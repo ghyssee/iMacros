@@ -1,0 +1,6 @@
+﻿VERSION BUILD=8820413 RECORDER=FX
+'TAB OPEN
+'TAB T=2
+SET !TIMEOUT_PAGE {{timeout}}
+URL GOTO=http://www.ultratop.be/nl/weekchart.asp?cat=s&year={{year}}&date={{date}}
+

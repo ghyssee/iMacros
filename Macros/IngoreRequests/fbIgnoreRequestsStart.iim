@@ -1,0 +1,3 @@
+﻿VERSION BUILD=8220116 RECORDER=FX
+URL GOTO=http://www.facebook.com/appcenter/requests
+WAIT SECONDS=5

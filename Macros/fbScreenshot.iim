@@ -1,0 +1,2 @@
+﻿SET !TIMEOUT_PAGE 60
+SAVEAS TYPE=JPEG FOLDER=c:\My<SP>Programs\iMacros\screenshots\{{folder}} FILE={{file}}.{{!NOW:yyyymmdd_hhnnss}}.jpg

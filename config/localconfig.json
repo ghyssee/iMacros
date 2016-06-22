@@ -1,0 +1,18 @@
+{"global":
+   {"oneDriveInstallDir": "C:\\My Programs\\OneDrive",
+    "oneDrive": false,
+    "enableMacroPlay": false,
+	"configComment": "Options available: ONEDRIVE, DEFAULT",
+	"config": "ONEDRIVE",
+	"computerComment": "Options available: 
+	                    1 laptopEric,
+						2 desktopEric,
+						3 laptopWerk",
+	"computer":"3"
+	},
+ "local":{
+	"nodeId":null,
+	"fireTitle":null,
+	"firefoxInstanceId":null
+  }
+}
