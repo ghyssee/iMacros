@@ -1,0 +1,3 @@
+﻿VERSION BUILD=8220116 RECORDER=FX
+URL GOTO={{profile}}
+WAIT SECONDS={{seconds}}
