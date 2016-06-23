@@ -21,8 +21,8 @@ function discoGS(){
 	
 	var retCode = simpleMacroPlayFolder("Discogs_01_GetAlbum.iim", MACRO_FOLDER);
 	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
-	var albumArtist = getLastExtract(1);
-	var albumObject = {"album":null,"tracks":null};
+	var albumObject = getAlbumObject();
+	albumObject.albumArtist = getLastExtract(1);
 	albumObject.album = getLastExtract(2);
 	albumObject.tracks = [];
 	var track = 0;
@@ -61,7 +61,7 @@ function getTrack(pos){
 			if (track.contains("-")){
 				var trackInfo = track.split("-");
 				trackObject.track = trackInfo[1];
-				trackObject.cd = trackInfo[0];
+				trackObject.cd = trackInfo[01];
 			}
 		}
 		else {
