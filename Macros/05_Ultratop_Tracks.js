@@ -13,7 +13,7 @@ songInit();
 var MACRO_FOLDER = "Ultratop";
 var EPISODE = "Album";
 var COMMON_FOLDER = "Common";
-var FILENAME = new ConfigFile(OUTPUT_DIR, EPISODE + ".txt");
+var FILENAME = new ConfigFile(MP3_OUTPUT_DIR, EPISODE + ".json");
 
 linked4You();
 
