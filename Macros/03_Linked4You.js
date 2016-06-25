@@ -7,24 +7,23 @@ eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.3.js"));
 var localConfigObject = null;
 var NODE_ID = "";
 LOG_FILE = new LogFile(LOG_DIR, "Linked4You");
-
 init();
 var	configObject = initObject(CONFIG_JSON_FILE);
 var mwObject = initObject(MAFIAWARS_JSON_FILE);
 var MACRO_FOLDER = "Linked4You";
-var EPISODE = "Zoo";
+var EPISODE = "Stitchers";
 var COMMON_FOLDER = "Common";
 var FILENAME = OUTPUT_DIR + EPISODE + ".txt";
 
 linked4You();
 
 function linked4You(){
-	
-	var startPage = "http://linked4you.net/forumdisplay.php?fid=1007";
+	var startPage = "http://linked4you.net/forumdisplay.php?fid=869";
 	save(FILENAME, EPISODE + NEWLINE);
 	
 	iimSet("profile", startPage);
 	simpleMacroPlayFolder("fbStart.iim", COMMON_FOLDER);
+	logV2(DEBUG, "INIT", "Lookup episode: " + EPISODE);
 	for (var i=1; i < 50; i++){
 		var epObj = {fileName:"", url:""};
 		iimSet("pos", i.toString());
@@ -39,39 +38,8 @@ function linked4You(){
 		else {
 			break;
 		}
-	}
-}
+	}	
 
-function processEpisode (epObj){
-	logV2(INFO, "EPISODE", "Episode Filename: " + epObj.fileName);
-	logV2(INFO, "EPISODE", "Episode URL: " + epObj.url);
-	iimSet("profile", epObj.url);
-	var retCode = simpleMacroPlayFolder("fbStart.iim", COMMON_FOLDER);
-	logV2(DEBUG, "EPISODE", "ReturnCode: " + retCode);
-	
-	if (retCode == 1){
-		// check if already replied
-		retCode = simpleMacroPlayFolder("Linked4You_20_CheckNotRepliedYet.iim", MACRO_FOLDER);
-		logV2(INFO, "EPISODE", "Already Replied Status: " + retCode);
-		if (retCode == 1){
-			retCode = simpleMacroPlayFolder("Linked4You_21_NewReply", MACRO_FOLDER);
-			makeScreenShot ("Linked4You.Unforgettable");
-			save (FILENAME, epObj.fileName);
-			save (FILENAME, epObj.url + NEWLINE);
-		}
-	}
-	else {
-		logV2(WARNING, "EPISODE", "Problem executing URL: " + epObj.url);
-	}
-	
-	simpleMacroPlayFolder("closeTab.iim", COMMON_FOLDER);
-	return retCode;
-}
-
-function LogFile(path, fileId){
-	this.path = path;
-	this.fileId = fileId;
-	this.fullPath = function() { return this.path + "log." + this.fileId + (NODE_ID == "" ? "" : "." + NODE_ID) + "." + getDateYYYYMMDD() + ".txt"};
 }
 
 function init(){
@@ -150,6 +118,32 @@ function init(){
 	}
 }
 
+function processEpisode (epObj){
+	logV2(INFO, "EPISODE", "Episode Filename: " + epObj.fileName);
+	logV2(INFO, "EPISODE", "Episode URL: " + epObj.url);
+	iimSet("profile", epObj.url);
+	var retCode = simpleMacroPlayFolder("fbStart.iim", COMMON_FOLDER);
+	logV2(DEBUG, "EPISODE", "ReturnCode: " + retCode);
+	
+	if (retCode == 1){
+		// check if already replied
+		retCode = simpleMacroPlayFolder("Linked4You_20_CheckNotRepliedYet.iim", MACRO_FOLDER);
+		logV2(INFO, "EPISODE", "Already Replied Status: " + retCode);
+		if (retCode == 1){
+			retCode = simpleMacroPlayFolder("Linked4You_21_NewReply", MACRO_FOLDER);
+			makeScreenShot ("Linked4You.Unforgettable");
+			save (FILENAME, epObj.fileName);
+			save (FILENAME, epObj.url + NEWLINE);
+		}
+	}
+	else {
+		logV2(WARNING, "EPISODE", "Problem executing URL: " + epObj.url);
+	}
+	
+	simpleMacroPlayFolder("closeTab.iim", COMMON_FOLDER);
+	return retCode;
+}
+
 function validateDirectory(directoryName){
 	if (!fileExists(directoryName)){
 		var errorMsg = "Directory does not exist: " + directoryName;
@@ -158,6 +152,8 @@ function validateDirectory(directoryName){
 		throw new Error(errorMsg);
 	}
 }
+
+
 
 function readScript(filename){
 
@@ -209,4 +205,11 @@ function getOneDrivePath(){
 		throw errorMsg;
 	}
 	return id;
+}
+
+
+function LogFile(path, fileId){
+	this.path = path;
+	this.fileId = fileId;
+	this.fullPath = function() { return this.path + "log." + this.fileId + (NODE_ID == "" ? "" : "." + NODE_ID) + "." + getDateYYYYMMDD() + ".txt"};
 }
