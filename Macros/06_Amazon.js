@@ -10,7 +10,7 @@ var NODE_ID = "";
 LOG_FILE = new LogFile(LOG_DIR, "Discogs");
 songInit();
 //var	configObject = initObject(CONFIG_JSON_FILE);
-var MACRO_FOLDER = "Ultratop";
+var MACRO_FOLDER = "Amazon";
 var EPISODE = "Album";
 var COMMON_FOLDER = "Common";
 var FILENAME = new ConfigFile(MP3_OUTPUT_DIR, EPISODE + ".json");
@@ -19,11 +19,16 @@ linked4You();
 
 function linked4You(){
 	
-	var startPage = "http://linked4you.net/forumdisplay.php?fid=1007";
-	var retCode = simpleMacroPlayFolder("Ultratop_01_GetAlbum.iim", MACRO_FOLDER);
+	var retCode = simpleMacroPlayFolder("Amazon_01_GetAlbum.iim", MACRO_FOLDER);
 	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
 	var albumObject = {"album":null,"tracks":null,"total":1};
 	albumObject.album = getLastExtract(1);
+	if (!isNullOrBlank(albumObject.album)){
+		albumObject.album = albumObject.album.trim();
+	}
+	else {
+		albumObject.album = null;
+	}
 	
 	albumObject.tracks = [];
 	var track = 0;
@@ -47,15 +52,15 @@ function linked4You(){
 
 function processTrack(albumObject, track){
 	var pos = track.toString();
+	var pos2 = (track*2).toString();
 	var songObject = getSongObject();
 	songObject.track = getTrack(pos);
+	logV2(DEBUG, "INIT", "songObject.track: " + songObject.track);
 	if (isNullOrBlank(songObject.track)){
 		return false;
 	}
-	var artistTitle = getArtist(pos);
-	var array = artistTitle.split(" - ");
-	songObject.artist = array[0];
-	songObject.title = array[1];
+	songObject.title = getTitle(pos2);
+	songObject.artist = getArtist(pos2);
 	songObject.extraArtists = [];
 	songObject.cd = albumObject.total;
 	albumObject.tracks.push(songObject);
@@ -65,8 +70,7 @@ function processTrack(albumObject, track){
 function getTrack(pos){
 	var track = null;
 	iimSet("pos", pos);
-	var retCode = simpleMacroPlayFolder("Ultratop_10_GetTrack.iim", MACRO_FOLDER);
-	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
+	var retCode = simpleMacroPlayFolder("Amazon_10_GetTrack.iim", MACRO_FOLDER);
 	if (retCode == 1){
 		track = iimGetLastExtract(1);
 		logV2(DEBUG, "MP3", "track: " + track);
@@ -80,13 +84,9 @@ function getTrack(pos){
 function getArtist(pos){
 	var artist = null;
 	iimSet("pos", pos);
-	var retCode = simpleMacroPlayFolder("Ultratop_11_GetArtist.iim", MACRO_FOLDER);
-	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
+	var retCode = simpleMacroPlayFolder("Amazon_11_GetArtist.iim", MACRO_FOLDER);
 	if (retCode == 1){
 		artist = iimGetLastExtract(1);
-		if (!isNullOrBlank(artist)){
-			artist = artist.replace("–", "");
-		}
 	}
 	return artist;
 }
@@ -94,8 +94,7 @@ function getArtist(pos){
 function getTitle(pos){
 	var title = null;
 	iimSet("pos", pos);
-	var retCode = simpleMacroPlayFolder("Ultratop_15_GetTitle.iim", MACRO_FOLDER);
-	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
+	var retCode = simpleMacroPlayFolder("Amazon_15_GetTitle.iim", MACRO_FOLDER);
 	if (retCode == 1){
 		title = iimGetLastExtract(1);
 	}

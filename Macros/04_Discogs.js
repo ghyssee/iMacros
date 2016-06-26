@@ -61,7 +61,10 @@ function getTrack(pos){
 			if (track.contains("-")){
 				var trackInfo = track.split("-");
 				trackObject.track = trackInfo[1];
-				trackObject.cd = trackInfo[01];
+				trackObject.cd = trackInfo[0];
+			}
+			else {
+				trackObject.track = track;
 			}
 		}
 		else {
