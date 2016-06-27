@@ -22,7 +22,7 @@ function linked4You(){
 	var startPage = "http://linked4you.net/forumdisplay.php?fid=1007";
 	var retCode = simpleMacroPlayFolder("Ultratop_01_GetAlbum.iim", MACRO_FOLDER);
 	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
-	var albumObject = {"album":null,"tracks":null,"total":1};
+	var albumObject = getAlbumObject();
 	albumObject.album = getLastExtract(1);
 	
 	albumObject.tracks = [];
