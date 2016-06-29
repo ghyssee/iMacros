@@ -24,6 +24,7 @@ function linked4You(){
 	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
 	var albumObject = getAlbumObject();
 	albumObject.album = getLastExtract(1);
+	albumObject.total = 1;
 	
 	albumObject.tracks = [];
 	var track = 0;
