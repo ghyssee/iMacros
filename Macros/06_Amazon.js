@@ -4,23 +4,20 @@ eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyFileUtils-0.0.3.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyConstants-0.0.2.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.3.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\SongUtils-0.0.1.js"));
+setupEnvrionment(getOneDrivePath());
 
-var localConfigObject = null;
-var NODE_ID = "";
-LOG_FILE = new LogFile(LOG_DIR, "Discogs");
+LOG_FILE = new LogFile(LOG_DIR, "Albums");
 songInit();
 //var	configObject = initObject(CONFIG_JSON_FILE);
 var MACRO_FOLDER = "Amazon";
-var EPISODE = "Album";
-var COMMON_FOLDER = "Common";
-var FILENAME = new ConfigFile(MP3_OUTPUT_DIR, EPISODE + ".json");
+var ALBUM = "Album";
+var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
 
-linked4You();
+processAlbum();
 
-function linked4You(){
+function processAlbum(){
 	
 	var retCode = simpleMacroPlayFolder("Amazon_01_GetAlbum.iim", MACRO_FOLDER);
-	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
 	var albumObject = {"album":null,"tracks":null,"total":1};
 	albumObject.album = getLastExtract(1);
 	if (!isNullOrBlank(albumObject.album)){

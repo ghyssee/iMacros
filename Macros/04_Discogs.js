@@ -3,21 +3,19 @@ eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyUtils-0.0.1.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyFileUtils-0.0.3.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyConstants-0.0.2.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.3.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\SongUtils-0.0.1.js"));
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\SongUtils-0.0.2.js"));
+setupEnvrionment(getOneDrivePath());
 
-var localConfigObject = null;
-var NODE_ID = "";
-LOG_FILE = new LogFile(LOG_DIR, "Discogs");
+LOG_FILE = new LogFile(LOG_DIR, "Albums");
 songInit();
-//var	configObject = initObject(CONFIG_JSON_FILE);
 var MACRO_FOLDER = "Discogs";
-var EPISODE = "Album";
-var COMMON_FOLDER = "Common";
-var FILENAME = new ConfigFile(MP3_OUTPUT_DIR, EPISODE + ".json");
+var ALBUM = "Album";
 
-discoGS();
+var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
 
-function discoGS(){
+processAlbum();
+
+function processAlbum(){
 	
 	var retCode = simpleMacroPlayFolder("Discogs_01_GetAlbum.iim", MACRO_FOLDER);
 	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
@@ -146,13 +144,6 @@ function getExtraArtist(pos){
 
 function getExtraArtistObject(type, extraArtist){
 	return {"type":type, "extraArtist":extraArtist};
-}
-
-
-function LogFile(path, fileId){
-	this.path = path;
-	this.fileId = fileId;
-	this.fullPath = function() { return this.path + "log." + this.fileId + (NODE_ID == "" ? "" : "." + NODE_ID) + "." + getDateYYYYMMDD() + ".txt"};
 }
 
 function readScript(filename){
