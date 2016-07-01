@@ -3,7 +3,7 @@ eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyUtils-0.0.1.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyFileUtils-0.0.3.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyConstants-0.0.2.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.3.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\SongUtils-0.0.1.js"));
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\SongUtils-0.0.2.js"));
 setupEnvrionment(getOneDrivePath());
 
 LOG_FILE = new LogFile(LOG_DIR, "Albums");
