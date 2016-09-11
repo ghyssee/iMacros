@@ -1,0 +1,7 @@
+﻿VERSION BUILD=9030808 RECORDER=FX
+TAB T=1
+URL GOTO=http://www.ultratop.be/nl/compilation/4bcf0/MNM-Party-2016-*-Volume-2
+EVENT TYPE=MOUSEDOWN SELECTOR="HTML>BODY>DIV:nth-of-type(4)>DIV:nth-of-type(2)>DIV>DIV:nth-of-type(6)>DIV>DIV:nth-of-type(4)>DIV>TABLE>TBODY:nth-of-type(2)>TR:nth-of-type(53)>TD:nth-of-type(2)" BUTTON=0
+EVENT TYPE=MOUSEMOVE SELECTOR="HTML>BODY>DIV:nth-of-type(4)>DIV:nth-of-type(2)>DIV>DIV:nth-of-type(6)>DIV>DIV:nth-of-type(4)>DIV>TABLE>TBODY:nth-of-type(2)>TR:nth-of-type(53)>TD:nth-of-type(2)" POINT="(77,1399)"
+EVENT TYPE=MOUSEUP POINT="(77,1399)"
+EVENT TYPE=CLICK SELECTOR="HTML>BODY>DIV:nth-of-type(4)>DIV:nth-of-type(2)>DIV>DIV:nth-of-type(6)>DIV>DIV:nth-of-type(4)>DIV>TABLE>TBODY:nth-of-type(2)>TR:nth-of-type(53)>TD:nth-of-type(2)" BUTTON=0

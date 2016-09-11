@@ -49,7 +49,10 @@ function processTrack(albumObject, track){
 	if (isNullOrBlank(songObject.track)){
 		return false;
 	}
-	var artistTitle = getArtist(pos);
+	var artistTitle = getArtist("Ultratop_11_GetArtist.iim", pos);
+	if (isNullOrBlank(artistTitle)){
+	   artistTitle = getArtist("Ultratop_11_GetArtist_2.iim", pos);
+	}
 	var array = artistTitle.split(" - ");
 	songObject.artist = array[0];
 	songObject.title = array[1];
@@ -74,10 +77,10 @@ function getTrack(pos){
 	return track;
 }
 
-function getArtist(pos){
+function getArtist(macro, pos){
 	var artist = null;
 	iimSet("pos", pos);
-	var retCode = simpleMacroPlayFolder("Ultratop_11_GetArtist.iim", MACRO_FOLDER);
+	var retCode = simpleMacroPlayFolder(macro, MACRO_FOLDER);
 	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
 	if (retCode == 1){
 		artist = iimGetLastExtract(1);

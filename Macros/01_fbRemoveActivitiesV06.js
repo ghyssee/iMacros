@@ -203,7 +203,7 @@ function cleanUpApplication(profileObject, loginObject, appId, year, wait, profi
 				return -1;
 			}
 			log("INFO: Profile " + profileObject.id + " : Application : " + appObject.name + " : Removing activities" );
-			removeSpecificApplicationActivities(appObject, profileObject, "1", year, wait);
+			removeSpecificApplicationActivities(appObject, profileObject, "2", year, wait);
 		}
 		else {
 			log("INFO: Profile " + profileObject.id + " disabled for this application");
@@ -249,8 +249,8 @@ function removeActivities2(url, profileObject, startPos, waitSeconds, year){
 	var retcode = 0;
 	var failuresInRow = 0;
 	var successInRow = 0;
-	var startPos = 1;
-	var pos = startPos.toString();
+	//var startPos = 1;
+	var pos = startPos;
 	var returnCode = 1; // continue with next line
 	var tagNotFound = 0;
 	var error933 = 0;
