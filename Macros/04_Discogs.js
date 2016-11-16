@@ -56,7 +56,7 @@ function getTrack(pos){
 	if (retCode == 1){
 		track = iimGetLastExtract(1);
 		if (!isNullOrBlank(track)){
-			if (track.contains("-")){
+			if (track.indexOf("-") >= 0){
 				var trackInfo = track.split("-");
 				trackObject.track = trackInfo[1];
 				trackObject.cd = trackInfo[0];

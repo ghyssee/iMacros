@@ -2,9 +2,9 @@
 SET !ERRORIGNORE NO
 SET !TIMEOUT_STEP 1
 ' fb activities remove type 3
-TAG POS=1 TYPE=I ATTR=CLASS:mrs<SP>_2fmu<SP>img<SP>sp_*&&TXT:
+TAG POS={{pos}} TYPE=I ATTR=CLASS:mrs<SP>_2fmu<SP>img<SP>sp_*&&TXT:
 SET !ERRORIGNORE NO
-TAG POS={{pos}} TYPE=SPAN ATTR=TXT:Verwijderen*
+TAG POS={{calcpos}} TYPE=SPAN ATTR=TXT:Verwijderen*
 WAIT SECONDS=4
 TAG POS=1 TYPE=BUTTON FORM=ID:u_* ATTR=TXT:Dit<Sp>Bericht<SP>verwijderen*
 WAIT SECONDS=4
