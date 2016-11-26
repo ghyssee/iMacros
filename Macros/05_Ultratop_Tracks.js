@@ -49,10 +49,10 @@ function processTrack(albumObject, track){
 	if (isNullOrBlank(songObject.track)){
 		return false;
 	}
-	var artistTitle = getArtist("Ultratop_11_GetArtist.iim", pos);
-	if (isNullOrBlank(artistTitle)){
-	   artistTitle = getArtist("Ultratop_11_GetArtist_2.iim", pos);
-	}
+	var artistTitle = getArtist("Ultratop_11_GetArtist_2.iim", pos);
+	//if (isNullOrBlank(artistTitle)){
+	  // artistTitle = getArtist("Ultratop_11_GetArtist_2.iim", pos);
+	//}
 	var array = artistTitle.split(" - ");
 	songObject.artist = array[0];
 	songObject.title = array[1];
