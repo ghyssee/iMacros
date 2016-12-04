@@ -13,7 +13,7 @@ var ULTRATOP_MENU_FILE = new ConfigFile(CONFIG_DIR, "UltratopMenu.json");
 var LOG_DIR = BASE_DIR + "logs\\";
 var LOG_FILE = LOG_DIR + "log.ULTRATOP." + getDateYYYYMMDD() + ".txt";
 var INFO = 0; var ERROR = 1; WARNING = 2;
-var TIMEOUT = 120;
+var TIMEOUT = 30;
 var WRITE_FILE = false;
 
 String.prototype.lpad = function(padString, length) {
