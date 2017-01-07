@@ -23,6 +23,7 @@ function processAlbum(){
 	albumObject.albumArtist = getLastExtract(1);
 	albumObject.album = getLastExtract(2);
 	albumObject.tracks = [];
+	albumObject.total = 1;
 	var track = 0;
 	do {
 		track++;
@@ -40,6 +41,7 @@ function processTrack(albumObject, track){
 		return false;
 	}
 	songObject.cd = trackObject.cd;
+	albumObject.total = trackObject.cd;
 	songObject.artist = getArtist(pos);
 	songObject.title = getTitle(pos);
 	songObject.extraArtists = getExtraArtist(pos);
