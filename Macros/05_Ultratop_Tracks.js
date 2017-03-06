@@ -13,9 +13,45 @@ var ALBUM = "Album";
 
 var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
 
-processAlbum();
+var artist = selectArtist();
+processAlbum(artist);
 
-function processAlbum(){
+function selectType(){
+	var type = null;
+	var msg = "0 - Met Artist" + NEWLINE +
+	          "1 - Zonder Artist";
+	var inputTxt = prompt(msg, "0");
+	if (inputTxt != null){
+		if (inputTxt != ""){
+			var result = parseInt(inputTxt);
+			alert(result);
+			if (result >= 0 && result <= 1){
+				type = inputTxt;
+			}
+			else {
+				alert("Verkeerde keuze!");
+			}
+		}
+	}
+	else {
+		alert("Geen keuze gemaakt. Script wordt nu gestopt!");
+	}
+	return type;
+}
+
+function selectArtist(){
+	var artist = null;
+	var msg = "Albumartist (Laat leeg indien verzamel CD of artist is ingevuld): ";
+	var inputTxt = prompt(msg, "0");
+	if (inputTxt != null){
+		if (inputTxt != ""){
+			artist = inputTxt;
+		}
+	}
+	return artist;
+}
+
+function processAlbum(artist){
 	
 	var retCode = simpleMacroPlayFolder("Ultratop_01_GetAlbum.iim", MACRO_FOLDER);
 	var albumObject = getAlbumObject();
@@ -28,7 +64,7 @@ function processAlbum(){
 	var oldTrack = 1;
 	do {
 		track++;
-		exitLoop = !processTrack(albumObject, track);
+		exitLoop = !processTrack(albumObject, track, artist);
 		if (!exitLoop){
 			if (oldTrack > parseInt(albumObject.tracks[track-1].track)){
 				logV2(DEBUG, "INIT", "Increase Number of CD's");
@@ -42,20 +78,23 @@ function processAlbum(){
 	writeObject(albumObject, FILENAME);
 }
 
-function processTrack(albumObject, track){
+function processTrack(albumObject, track, artist){
 	var pos = track.toString();
 	var songObject = getSongObject();
 	songObject.track = getTrack(pos);
 	if (isNullOrBlank(songObject.track)){
 		return false;
 	}
-	var artistTitle = getArtist("Ultratop_11_GetArtist_2.iim", pos);
-	//if (isNullOrBlank(artistTitle)){
-	  // artistTitle = getArtist("Ultratop_11_GetArtist_2.iim", pos);
-	//}
+	var artistTitle = getArtist(pos);
 	var array = artistTitle.split(" - ");
-	songObject.artist = array[0];
-	songObject.title = array[1];
+	if (array.length == 1){
+		songObject.artist = artist;
+		songObject.title = array[0];
+	}
+	else {
+		songObject.artist = array[0];
+		songObject.title = array[1];
+	}
 	songObject.extraArtists = [];
 	songObject.cd = albumObject.total;
 	albumObject.tracks.push(songObject);
@@ -77,10 +116,10 @@ function getTrack(pos){
 	return track;
 }
 
-function getArtist(macro, pos){
+function getArtist(pos){
 	var artist = null;
 	iimSet("pos", pos);
-	var retCode = simpleMacroPlayFolder(macro, MACRO_FOLDER);
+	var retCode = simpleMacroPlayFolder("Ultratop_11_GetArtist.iim", MACRO_FOLDER);
 	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
 	if (retCode == 1){
 		artist = iimGetLastExtract(1);
@@ -89,17 +128,6 @@ function getArtist(macro, pos){
 		}
 	}
 	return artist;
-}
-
-function getTitle(pos){
-	var title = null;
-	iimSet("pos", pos);
-	var retCode = simpleMacroPlayFolder("Ultratop_15_GetTitle.iim", MACRO_FOLDER);
-	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
-	if (retCode == 1){
-		title = iimGetLastExtract(1);
-	}
-	return title;
 }
 
 function readScript(filename){
