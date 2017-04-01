@@ -119,7 +119,7 @@ function getTrack(pos){
 function getArtist(pos){
 	var artist = null;
 	iimSet("pos", pos);
-	var retCode = simpleMacroPlayFolder("Ultratop_11_GetArtist.iim", MACRO_FOLDER);
+	var retCode = simpleMacroPlayFolder("Ultratop_11_GetArtist_2.iim", MACRO_FOLDER);
 	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
 	if (retCode == 1){
 		artist = iimGetLastExtract(1);

@@ -5,6 +5,7 @@ var OUTPUT_DIR = BASE_DIR + "output\\";
 var CONFIG_DIR  = BASE_DIR + "config\\";
 var CONFIG_INI = CONFIG_DIR + "config.ini";
 var TMP_DIR = BASE_DIR + "tmp\\";
+var ULTRATOP50_BASE = "ultratop/Top50/";
 
 var LOCAL_CONFIG_JSON_FILE = new ConfigFile(CONFIG_DIR, "localconfig.json");
 //var ULTRATOP_JSON_FILE = CONFIG_DIR + "ultratop.json";
@@ -37,10 +38,6 @@ String.prototype.repeat = function(times){
 
 Components.utils.import("resource://gre/modules/FileUtils.jsm");
 
-	var BOLD_START_TAG = "<b>";
-	var BOLD_END_TAG = "</b>";
-	var BREAK="<br>";
-	var LINK_END_TAG="</a>";
 	var retcode = 1;
 	var display = "";
 	var JANUARY=0; var FEBRUARY=1; var MARCH=2; var APRIL=3; var MAY=4; var JUNE=5; var JULY=6; var AUGUST=7; var SEPTEMBER=8; var OCTOBER=9; var NOVEMBER=10; var DECEMBER=11;
@@ -53,7 +50,13 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 	ULTRATOP_JSON_FILE.path = localConfigObject.global.oneDriveInstallDir + "\\" + CONFIG_BASE + "\\";
 	ULTRATOP_MENU_FILE.path = localConfigObject.global.oneDriveInstallDir + "\\" + CONFIG_BASE + "\\";
 	var ultratopMenu = initObject(ULTRATOP_MENU_FILE);
+	start(ultratopMenu);
+
+
 	
+
+	
+function start(ultratopMenu){
 	var m3uObj = initObject(ULTRATOP_JSON_FILE);
 	msg = TITLE;
 	for (var i=0; i < ultratopMenu.yearMenu.length; i++){
@@ -99,18 +102,21 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 		copyFile(ULTRATOP_JSON_FILE.fullPath(), getFileDirectory(ULTRATOP_JSON_FILE.path) + "\\", stripPath(newFile));
 		writeObject(m3uObj, ULTRATOP_JSON_FILE);
 	}
+}
 
-	/*
-	for (var i=0; i < m3uObj.m3u.years.length; i++){
-		yearObj = m3uObj.m3u.years[i];
-		log(yearObj.year);
-		for (var j=0; j < yearObj.m3uMonth.length; j++){
-		   var monthObj = yearObj.m3uMonth[j];
-		   log(monthObj.id);
-		   log(monthObj.baseDir);
-		   log(monthObj.inputFile);
+function checkTitle(text){
+	var tmp = text.split("\n");
+	if (tmp.length > 1){
+		if (tmp[1].trim() != ""){
+			var newTitle = tmp[1].trim().replace(/^\+ +/g, "");
+			return newTitle;
 		}
-	}*/
+		else {
+			return tmp[0].trim();
+		}
+	}
+	return text;
+}
 
 function processUltratop(ultratopMenu, m3uObj, year, month, day){
 	var date = new Date(year, month, day);
@@ -191,6 +197,7 @@ function selectDay(title, year, month, ultratopMenu){
 		msg += ultratopMenu.dayMenu[i].description + NEWLINE;
 	}
 	msg += NEWLINE;
+	var day = "";
 	var inputTxt = prompt(msg, day);
 	if (inputTxt != null){
 		if (inputTxt == ""){
@@ -291,12 +298,11 @@ function getUltratopList(year, date, filename){
 	
 	var retcode = 0;
 	var retries=0;
-	//var filename = OUTPUT_DIR + "Ultratop<week>.txt"; 
 	do {
 		iimSet("timeout", TIMEOUT);
 		iimSet("year", year);
 		iimSet("date", date);
-		retcode = iimPlay("ultratop/UltraTopInit.iim");
+		retcode = iimPlay(ULTRATOP50_BASE + "UltraTop_01_Load.iim");
 		// page loading timeout
 		if (retcode = -802){
 			retcode = 1;
@@ -304,20 +310,11 @@ function getUltratopList(year, date, filename){
 			logV2(WARNING, "Page Loading Timeout. Consider it as page is loaded correctly..."); 
 		}
 	} while (retries < 5 && retcode != 1);
-	retcode = iimPlay("ultratop/UltraTopInitGetTitle.iim");
 	
-	if (retcode == 1){
-		var week=iimGetLastExtract(1);
-		//week=week.replace("SINGLES ", "").replace(/\n/g,"");
-		//filename=filename.replace("<week>", week.substr(6,4) + week.substr(3,2) + week.substr(0,2));
-		deleteFile(filename);
-		for (var i=1; i <= 50; i++){
-			var songObject = getSong(i);
-			writeFile(filename, songObject.position + " " + songObject.artist + " - " + songObject.title + "\r\n", false);
-		}
-	}
-	else {
-		logV2(WARNING, "ERROR Getting Title of Page"); 
+	deleteFile(filename);
+	for (var i=1; i <= 50; i++){
+		var songObject = getSong(i);
+		writeFile(filename, songObject.position + " " + songObject.artist + " - " + songObject.title + "\r\n", false);
 	}
 }
 
@@ -362,26 +359,35 @@ function pad(number, length) {
 function getSong(pos){
 	// var songObject = initObject(CONFIG_DIR + "song.json");
 	var songObject = {position:"", artist:"",title:""}
-	songObject.position = pos.toString().lpad("0", 2);
-	iimSet("position", pos.toString());
-	iimPlay("ultratop/UltraTop.iim");
+	//songObject.position = pos.toString().lpad("0", 2);
+	iimSet("pos", (pos+1).toString());
+	retcode = iimPlay(ULTRATOP50_BASE + "Ultratop_10_GetTrack.iim");
+	if (retcode != 1){
+		logV2(ERROR, "Problem Getting Track");
+		throw new Error("Error Loading Track");
+	}
 	var txt=iimGetLastExtract(1);
-	var n=txt.search(BOLD_START_TAG);
-	var n2=txt.search(BOLD_END_TAG);
-	songObject.artist = htmlDecode(txt.substr(n+BOLD_START_TAG.length,n2-n-BOLD_END_TAG.length+1));
-	n=txt.search(BREAK);
-	n2=txt.search(LINK_END_TAG);
-	songObject.title = htmlDecode(txt.substr(n+BREAK.length,n2-n-LINK_END_TAG.length));
+	songObject.position = txt.trim().lpad("0", 2);
+	
+	iimSet("pos", pos.toString());
+	retcode = iimPlay(ULTRATOP50_BASE + "Ultratop_20_GetArtist.iim");
+	if (retcode != 1){
+		logV2(ERROR, "Problem Getting Artist");
+		throw new Error("Error Loading Artist");
+	}
+	var txt=iimGetLastExtract(1);
+	songObject.artist = txt.trim();
+	
+	iimSet("pos", pos.toString());
+	retcode = iimPlay(ULTRATOP50_BASE + "Ultratop_30_GetTitle.iim");
+	if (retcode != 1){
+		logV2(ERROR, "Problem Getting Title");
+		throw new Error("Error Loading Title");
+	}
+	var txt=iimGetLastExtract(1);
+	songObject.title = checkTitle(txt);
+	
 	return songObject;
-}
-
-function htmlDecode(enitity){
-	var decoded = enitity.replace(/&amp;/g, "&");
-	decoded = decoded.replace(/&gt;/g, ">");
-	decoded = decoded.replace(/&lt;/g, "<");
-	decoded = decoded.replace(/&quot;/g, '"');
-	decoded = decoded.replace(/'&#39;/g, "'");
-	return decoded;
 }
 
 function writeFile(fileName, data, overwrite) {
@@ -461,7 +467,7 @@ function logV2(type, outputText, logFile){
 	var currentTime = formatDateYYYYMMDDHHMISS();
 	switch (type) {
 		case ERROR:
-			log(currentTime + " " + "ERROR: " + outputText, ERROR_LOG);
+			log(currentTime + " " + "ERROR: " + outputText, logFile);
 			break;
 		case WARNING:
 			log(currentTime + " " + "WARN: " + outputText, logFile);

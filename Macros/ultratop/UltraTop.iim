@@ -1,3 +1,0 @@
-﻿VERSION BUILD=8820413 RECORDER=FX
-TAG POS=1 TYPE=TD ATTR=CLASS:text&&STYLE:padding:0<SP>5px;color:#FFFFFF;text-align:center;vertical-align:middle*&&TXT:{{position}}
-TAG POS=R1 TYPE=A ATTR=CLASS:navb EXTRACT=HTM
