@@ -12,7 +12,7 @@ var MACRO_FOLDER = "Discogs";
 var ALBUM = "Album";
 
 var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
-
+//var albumArtist = selectArtist();
 processAlbum();
 
 function processAlbum(){
@@ -24,15 +24,44 @@ function processAlbum(){
 	albumObject.album = getLastExtract(2);
 	albumObject.tracks = [];
 	albumObject.total = 1;
-	var track = 0;
+	var pos = 0;
+	var track = pos;
+	var exit = false;
 	do {
-		track++;
+		pos++;
+		var validTrack = checkTrack(pos);
+		switch (validTrack){
+			case 1:
+				track++;
+				exit = !processTrack(albumObject, pos, track)
+				break;
+			case 2: // bonus track line:
+				break;
+			default :
+				exit = true;
+				break;
+		}
+		logV2("DEBUG", "CAT", "Pos = " + pos);
 	}
-	while (processTrack(albumObject, track));
+	while (!exit);
 	writeObject(albumObject, FILENAME);
 }
 
-function processTrack(albumObject, track){
+
+function selectArtist(){
+	var artist = null;
+	var msg = "Albumartist (Laat leeg indien verzamel CD of artist is ingevuld): ";
+	var inputTxt = prompt(msg, "");
+	if (inputTxt != null){
+		if (inputTxt != ""){
+			artist = inputTxt;
+		}
+	}
+	return artist;
+}
+
+
+function processTrack(albumObject, track, realTrack){
 	var pos = track.toString();
 	var songObject = getSongObject();
 	var trackObject = getTrack(pos);
@@ -43,10 +72,28 @@ function processTrack(albumObject, track){
 	songObject.cd = trackObject.cd;
 	albumObject.total = trackObject.cd;
 	songObject.artist = getArtist(pos);
-	songObject.title = getTitle(pos);
+	if (isNullOrBlank(songObject.artist)){
+		songObject.artist = albumObject.albumArtist;
+	}
+	songObject.title = getTitle(realTrack.toString());
 	songObject.extraArtists = getExtraArtist(pos);
 	albumObject.tracks.push(songObject);
 	return true;
+}
+
+function checkTrack(pos){
+	iimSet("pos", pos.toString());
+	var retCode = simpleMacroPlayFolder("Discogs_10_GetTrack.iim", MACRO_FOLDER);
+	logV2(DEBUG, "POS", "Pos = " + pos);
+	if (retCode == 1){
+		track = iimGetLastExtract(1);
+		if (track == null || track == ""){
+			logV2(DEBUG, "MP3", "Skip Track (Bonus Track Notification)");
+			return 2;
+		}
+		return 1;
+	}
+	return (-1);
 }
 
 function getTrack(pos){

@@ -20,8 +20,8 @@ function processAlbum(){
 	var retCode = simpleMacroPlayFolder(MACRO_FOLDER + "_01_GetAlbum.iim", MACRO_FOLDER);
 	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
 	var albumObject = getAlbumObject();
-	albumObject.album = getLastExtract(1);
-	albumObject.albumArtist = getAlbumArtist(MACRO_FOLDER);
+	albumObject.album = getLastExtract(1).trim();
+	albumObject.albumArtist = getAlbumArtist(MACRO_FOLDER).trim();
 	albumObject.tracks = [];
 	albumObject.total = 1;
 	var track = 0;
@@ -48,13 +48,13 @@ function processTrack(albumObject, track){
 	var pos = track.toString();
 	var songObject = getSongObject();
 	var trackObject = getTrack(MACRO_FOLDER, pos);
-	songObject.track = trackObject.track;
+	songObject.track = trackObject.track.trim();
 	if (isNullOrBlank(songObject.track)){
 		return false;
 	}
 	songObject.cd = trackObject.cd;
-	songObject.artist = getArtist(MACRO_FOLDER, pos);
-	songObject.title = getTitle(MACRO_FOLDER, pos);
+	songObject.artist = getArtist(MACRO_FOLDER, pos).trim();
+	songObject.title = getTitle(MACRO_FOLDER, pos).trim();
 	songObject.cd = albumObject.total;
 	albumObject.tracks.push(songObject);
 	return true;

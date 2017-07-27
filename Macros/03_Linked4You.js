@@ -11,14 +11,14 @@ init();
 var	configObject = initObject(CONFIG_JSON_FILE);
 var mwObject = initObject(MAFIAWARS_JSON_FILE);
 var MACRO_FOLDER = "Linked4You";
-var EPISODE = "Marvels Jessica Jones";
+var EPISODE = "NCIS";
 var COMMON_FOLDER = "Common";
 var FILENAME = OUTPUT_DIR + EPISODE + ".txt";
 
 linked4You();
 
 function linked4You(){
-	var startPage = "http://linked4you.net/forumdisplay.php?fid=1068";
+	var startPage = "http://linked4you.net/forumdisplay.php?fid=192";
 	save(FILENAME, EPISODE + NEWLINE);
 	
 	iimSet("profile", startPage);

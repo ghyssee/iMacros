@@ -17,15 +17,7 @@ processAlbum();
 
 function processAlbum(){
 	
-	var retCode = simpleMacroPlayFolder("Amazon_01_GetAlbum.iim", MACRO_FOLDER);
-	var albumObject = {"album":null,"tracks":null,"total":1};
-	albumObject.album = getLastExtract(1);
-	if (!isNullOrBlank(albumObject.album)){
-		albumObject.album = albumObject.album.trim();
-	}
-	else {
-		albumObject.album = null;
-	}
+	var albumObject = getAlbum();
 	
 	albumObject.tracks = [];
 	var track = 0;
@@ -45,6 +37,29 @@ function processAlbum(){
 	}
 	while (exitLoop == false);
 	writeObject(albumObject, FILENAME);
+}
+
+function getAlbum(){
+	var albumObject = {"album":null,"tracks":null,"total":1};
+	if (!getAlbumName("Amazon_01_GetAlbum.iim", albumObject)){
+		getAlbumName("Amazon_02_GetAlbum.iim", albumObject);
+	}
+	alert(albumObject.album);
+	return albumObject;
+}
+
+function getAlbumName(macroName, albumObject){
+	var retCode = simpleMacroPlayFolder(macroName, MACRO_FOLDER);
+	albumObject.album = getLastExtract(1);
+	var ok = false;
+	if (!isNullOrBlank(albumObject.album)){
+		albumObject.album = albumObject.album.trim();
+		ok =true;
+	}
+	else {
+		albumObject.album = null;
+	}
+	return ok;
 }
 
 function processTrack(albumObject, track){

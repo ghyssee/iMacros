@@ -1,4 +1,6 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
 TAB T=1
-URL GOTO=http://www.ultratop.be/nl/ultratop50/2017/20170401
-TAG POS=14 TYPE=SPAN ATTR=CLASS:CR_title<SP>breakWord
+URL GOTO=https://www.discogs.com/Katy-Perry-Witness/release/10417949
+TAG POS=1 TYPE=TD ATTR=COLSPAN:2&&CLASS:tracklist_track_title
+TAG POS=16 TYPE=SPAN ATTR=CLASS:tracklist_track_title&&ITEMPROP:name
+TAG POS=1 TYPE=TD ATTR=COLSPAN:2&&CLASS:tracklist_track_title
