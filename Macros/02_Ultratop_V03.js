@@ -107,12 +107,12 @@ function start(ultratopMenu){
 function checkTitle(text){
 	var tmp = text.split("\n");
 	if (tmp.length > 1){
-		if (tmp[1].trim() != ""){
-			var newTitle = tmp[1].trim().replace(/^\+ +/g, "");
+		if (tmp[0].trim() != ""){
+			var newTitle = tmp[0].trim().replace(/^\+ +/g, "");
 			return newTitle;
 		}
 		else {
-			return tmp[0].trim();
+			return tmp[1].trim();
 		}
 	}
 	return text;
@@ -298,6 +298,7 @@ function getUltratopList(year, date, filename){
 	
 	var retcode = 0;
 	var retries=0;
+	
 	do {
 		iimSet("timeout", TIMEOUT);
 		iimSet("year", year);
