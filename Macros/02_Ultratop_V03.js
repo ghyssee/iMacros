@@ -261,7 +261,7 @@ function checkYear(yearsObj, year){
 		}
 	}
 	if (!found){
-		var yearObj = {year: year,listFile: "",enabled: true, m3uMonth: []}
+		var yearObj = {year: year,enabled: true, relativePathId: "2",filter: "Ultratop 50 " + year, m3uMonth: []}
 		yearsObj.years.push(yearObj);
 		yearsObj.years.sort(
 				function (a, b) {
