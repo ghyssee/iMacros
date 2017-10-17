@@ -1,0 +1,11 @@
+﻿VERSION BUILD=8970419 RECORDER=FX
+TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=hospital&action=ghj EXTRACT=TXT
+' 0/350
+'TAG POS=1 TYPE=SPAN ATTR=ID:id-zAd EXTRACT=TXT
+' health of attackee
+'TAG POS=1 TYPE=SPAN ATTR=ID:fight-defender-health
+'WAIT SECONDS=2
+TAG POS=1 TYPE=DIV ATTR=ID:attack-msg EXTRACT=TXT
+'You LOST the fight!You attacked ℛʈℬ🔥1 ßĪƚĈĦ$ĿÂPPЄR ⊜³³°ↂ using 1 stamina.You dealt 2 damage and took 9 damage.You gained 2 experience.
+'of
+'TAG POS=1 TYPE=SPAN ATTR=TXT:You<SP>WON*

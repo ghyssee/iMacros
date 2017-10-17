@@ -11,43 +11,20 @@ LOG_FILE = new LogFile(LOG_DIR, "MRFight");
 init();
 //var	configObject = initObject(CONFIG_JSON_FILE);
 //var mwObject = initObject(MAFIAWARS_JSON_FILE);
+var FIGHT_FOLDER = "MR/Fight";
 
-//fightBoss();
+fightBoss();
 alert("test");
 
 function fightBoss(){
-	var retCode = initBossFight();
-	if (retCode == 1){
-		var exitLoop = true;
-		do {
-			//exitLoop = true;
-			var health = getHealth();
-			if (health > 1800){
-				var st = attack();
-				if (st == 1){
-					exitLoop = false;
-				}
-				else if (st == -921){
-					exitLoop = false;
-					macroPlayFolder(mwObject.bossFight, "MWBossFight_90_Close.iim");
-					retCode = initBossFight();
-					if (retCode != 1){
-						exitLoop = true;
-					}
-				}
-				else {
-					exitLoop = true;
-				}
-			}
-			else {
-				heal();
-			}
-		}
-		while (!exitLoop);
+	
+	var retCode = macroPlayFolder(FIGHT_FOLDER, "01_Start.iim");
+	var exitLoop = true;
+	do {
+		//exitLoop = true;
+		checkHealth();
 	}
-	else {
-		logV2(INFO, "BOSS", "Problem Init BossFight");
-	}
+	while (!exitLoop);
 }
 
 function LogFile(path, fileId){
@@ -57,19 +34,14 @@ function LogFile(path, fileId){
 }
 
 
-function initBossFight(){
+function checkHealth(){
 	logV2(INFO, "BOSS", "Initializing Fight");
 	var health = 0;
-	do {
+	health = getHealth();
+	while (health < 10){
 		heal();
 		health = getHealth();
 	}
-	while (health < 1800);
-	var retCode = macroPlayFolder(mwObject.bossFight, "MWBossFight_01_Init.iim");
-	// TODO
-	//retCode = prompt("Init Boss Fight", "1");
-
-	return retCode;
 }
 
 function attack(){
@@ -83,14 +55,12 @@ function attack(){
 
 function heal(){
 	logV2(INFO, "TEST", "Healing...");
-	macroPlayFolder(mwObject.bossFight, "MWBossFight_10_Heal.iim");
+	macroPlayFolder(mwObject.bossFight, "10_Heal.iim");
 }
 
 function getHealth(){
-	macroPlayFolder(mwObject.bossFight, "MWBossFight_20_GetHealth.iim");
+	macroPlayFolder("FIGHT_FOLDER", "11_GetHealth.iim");
 	var healthInfo = getLastExtract(1);
-	// TODO
-	//healthInfo = prompt("Health Info (example: 5850 / 9000", "");
 	logV2(INFO, "BOSS", "healthInfo = " + healthInfo);
 	if (!isNullOrBlank(healthInfo)){
 		var tmp = healthInfo.split("/");
