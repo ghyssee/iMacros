@@ -1,0 +1,8 @@
+﻿VERSION BUILD=8970419 RECORDER=FX
+SET !TIMEOUT_STEP 1
+FRAME NAME="iframe_canvas_fb_https"
+TAG POS=1 TYPE=DIV ATTR=ID:attack-msg EXTRACT=TXT
+'You WON the fight!
+'You cannot attack your friends.
+'It looks like LOU E LOU I is already smashed to pieces.
+

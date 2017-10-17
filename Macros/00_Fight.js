@@ -2,7 +2,7 @@
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyUtils-0.0.1.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyFileUtils-0.0.2.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyConstants-0.0.2.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.2.js"));
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.4.js"));
 
 var localConfigObject = null;
 var NODE_ID = "";
@@ -14,7 +14,6 @@ init();
 var FIGHT_FOLDER = "MR/Fight";
 
 fightBoss();
-alert("test");
 
 function fightBoss(){
 	
@@ -38,6 +37,7 @@ function checkHealth(){
 	logV2(INFO, "BOSS", "Initializing Fight");
 	var health = 0;
 	health = getHealth();
+	alert(health);
 	while (health < 10){
 		heal();
 		health = getHealth();
@@ -55,11 +55,12 @@ function attack(){
 
 function heal(){
 	logV2(INFO, "TEST", "Healing...");
-	macroPlayFolder(mwObject.bossFight, "10_Heal.iim");
+	alert("healing");
+	macroPlayFolder(FIGHT_FOLDER, "10_Heal.iim");
 }
 
 function getHealth(){
-	macroPlayFolder("FIGHT_FOLDER", "11_GetHealth.iim");
+	macroPlayFolder(FIGHT_FOLDER, "11_GetHealth.iim");
 	var healthInfo = getLastExtract(1);
 	logV2(INFO, "BOSS", "healthInfo = " + healthInfo);
 	if (!isNullOrBlank(healthInfo)){
