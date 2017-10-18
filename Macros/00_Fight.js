@@ -47,13 +47,15 @@ filtered.forEach( function (arrayItem)
 	var tmp = evaluateAttackMessage("You Won The Fight");
 	
 	var tmp = '<a href="#" class="ajax_request" data-params="controller=profile&amp;action=view&amp;id=1700086423343089" style="outline: 1px solid blue;">tania</a>';
+	/*
 	var lst = getFightList();
 lst.forEach( function (arrayItem)
 	{
 		window.console.log("Filtered name:" + arrayItem.name);
 	});
+	*/
 	
-	// attackTillDeath(getFighterObject("200", "11fdfdfsfds", 200));
+	 attack(getFighterObject("10208123373622212", "11fdfdfsfds", 200));
 
 function fightBoss(){
 	
@@ -94,7 +96,8 @@ function fightBoss(){
 }
 
 function attack(fighter){
-	logV2(INFO, "FIGHT", "Attacking " + figther.id);
+	logV2(INFO, "FIGHT", "Attacking " + fighter.id);
+	addMacroSetting("ID", fighter.id);
 	var retCode = playMacro(FIGHT_FOLDER, "30_Attack_Start");
 	var nrOfAttacks = 0;
 	if (retCode == SUCCESS){
@@ -122,12 +125,12 @@ function attack(fighter){
 			}
 		}
 		else {
-			logV2(INFO, "FIGHT", "Problem getting status for Fighter: " + figther.id);
+			logV2(INFO, "FIGHT", "Problem getting status for Fighter: " + fighter.id);
 			nrOfAttacks = -1;
 		}
 	}
 	else {
-		logV2(INFO, "FIGHT", "Fighter Not Found: " + figther.id + " / Fight List Refreshed???" );
+		logV2(INFO, "FIGHT", "Fighter Not Found: " + fighter.id + " / Fight List Refreshed???" );
 		nrOfAttacks = -1;
 	}
 	return nrOfAttacks;
@@ -161,13 +164,14 @@ function attackTillDeath(fighter){
 				if (stamina < 5){
 					return -2;
 				}
+				addMacroSetting("ID", fighter.id);
 				retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack");
 				if (retCode != SUCCESS){
 					return retCode;
 				}
 			}
 		}
-		alive = false;
+		//alive = false;
 	}
 	while (alive);
 	return retCode;
