@@ -1,7 +1,7 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
 SET !TIMEOUT_STEP 1
-FRAME NAME="iframe_canvas_fb_https"
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=profile&action=view&id=* EXTRACT=HTM
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=profile&action=view&id=* EXTRACT=TXT
+'FRAME NAME="iframe_canvas_fb_https"
+TAG POS={{pos}} TYPE=A ATTR=DATA-PARAMS:controller=profile&action=view&id=* EXTRACT=HTM
+TAG POS={{pos}} TYPE=A ATTR=DATA-PARAMS:controller=profile&action=view&id=* EXTRACT=TXT
 TAG POS=R1 TYPE=DIV ATTR=*
 TAG POS=R-1 TYPE=DIV ATTR=* EXTRACT=TXT

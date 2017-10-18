@@ -1,6 +1,8 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
 SET !TIMEOUT_STEP 1
-FRAME NAME="iframe_canvas_fb_https"
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fight&action=view&&DATA-CALLBACK:on_attack_done
+'FRAME NAME="iframe_canvas_fb_https"
+'TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fight&action=view&&DATA-CALLBACK:on_attack_done
+'WAIT SECONDS=1
 TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fight&action=view&tab=1
 WAIT SECONDS=1
+
