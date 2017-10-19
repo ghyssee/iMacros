@@ -7,6 +7,7 @@ eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.4.js"));
 var localConfigObject = null;
 var NODE_ID = "";
 var SUCCESS = 1;
+var FRAME="0";
 LOG_FILE = new LogFile(LOG_DIR, "MRFight");
 
 var CONSTANTS = Object.freeze({
@@ -64,7 +65,8 @@ lst.forEach( function (arrayItem)
 	});
 	*/
 	
-	 attack(getFighterObject("10208123373622212", "11fdfdfsfds", 200));
+	 //attack(getFighterObject(prompt("Player ID","700943793423304"), "11fdfdfsfds", 200));
+	 fightBoss();
 
 function fightBoss(){
 	
@@ -105,6 +107,8 @@ function fightBoss(){
 
 function attack(fighter){
 	logV2(INFO, "FIGHT", "Attacking " + fighter.id);
+	var retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim");
+	checkHealth();
 	addMacroSetting("ID", fighter.id);
 	var retCode = playMacro(FIGHT_FOLDER, "30_Attack_Start");
 	var statusObj = getStatusObject();
@@ -179,6 +183,7 @@ function attackTillDeath(fighter){
 				break;
 			}
 			health = health.replace("%", "");
+			logV2(INFO, "ATTACK", "Victim Health: " + health);
 			health = parseInt(health);
 			if (oldHealth < health){
 				logV2(INFO, "ATTACK", "Victim healed: " + fighter.id);
@@ -197,17 +202,15 @@ function attackTillDeath(fighter){
 					logV2(INFO, "ATTACK", "Victim Health changed: " + deltaHealth);
 				}
 				oldHealth = health;
-				if (!firstAttack && deltaHealth >= 0 && deltaHealth < 3){
-					logV2(INFO, "ATTACK", "Opponent with a lot of health. Skipping...");
-					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
-				}
-				else if (nrOfAttacks > 50 && health > 3){
+				if (nrOfAttacks > 25 && health > 10){
 					logV2(INFO, "ATTACK", "Max. Nr Of Attacks Reached. Skipping...");
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
+					break;
 				}
 				else if (nrOfHeals > 4){
 					logV2(INFO, "ATTACK", "Victim Heals too fast. Skipping...");
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
+					break;
 				}
 				else {
 					checkHealth();
@@ -262,6 +265,7 @@ function addFighter(fighter){
 }
 
 function evaluateAttackMessage(msg){
+	logV2(INFO, "ATTACK", "Msg = " + msg);
 	if (isNullOrBlank(msg)){
 		return CONSTANTS.OPPONENT.UNKNOWN;
 	}
@@ -466,7 +470,6 @@ return text;
 
 function heal(){
 	logV2(INFO, "TEST", "Healing...");
-	alert("healing");
 	playMacro(FIGHT_FOLDER, "10_Heal.iim");
 }
 
