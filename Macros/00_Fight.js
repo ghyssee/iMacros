@@ -116,8 +116,8 @@ function attack(fighter){
 	if (retCode == SUCCESS){
 		retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status");
 		if (retCode == SUCCESS){
-			//var msg = getLastExtract(1);
-			var msg = prompt("FIRST ATTACK","You WON");
+			var msg = getLastExtract(1);
+			//var msg = prompt("FIRST ATTACK","You WON");
 			var status = evaluateAttackMessage(msg);
 			switch (status){
 				case CONSTANTS.OPPONENT.FRIEND :
@@ -173,8 +173,8 @@ function attackTillDeath(fighter){
 	do {
 		retCode = playMacro(FIGHT_FOLDER, "40_Victim_Health");
 		if (retCode == SUCCESS){
-			//var health = getLastExtract(1);
-			var health = prompt("Victim Health", "50%");
+			var health = getLastExtract(1);
+			//var health = prompt("Victim Health", "50%");
 			if (isNullOrBlank(health)){
 				break;
 			}
@@ -297,8 +297,8 @@ function checkStamina(){
 
 function getStamina(){
 	playMacro(FIGHT_FOLDER, "52_GetStamina.iim");
-	//var staminaInfo = getLastExtract(1);
-	var staminaInfo = prompt("Stamina", "300/400");
+	var staminaInfo = getLastExtract(1);
+	//var staminaInfo = prompt("Stamina", "300/400");
 	logV2(INFO, "STAMINA", "stamina = " + staminaInfo);
 	if (!isNullOrBlank(staminaInfo)){
 		var tmp = staminaInfo.split("/");
@@ -356,8 +356,8 @@ function bank(){
 
 function getSaldo(){
 	playMacro(FIGHT_FOLDER, "51_GetSaldo.iim");
-	// var saldoInfo = getLastExtract(1);
-	var saldoInfo = prompt("Saldo", "500");
+	var saldoInfo = getLastExtract(1);
+	//var saldoInfo = prompt("Saldo", "500");
 	logV2(INFO, "BANK", "saldoInfo = " + saldoInfo);
 	if (!isNullOrBlank(saldoInfo)){
 		var saldo = parseInt(saldoInfo);
@@ -472,8 +472,8 @@ function heal(){
 
 function getHealth(){
 	playMacro(FIGHT_FOLDER, "11_GetHealth.iim");
-	//var healthInfo = getLastExtract(1);
-	var healthInfo = prompt("Health", "80/350");
+	var healthInfo = getLastExtract(1);
+	//var healthInfo = prompt("Health", "80/350");
 	logV2(INFO, "BOSS", "healthInfo = " + healthInfo);
 	if (!isNullOrBlank(healthInfo)){
 		var tmp = healthInfo.split("/");
