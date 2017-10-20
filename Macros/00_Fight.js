@@ -30,6 +30,7 @@ init();
 //var	configObject = initObject(CONFIG_JSON_FILE);
 //var mwObject = initObject(MAFIAWARS_JSON_FILE);
 var FIGHT_FOLDER = "MR/Fight";
+var COMMON_FOLDER = "MR/Common";
 
 var txt="blabla&id='123456789'&blabla='test'";
 var regExp = /id='(.*)'[&|$]/;
@@ -51,7 +52,7 @@ tmpFighter.push(getFighterObject("100", "11fdfdfsfds", 200));
 tmpFighter.push(getFighterObject("200", "11fdfdfsfds", 200));
 
 var filtered = filterFightList(tmpFighter);
-var globalSettings = {"iced": 0};
+var globalSettings = {"iced": 0, "money": 0};
 
 filtered.forEach( function (arrayItem)
 	{
@@ -68,11 +69,13 @@ lst.forEach( function (arrayItem)
 	
 	 //attack(getFighterObject(prompt("Player ID","700943793423304"), "11fdfdfsfds", 200));
 	 fightBoss();
+	 logV2(INFO, "Total Iced: " + globalSettings.iced);
+	 logV2(INFO, "Money Gained: " + globalSettings.money);
 
 
 function fightBoss(){
 	
-	var retCode = playMacro(FIGHT_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
+	var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
 	var exitLoop = false;
 	var counter = 0;
 	do {
@@ -297,6 +300,9 @@ function checkIfIced(){
 		if (msg.indexOf("YOUR KILL COUNT") !== -1){
 			iced = true;
 		}
+		else if (msg.indexOf("JUST KILLED") !== -1){
+			iced = true;
+		}
 	}
 	return iced;
 }
@@ -408,12 +414,13 @@ function checkSaldo(){
 }
 
 function bank(saldo){
+	playMacro(COMMON_FOLDER, "10_Bank.iim", MACRO_INFO_LOGGING);
 	logV2(INFO, "BANK", "Banking " + saldo);
-	playMacro(FIGHT_FOLDER, "50_Bank.iim", MACRO_INFO_LOGGING);
+	globalSettings.money += saldo;
 }
 
 function getSaldo(){
-	playMacro(FIGHT_FOLDER, "51_GetSaldo.iim", MACRO_INFO_LOGGING);
+	playMacro(COMMON_FOLDER, "11_GetSaldo.iim", MACRO_INFO_LOGGING);
 	var saldoInfo = getLastExtract(1);
 	//var saldoInfo = prompt("Saldo", "500");
 	logV2(INFO, "BANK", "saldoInfo = " + saldoInfo);
