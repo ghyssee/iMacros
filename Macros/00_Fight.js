@@ -9,6 +9,7 @@ var NODE_ID = "";
 var SUCCESS = 1;
 var FRAME="0";
 LOG_FILE = new LogFile(LOG_DIR, "MRFight");
+var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 
 var CONSTANTS = Object.freeze({
     "OPPONENT" : {
@@ -50,12 +51,12 @@ tmpFighter.push(getFighterObject("100", "11fdfdfsfds", 200));
 tmpFighter.push(getFighterObject("200", "11fdfdfsfds", 200));
 
 var filtered = filterFightList(tmpFighter);
+var globalSettings = {"iced": 0};
+
 filtered.forEach( function (arrayItem)
 	{
 		window.console.log("Filtered Id:" + arrayItem.id);
 	});
-	var tmp = evaluateAttackMessage("You Won The Fight");
-	
 	var tmp = '<a href="#" class="ajax_request" data-params="controller=profile&amp;action=view&amp;id=1700086423343089" style="outline: 1px solid blue;">tania</a>';
 	/*
 	var lst = getFightList();
@@ -68,15 +69,16 @@ lst.forEach( function (arrayItem)
 	 //attack(getFighterObject(prompt("Player ID","700943793423304"), "11fdfdfsfds", 200));
 	 fightBoss();
 
+
 function fightBoss(){
 	
-	var retCode = playMacro(FIGHT_FOLDER, "01_Start.iim");
-	var exitLoop = true;
+	var retCode = playMacro(FIGHT_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
+	var exitLoop = false;
 	var counter = 0;
 	do {
-		//exitLoop = true;
 		var fighters = getFightList();
 		counter++;
+		var refresh = false;
 		var filteredFightersList = filterFightList(fighters);
 		filteredFightersList.forEach( function (arrayItem)
 		{
@@ -89,28 +91,41 @@ function fightBoss(){
 						break;
 					case CONSTANTS.ATTACKSTATUS.PROBLEM :
 						logV2(INFO, "FIGHT", "Problem With Fightlist. Refreshing...");
-						return;
+						refresh = true;
 						break;
 					case CONSTANTS.ATTACKSTATUS.NOSTAMINA :
 						logV2(INFO, "FIGHT", "Out Of Stamina. Waiting for 10 minutes");
-						waitV2("600");
+						waitTillEnoughStamina();
+						refresh = true;
 						break;
 				}
 			}
 			else {
 				logV2(INFO, "FIGHT", "Skipping Stronger Opponent: " + arrayItem.id);
 			}
+			if (refresh) return;
 		});
+		logV2(INFO, "FIGHT", "Out Of The Fightlist Loop");
 	}
-	while (!exitLoop && counter < 10);
+	while (!exitLoop && counter < 10000);
+}
+
+function waitTillEnoughStamina(){
+	var stamina = 0;
+	do {
+		stamina = getStamina();
+		ret = waitV2("600");
+		window.console.log("Outside macroplay = " + ret);
+	}
+	while (stamina < 100);
 }
 
 function attack(fighter){
 	logV2(INFO, "FIGHT", "Attacking " + fighter.id);
-	var retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim");
+	var retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
 	checkHealth();
 	addMacroSetting("ID", fighter.id);
-	var retCode = playMacro(FIGHT_FOLDER, "30_Attack_Start");
+	var retCode = playMacro(FIGHT_FOLDER, "30_Attack_Start", MACRO_INFO_LOGGING);
 	var statusObj = getStatusObject();
 	statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 	/* attackStatus = 0 => Move On. Go To next (died, killed, won, lost)
@@ -118,20 +133,28 @@ function attack(fighter){
 	   attackStatus = -1 => Problem with one of the scripts
 	*/
 	if (retCode == SUCCESS){
-		retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status");
+		retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status", MACRO_INFO_LOGGING);
 		if (retCode == SUCCESS){
 			var msg = getLastExtract(1);
 			//var msg = prompt("FIRST ATTACK","You WON");
 			var status = evaluateAttackMessage(msg);
 			switch (status){
 				case CONSTANTS.OPPONENT.FRIEND :
+					logV2(INFO, "FIGHT", "Add Friend: " + fighter.id);
+					fighter.skip = true;
 					addFriend(fighter);
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
 				case CONSTANTS.OPPONENT.WON :
-					nrOfAttacks = 1;
 					addFighter(fighter);
+					if (checkIfIced()){
+						globalSettings.iced++;
+						statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
+						logV2(INFO, "FIGHT", "Total Ices: " + globalSettings.iced);
+						break;
+					}
 					var attackStatusObj = attackTillDeath(fighter);
+					globalSettings.iced += attackStatusObj.iced;
 					if (attackStatusObj.status == CONSTANTS.ATTACKSTATUS.NOSTAMINA){
 					   // no stamina
 						statusObj.status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
@@ -145,6 +168,11 @@ function attack(fighter){
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
 				case CONSTANTS.OPPONENT.LOST :
+					if (checkIfIced()){
+						globalSettings.iced++;
+						logV2(INFO, "FIGHT", "Total Ices: " + globalSettings.iced);
+					}
+					logV2(INFO, "FIGHT", "Add Stronger Opponent: " + fighter.id);
 					addStrongerOpponent(fighter);
 					fighter.skip = true;
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
@@ -175,7 +203,7 @@ function attackTillDeath(fighter){
 	var firstAttack = true;
 	var nrOfHeals = 0;
 	do {
-		retCode = playMacro(FIGHT_FOLDER, "40_Victim_Health");
+		retCode = playMacro(FIGHT_FOLDER, "40_Victim_Health", MACRO_INFO_LOGGING);
 		if (retCode == SUCCESS){
 			var health = getLastExtract(1);
 			//var health = prompt("Victim Health", "50%");
@@ -212,6 +240,11 @@ function attackTillDeath(fighter){
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
 				}
+				else if (!firstAttack && deltaHealth > 0 && deltaHealth < 2 && health > 20){
+					logV2(INFO, "ATTACK", "Victim has too much health. Skipping...");
+					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
+					break;
+				}
 				else {
 					checkHealth();
 					var stamina = getStamina();
@@ -220,13 +253,20 @@ function attackTillDeath(fighter){
 						break;
 					}
 					addMacroSetting("ID", fighter.id);
-					retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack");
+					retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack", MACRO_INFO_LOGGING);
+					checkSaldo();
 					firstAttack = false;
+					if (checkIfIced()){
+						statusObj.iced = 1;
+						CONSTANTS.ATTACKSTATUS.OK;
+						break;
+					}
 					// maybe todo: check status of fight. If Message starts with "It looks like"
 					// Opponent was already dead and no stamina is spent
 					// maybe also check if is iced by you
 					statusObj.totalStamina += 5;
 					nrOfAttacks++;
+					
 					if (retCode != SUCCESS){
 						statusObj.status = CONSTANTS.ATTACKSTATUS.PROBLEM;
 						break;
@@ -248,6 +288,19 @@ function attackTillDeath(fighter){
 	return statusObj;
 }
 
+function checkIfIced(){
+	iced = false;
+	var retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status.iim", MACRO_INFO_LOGGING);
+	if (retCode == SUCCESS){
+		var msg = getLastExtract().toUpperCase();
+		logV2(INFO, "FIGHT", "Check For Iced: " + msg);
+		if (msg.indexOf("YOUR KILL COUNT") !== -1){
+			iced = true;
+		}
+	}
+	return iced;
+}
+
 function addFriend(fighter){
 	friendObj.fighters.push(fighter);
 	writeObject(friendObj, MR_FRIENDS_FILE);
@@ -260,6 +313,7 @@ function addStrongerOpponent(fighter){
 
 function addFighter(fighter){
 	if (!findFighter(fighterObj.fighters, fighter.id)){
+		fighterObj.fighters.push(fighter);
 		writeObject(fighterObj, MR_FIGHTERS_FILE);
 	}
 }
@@ -276,7 +330,7 @@ function evaluateAttackMessage(msg){
 	else if (msg.startsWith("YOU WON")){
 		return CONSTANTS.OPPONENT.WON;
 	}
-	else if (msg.startsWith("YOU CAN NOT ATTACK YOUR FRIEND")){
+	else if (msg.startsWith("YOU CANNOT ATTACK YOUR FRIEND")){
 		return CONSTANTS.OPPONENT.FRIEND;
 	}
 	else if (msg.startsWith("IT LOOKS LIKE")){
@@ -300,7 +354,7 @@ function checkStamina(){
 }
 
 function getStamina(){
-	playMacro(FIGHT_FOLDER, "52_GetStamina.iim");
+	playMacro(FIGHT_FOLDER, "52_GetStamina.iim", MACRO_INFO_LOGGING);
 	var staminaInfo = getLastExtract(1);
 	//var staminaInfo = prompt("Stamina", "300/400");
 	logV2(INFO, "STAMINA", "stamina = " + staminaInfo);
@@ -332,7 +386,7 @@ function checkFreeFighters(){
 }
 
 function getFreeFighters(){
-	playMacro(FIGHT_FOLDER, "60_FreeFighter.iim");
+	playMacro(FIGHT_FOLDER, "60_FreeFighter.iim", MACRO_INFO_LOGGING);
 	var info = getLastExtract(1);
 	logV2(INFO, "FIGHT", "Free Fighters Info = " + info);
 	if (!isNullOrBlank(info)){
@@ -349,35 +403,37 @@ function checkSaldo(){
 	var saldo = 0;
 	saldo = getSaldo();
 	if (saldo > 10){
-		bank();
+		bank(saldo);
 	}
 }
 
-function bank(){
-	logV2(INFO, "BANK", "Banking...");
-	playMacro(FIGHT_FOLDER, "50_Bank.iim");
+function bank(saldo){
+	logV2(INFO, "BANK", "Banking " + saldo);
+	playMacro(FIGHT_FOLDER, "50_Bank.iim", MACRO_INFO_LOGGING);
 }
 
 function getSaldo(){
-	playMacro(FIGHT_FOLDER, "51_GetSaldo.iim");
+	playMacro(FIGHT_FOLDER, "51_GetSaldo.iim", MACRO_INFO_LOGGING);
 	var saldoInfo = getLastExtract(1);
 	//var saldoInfo = prompt("Saldo", "500");
 	logV2(INFO, "BANK", "saldoInfo = " + saldoInfo);
 	if (!isNullOrBlank(saldoInfo)){
-		var saldo = parseInt(saldoInfo);
+		var saldo = parseInt(saldoInfo.replace("$", ""));
 		return saldo;
 	}
 	return 0;
 }
 
 function getFightList(){
+	logV2(INFO, "FIGHTLIST", "Getting Fight List Info");
 	var list = [];
-	var retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim");
-	if (retCode == 1){
-		for (var i=1; i<= 14; i++){
+	var retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
+	logV2(INFO, "FIGHTLIST", "Extract_Start Return Code: " + retCode);
+	if (retCode == SUCCESS){
+		for (var i=1; i<= 15; i++){
 			addMacroSetting("pos", i.toString(), ENABLE_LOGGING);
-			var retCode = playMacro(FIGHT_FOLDER, "21_Extract.iim");
-			if (retCode == 1){
+			var retCode = playMacro(FIGHT_FOLDER, "21_Extract.iim", MACRO_INFO_LOGGING);
+			if (retCode == SUCCESS){
 				var id = extractIdFromString(getLastExtract(1));
 				var name = getLastExtract(2);
 				var level = extractLevelFromString(getLastExtract(3));
@@ -386,6 +442,8 @@ function getFightList(){
 			}
 			else {
 				// ignore this line on the fight list
+				logV2(INFO, "FIGHTLIST", "Last Line reached: " + i);
+				break;
 			}
 		}
 	}
@@ -401,7 +459,8 @@ function getFighterObject(id, name, level){
 
 function getStatusObject(l){
 	return {"status":null, 
-	        "totalStamina":0
+	        "totalStamina":0,
+			"iced": 0
 		   };
 }
 
@@ -470,11 +529,16 @@ return text;
 
 function heal(){
 	logV2(INFO, "TEST", "Healing...");
-	playMacro(FIGHT_FOLDER, "10_Heal.iim");
+	playMacro(FIGHT_FOLDER, "10_Heal.iim", MACRO_INFO_LOGGING);
+	closePopup();
+}
+
+function closePopup(){
+	playMacro(FIGHT_FOLDER, "02_Close_Popup.iim", MACRO_INFO_LOGGING);
 }
 
 function getHealth(){
-	playMacro(FIGHT_FOLDER, "11_GetHealth.iim");
+	playMacro(FIGHT_FOLDER, "11_GetHealth.iim", MACRO_INFO_LOGGING);
 	var healthInfo = getLastExtract(1);
 	//var healthInfo = prompt("Health", "80/350");
 	logV2(INFO, "BOSS", "healthInfo = " + healthInfo);
