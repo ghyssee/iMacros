@@ -29,63 +29,25 @@ var CONSTANTS = Object.freeze({
 init();
 //var	configObject = initObject(CONFIG_JSON_FILE);
 //var mwObject = initObject(MAFIAWARS_JSON_FILE);
-var FIGHT_FOLDER = "MR/Fight";
+var FIGHT_FOLDER = "MR/Jobs";
 var COMMON_FOLDER = "MR/Common";
 
-var txt="blabla&id='123456789'&blabla='test'";
-var regExp = /id='(.*)'[&|$]/;
-var matches = txt.match(regExp);
-window.console.log("test");
-for (var i = 0; i < matches.length; i++) {
-    var str = matches[i];
-    window.console.log(str);
-}
-window.console.log(MR_DIR);
 var fightersToExclude = initObject(MR_FIGHTERS_EXCLUDE_FILE);
 var friendObj = initObject(MR_FRIENDS_FILE);
 var fighterObj = initObject(MR_FIGHTERS_FILE);
-var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0, "skippedHealth": 0, "maxHealed": 0, "heals": 0};
+var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0};
 
-/*
-var tmpFighter = [];
-tmpFighter.push(getFighterObject("1", "dfsfds", 200));
-tmpFighter.push(getFighterObject("10", "10qfddfsfds", 200));
-tmpFighter.push(getFighterObject("11", "11fdfdfsfds", 200));
-tmpFighter.push(getFighterObject("100", "11fdfdfsfds", 200));
-tmpFighter.push(getFighterObject("200", "11fdfdfsfds", 200));
-
-var filtered = filterFightList(tmpFighter);
-
-filtered.forEach( function (arrayItem)
-	{
-		window.console.log("Filtered Id:" + arrayItem.id);
-	});
-	var tmp = '<a href="#" class="ajax_request" data-params="controller=profile&amp;action=view&amp;id=1700086423343089" style="outline: 1px solid blue;">tania</a>';
-	/*
-	var lst = getFightList();
-lst.forEach( function (arrayItem)
-	{
-		window.console.log("Filtered name:" + arrayItem.name);
-	});
-	
-	
-	 //attack(getFighterObject(prompt("Player ID","700943793423304"), "11fdfdfsfds", 200));
-	*/ 
 	 try {
-		fightBoss();
+		doJobs();
 	 }
 	 catch (ex) {
 		logV2(INFO, "SUMMARY", "Total Iced: " + globalSettings.iced);
 		logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
 		logV2(INFO, "SUMMARY", "Nr Of Attacks: " + globalSettings.nrOfAttacks);
-		logV2(INFO, "SUMMARY", "Stolen Ices: " + globalSettings.stolenIces);
-		logV2(INFO, "SUMMARY", "Skipped Health: " + globalSettings.skippedHealth);
-		logV2(INFO, "SUMMARY", "Max Healed: " + globalSettings.maxHealed);
-		logV2(INFO, "SUMMARY", "Heals: " + globalSettings.heals);
 	}
 
 
-function fightBoss(){
+function doJobs(){
 	
 	var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
 	var exitLoop = false;
@@ -126,18 +88,13 @@ function fightBoss(){
 }
 
 function waitTillEnoughStamina(){
-	var maxStamina = 300;
+	var stamina = 0;
 	do {
-		ret = waitV2("60");
 		stamina = getStamina();
-		var exp = getExperience();
-		if (exp > 0){
-			var staminaNeeded = exp / 4;
-			logV2(INFO, "WAIT", "Stamina Needed: " + staminaNeeded);
-			maxStamina = Math.min(maxStamina, staminaNeeded);
-		}
+		ret = waitV2("600");
+		window.console.log("Outside macroplay = " + ret);
 	}
-	while (stamina < maxStamina);
+	while (stamina < 100);
 }
 
 function attack(fighter){
@@ -169,11 +126,14 @@ function attack(fighter){
 				case CONSTANTS.OPPONENT.WON :
 					addFighter(fighter);
 					if (checkIfIced()){
+						globalSettings.iced++;
 						statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
+						logV2(INFO, "FIGHT", "Total Ices: " + globalSettings.iced);
 						break;
 					}
 					var attackStatusObj = attackTillDeath(fighter);
 					checkIfLevelUp();
+					globalSettings.iced += attackStatusObj.iced;
 					if (attackStatusObj.status == CONSTANTS.ATTACKSTATUS.NOSTAMINA){
 					   // no stamina
 						statusObj.status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
@@ -185,10 +145,12 @@ function attack(fighter){
 				case CONSTANTS.OPPONENT.DEAD :
 					logV2(INFO, "FIGHT", "Opponent is dead. Move on to the next one");
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
-					globalSettings.stolenIces++;
 					break;
 				case CONSTANTS.OPPONENT.LOST :
-					checkIfIced();
+					if (checkIfIced()){
+						globalSettings.iced++;
+						logV2(INFO, "FIGHT", "Total Ices: " + globalSettings.iced);
+					}
 					logV2(INFO, "FIGHT", "Add Stronger Opponent: " + fighter.id);
 					addStrongerOpponent(fighter);
 					fighter.skip = true;
@@ -196,8 +158,6 @@ function attack(fighter){
 					break;
 				default :
 					statusObj.status = CONSTANTS.ATTACKSTATUS.PROBLEM;
-					logV2(INFO, "FIGHT", "Attack First Time Problem");
-					break;
 			}
 		}
 		else {
@@ -256,13 +216,11 @@ function attackTillDeath(fighter){
 				}
 				else if (nrOfHeals > 4){
 					logV2(INFO, "ATTACK", "Victim Heals too fast. Skipping...");
-					globalSettings.maxHealed++;
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
 				}
 				else if (!firstAttack && deltaHealth > 0 && deltaHealth < 2 && health > 20){
 					logV2(INFO, "ATTACK", "Victim has too much health. Skipping...");
-					globalSettings.skippedHealth++;
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
 				}
@@ -275,12 +233,13 @@ function attackTillDeath(fighter){
 					}
 					addMacroSetting("ID", fighter.id);
 					retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack", MACRO_INFO_LOGGING);
+					checkSaldo();
 					firstAttack = false;
 					if (checkIfIced()){
+						statusObj.iced = 1;
 						CONSTANTS.ATTACKSTATUS.OK;
 						break;
 					}
-					checkSaldo();
 					// maybe todo: check status of fight. If Message starts with "It looks like"
 					// Opponent was already dead and no stamina is spent
 					// maybe also check if is iced by you
@@ -321,10 +280,6 @@ function checkIfIced(){
 		else if (msg.indexOf("JUST KILLED") !== -1){
 			iced = true;
 		}
-	}
-	if (iced){
-		logV2(INFO, "FIGHT", "Total Ices: " + ++globalSettings.iced);
-		globalSettings.iced++;
 	}
 	return iced;
 }
@@ -414,19 +369,6 @@ function getStamina(){
 	return 0;
 }
 
-function getExperience(){
-	logV2(INFO, "EXP", "Get Experience");
-	ret = playMacro(COMMON_FOLDER, "13_GetExperience.iim", MACRO_INFO_LOGGING);
-	var exp = 0;
-	if (ret == SUCCESS){
-		var msg = getLastExtract(1);
-		exp = extractExperience(msg);
-		logV2(INFO, "EXP", "Experience Left: " + exp);
-	}
-	return exp;
-
-}
-
 
 function checkHealth(){
 	logV2(INFO, "BOSS", "Checking Health");
@@ -435,9 +377,6 @@ function checkHealth(){
 	while (health < 10){
 		heal();
 		health = getHealth();
-		if (health > 10){
-			globalSettings.heals++;
-		}
 	}
 }
 
@@ -589,18 +528,6 @@ if (matches != null && matches.length > 0){
 	return matches[matches.length-1];
 }
 return text;
-
-}
-
-function extractExperience(text){
-text = text.toUpperCase().replace(/,/g, "");
-var regExp = /(?:.*)[0-9]{1,10} \((.*) TO LEVEL/; //5,886 (1,264 to level)
-var matches = text.match(regExp);
-var exp = 0;
-if (matches != null && matches.length > 0){
-	exp = parseInt(matches[matches.length-1]);
-}
-return exp;
 
 }
 
