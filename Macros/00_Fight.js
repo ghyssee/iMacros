@@ -104,10 +104,8 @@ function fightBoss(){
 		//}
 		var filteredFightersList = filterFightList(fighters);
 		processList(filteredFightersList, !RIVAL_MOBSTER);
-		alert("AFTER PROCESS");
 	}
 	while (!exitLoop && counter < 10000);
-		alert("AFTER LOOP");
 }
 
 function processList(list, rivalMobster){
