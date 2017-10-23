@@ -44,6 +44,8 @@ enableMacroPlaySimulation();
 function doJobs(listOfJobs){
     listOfJobs.forEach( function (jobItem)
     {
+        // maybe not necessary, is checked when job is executed successfully
+        checkIfLevelUp();
         processJob(jobItem);
     });
 }
@@ -181,6 +183,7 @@ function executeMacroJob(jobItem){
     var retCode = playMacro(JOB_FOLDER, "04_Job_Start.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS){
         checkSaldo();
+        checkIfLevelUp();
         globalSettings.jobsCompleted++;
     }
     return retCode;
