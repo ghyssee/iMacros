@@ -79,7 +79,7 @@ lst.forEach( function (arrayItem)
 		fightBoss();
 	 }
 	 catch (ex) {
-		logV2(ex);
+	    logError(ex);
 		logV2(INFO, "SUMMARY", "Total Iced: " + globalSettings.iced);
 		logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
 		logV2(INFO, "SUMMARY", "Nr Of Attacks: " + globalSettings.nrOfAttacks);
@@ -98,14 +98,16 @@ function fightBoss(){
 	do {
 		var fighters = getFightList();
 		counter++;
-		//var rival = extractRivalMobster;
-		//if (rival > 0){
-		//	var fighter = getFighterObject("RIVAL", "RIVAL " + rival, "0");
-		//}
+		var rival = extractRivalMobster();
+		if (rival > 0){
+			var fighter = getFighterObject("RIVAL", "RIVAL " + rival, "0");
+			var list = [fighter];
+            processList(list, RIVAL_MOBSTER);
+		}
 		var filteredFightersList = filterFightList(fighters);
 		processList(filteredFightersList, !RIVAL_MOBSTER);
 	}
-	while (!exitLoop && counter < 10000);
+	while (!exitLoop && counter < 100000);
 }
 
 function processList(list, rivalMobster){
@@ -160,7 +162,7 @@ function extractRivalMobster(){
 	var retCode = playMacro(FIGHT_FOLDER, "22_Extract_Rival.iim", MACRO_INFO_LOGGING);
 	var mob = 0;
 	if (retCode == SUCCESS){
-		var msg = getLastExtract(1);
+		var msg = getLastExtract(1, "Rival", "20 / 20");
 		logV2(INFO, "FIGHT", "MSG: " + msg);
 		msg = msg.toUpperCase().replace ("RIVAL MOBSTERS ALIVE: ");
 		msg = msg.replace("/ 20").trim();;
@@ -185,14 +187,10 @@ function attack(fighter, rivalMobster){
 	var statusObj = getStatusObject();
 	statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 	checkIfLevelUp();
-	/* attackStatus = 0 => Move On. Go To next (died, killed, won, lost)
-	   attackStatus = 2 => Out Of Stamina
-	   attackStatus = -1 => Problem with one of the scripts
-	*/
 	if (retCode == SUCCESS){
 		retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status", MACRO_INFO_LOGGING);
 		if (retCode == SUCCESS){
-			var msg = getLastExtract(1);
+			var msg = getLastExtract(1, "Attack Status", "You WON The Fight");
 			//var msg = prompt("FIRST ATTACK","You WON");
 			var status = evaluateAttackMessage(msg);
 			switch (status){
@@ -263,14 +261,13 @@ function attackTillDeath(fighter, rivalMobster){
 	do {
 		retCode = playMacro(FIGHT_FOLDER, "40_Victim_Health", MACRO_INFO_LOGGING);
 		if (retCode == SUCCESS){
-			var health = getLastExtract(1);
+			var health = getLastExtract(1, "Victim Health", "50%");
 			health = health.replace("%", "");
 			logV2(INFO, "ATTACK", "Victim Health: " + health);
 			health = parseInt(health);
 			if (firstAttack) {
 				originalHealth = health;
 			}
-			//var health = prompt("Victim Health", "50%");
 			if (isNullOrBlank(health)){
 				break;
 			}
@@ -365,7 +362,7 @@ function checkIfIced(){
 	iced = false;
 	var retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status.iim", MACRO_INFO_LOGGING);
 	if (retCode == SUCCESS){
-		var msg = getLastExtract().toUpperCase();
+		var msg = getLastExtract(1, "Ice Status", "Riki just Killed blabla. Your Kill Count is now 777").toUpperCase();
 		logV2(INFO, "FIGHT", "Check For Iced: " + msg);
 		if (msg.indexOf("YOUR KILL COUNT") !== -1){
 			iced = true;
@@ -374,6 +371,9 @@ function checkIfIced(){
 			iced = true;
 		}
 	}
+	else {
+        logV2(INFO, "FIGHT", "Problem getting fight status: " + retCode);
+    }
 	if (iced){
 		logV2(INFO, "FIGHT", "Total Ices: " + ++globalSettings.iced);
 	}
@@ -383,10 +383,10 @@ function checkIfIced(){
 function checkIfLevelUp(){
 	var retCode = playMacro(COMMON_FOLDER, "12_GetLevel.iim", MACRO_INFO_LOGGING);
 	if (retCode == SUCCESS){
-		var msg = getLastExtract().toUpperCase();
+		var msg = getLastExtract(1, "Level 300").toUpperCase();
 		msg = msg.replace("LEVEL ", "");
 		var level = parseInt(msg);
-		if (globalSettings.currentLevel == 0) {
+		if (globalSettings.currentLevel === 0) {
 			globalSettings.currentLevel = level;
 		}
 		else if (level > globalSettings.currentLevel){
@@ -454,8 +454,7 @@ function checkStamina(){
 
 function getStamina(){
 	playMacro(FIGHT_FOLDER, "52_GetStamina.iim", MACRO_INFO_LOGGING);
-	var staminaInfo = getLastExtract(1);
-	//var staminaInfo = prompt("Stamina", "300/400");
+	var staminaInfo = getLastExtract(1, "Stamina Left", "300/400");
 	logV2(INFO, "STAMINA", "stamina = " + staminaInfo);
 	if (!isNullOrBlank(staminaInfo)){
 		var tmp = staminaInfo.split("/");
@@ -470,7 +469,7 @@ function getExperience(){
 	ret = playMacro(COMMON_FOLDER, "13_GetExperience.iim", MACRO_INFO_LOGGING);
 	var exp = 0;
 	if (ret == SUCCESS){
-		var msg = getLastExtract(1);
+		var msg = getLastExtract(1, "Experience Left", "5,886 (1,264 to level)");
 		exp = extractExperience(msg);
 		logV2(INFO, "EXP", "Experience Left: " + exp);
 	}
@@ -492,27 +491,6 @@ function checkHealth(){
 	}
 }
 
-function checkFreeFighters(){
-	logV2(INFO, "FIGHT", "Get Free Fighers");
-	var nr = getFreeFighters();
-	if (nr > 10){
-		//attackFreeFighter();
-	}
-}
-
-function getFreeFighters(){
-	playMacro(FIGHT_FOLDER, "60_FreeFighter.iim", MACRO_INFO_LOGGING);
-	var info = getLastExtract(1);
-	logV2(INFO, "FIGHT", "Free Fighters Info = " + info);
-	if (!isNullOrBlank(info)){
-		var tmp = healthInfo.split("/");
-		var nr = parseInt(tmp[0]);
-		return nr;
-	}
-	return 0;
-}
-
-
 function checkSaldo(){
 	logV2(INFO, "SALDO", "Get Saldo");
 	var saldo = 0;
@@ -530,7 +508,7 @@ function bank(saldo){
 
 function getSaldo(){
 	playMacro(COMMON_FOLDER, "11_GetSaldo.iim", MACRO_INFO_LOGGING);
-	var saldoInfo = getLastExtract(1);
+	var saldoInfo = getLastExtract(1, "Saldo", "$128");
 	//var saldoInfo = prompt("Saldo", "500");
 	logV2(INFO, "BANK", "saldoInfo = " + saldoInfo);
 	if (!isNullOrBlank(saldoInfo)){
@@ -550,10 +528,10 @@ function getFightList(){
 			addMacroSetting("pos", i.toString(), ENABLE_LOGGING);
 			var retCode = playMacro(FIGHT_FOLDER, "21_Extract.iim", MACRO_INFO_LOGGING);
 			if (retCode == SUCCESS){
-				var id = extractIdFromString(getLastExtract(1));
-				var name = getLastExtract(2);
+				var id = extractIdFromString(getLastExtract(1, "Fighter ID", "123456789"));
+				var name = getLastExtract(2, "Fighter Name", "BlaBla");
 				name = name.substring(0,100);
-				var level = extractLevelFromString(getLastExtract(3));
+				var level = extractLevelFromString(getLastExtract(3, "Fighter Level", "200"));
 				var object = getFighterObject(id, name, level);
 				list.push(object);
 			}
@@ -668,7 +646,7 @@ function closePopup(){
 
 function getHealth(){
 	playMacro(FIGHT_FOLDER, "11_GetHealth.iim", MACRO_INFO_LOGGING);
-	var healthInfo = getLastExtract(1);
+	var healthInfo = getLastExtract(1, "Health", "50%");
 	//var healthInfo = prompt("Health", "80/350");
 	logV2(INFO, "BOSS", "healthInfo = " + healthInfo);
 	if (!isNullOrBlank(healthInfo)){

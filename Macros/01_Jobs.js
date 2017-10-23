@@ -1,6 +1,6 @@
 ﻿var ONEDRIVEPATH = getOneDrivePath();
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyUtils-0.0.1.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyFileUtils-0.0.2.js"));
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyFileUtils-0.0.4.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyConstants-0.0.3.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.4.js"));
 
@@ -12,107 +12,196 @@ LOG_FILE = new LogFile(LOG_DIR, "MRJobs");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 
 var CONSTANTS = Object.freeze({
-    "OPPONENT" : {
-		"UNKNOWN": 0,
-		"FRIEND": 1,
-		"WON" : 2,
-		"LOST": 3,
-		"DEAD": 4
-	},
-	"ATTACKSTATUS" : {
-		"OK" : 0,
-		"PROBLEM": -1,
-		"NOSTAMINA": 2
+    "EXECUTE" : {
+		"REPEAT": "REPEAT",
+		"COMPLETE": "COMPLETE",
 	}
 });
 
 init();
-//var	configObject = initObject(CONFIG_JSON_FILE);
-//var mwObject = initObject(MAFIAWARS_JSON_FILE);
 var JOB_FOLDER = "MR/Jobs";
 var COMMON_FOLDER = "MR/Common";
 
-var fightersToExclude = initObject(MR_FIGHTERS_EXCLUDE_FILE);
-var friendObj = initObject(MR_FRIENDS_FILE);
-var fighterObj = initObject(MR_FIGHTERS_FILE);
-var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0};
+var jobsObj = initObject(MR_JOBS_FILE);
+var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0};
 
-	 try {
-		doJobs();
+enableMacroPlaySimulation();
+
+	var listOfJobs = jobsObj.activeJobs;
+    try {
+		do {
+            doJobs(listOfJobs);
+            waitV2("5");
+        }
+        while (true);
 	 }
 	 catch (ex) {
-		logV2(INFO, "SUMMARY", "Total Iced: " + globalSettings.iced);
+        logError(ex);
+        logV2(INFO, "SUMMARY", "Jobs Completed: " + globalSettings.jobsCompleted);
 		logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
-		logV2(INFO, "SUMMARY", "Nr Of Attacks: " + globalSettings.nrOfAttacks);
 	}
 
-
-function doJobs(){
-	
-	var retCode = playMacro(JOB_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
-	if (retCode == SUCCESS){
-		retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
-		if (retCode == SUCCESS){
-			retCode = playMacro(JOB_FOLDER, "03_Job_Energy.iim", MACRO_INFO_LOGGING);
-			// Get Energy + Experience
-			if (retCode == SUCCESS){
-				var energy = getLastExtract(1);
-				var exp = getLastExtract(2);
-				
-			}
-		}
-	var exitLoop = false;
-	var counter = 0;
-	do {
-		var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
-		var fighters = getFightList();
-		counter++;
-		var refresh = false;
-		var filteredFightersList = filterFightList(fighters);
-		filteredFightersList.forEach( function (arrayItem)
-		{
-			if (!arrayItem.skip){
-				logV2(INFO, "FIGHT", "Fighting Player " + arrayItem.id + " - " + arrayItem.name);
-				var statusObj = attack(arrayItem);
-				switch (statusObj.status) {
-					case CONSTANTS.ATTACKSTATUS.OK :
-						// do nothing, continue with next fighter
-						break;
-					case CONSTANTS.ATTACKSTATUS.PROBLEM :
-						logV2(INFO, "FIGHT", "Problem With Fightlist. Refreshing...");
-						refresh = true;
-						break;
-					case CONSTANTS.ATTACKSTATUS.NOSTAMINA :
-						logV2(INFO, "FIGHT", "Out Of Stamina. Waiting for 10 minutes");
-						waitTillEnoughStamina();
-						refresh = true;
-						break;
-				}
-			}
-			else {
-				logV2(INFO, "FIGHT", "Skipping Stronger Opponent: " + arrayItem.id);
-			}
-			if (refresh) return;
-		});
-		logV2(INFO, "FIGHT", "Out Of The Fightlist Loop");
-	}
-	while (!exitLoop && counter < 10000);
+function doJobs(listOfJobs){
+    listOfJobs.forEach( function (jobItem)
+    {
+        processJob(jobItem);
+    });
 }
 
-function waitTillEnoughStamina(){
-	var stamina = 0;
-	do {
-		stamina = getStamina();
-		ret = waitV2("600");
-		window.console.log("Outside macroplay = " + ret);
-	}
-	while (stamina < 100);
+function processJob(jobItem){
+
+    var retCode = playMacro(JOB_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
+	if (retCode == SUCCESS) {
+        var district = findDistrict(jobItem);
+        if (district == null) {
+           logV2(INFO, "JOB", "Problem Finding District " + jobItem.districtId);
+           return;
+        }
+        retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
+        if (retCode == SUCCESS) {
+            if (jobItem.chapter != null){
+                retCode = playMacro(JOB_FOLDER, "04_Job_Chapter.iim", MACRO_INFO_LOGGING);
+                if (retCode != null){
+                    logV2(INFO, "JOB", "Problem Selecting chapter");
+                    return;
+                }
+            }
+            if (jobItem.energy == null || jobItem.exp == null){
+                retCode = playMacro(JOB_FOLDER, "03_Job_Energy.iim", MACRO_INFO_LOGGING);
+                // Get Energy + Experience
+                if (retCode == SUCCESS) {
+                    jobItem.energy = parseInt(getLastExtract(1, "Energy Job", "100"));
+                    jobItem.exp = parseInt(getLastExtract(2, "Experience Job", "400"));
+                }
+                else {
+                    logV2(INFO, "JOB", "Problem Getting Energy Info");
+                    return;
+                }
+            }
+            logJob(jobItem);
+            switch (jobItem.type) {
+                case CONSTANTS.EXECUTE.REPEAT:
+                    repeatJob(jobItem);
+                    break;
+                case CONSTANTS.EXECUTE.COMPLETE:
+                    completeJob(jobItem);
+                    break;
+            }
+        }
+        else {
+            logV2(INFO, "JOB", "Problem Selecting District");
+        }
+    }
+    else {
+        logV2(INFO, "JOB", "Problem Job Page");
+    }
+}
+
+function repeatJob(jobItem){
+    var repeat = true;
+    if (jobItem.total == null){
+        jobItem.total = 0;
+    }
+    if (jobItem.number == null){
+        jobItem.number = 0;
+    }
+    if (jobItem.total > 0 && jobItem.number >= jobItem.total){
+        logV2(INFO, "JOB", "Nr Of Times Exceeded: " + jobItem.number + "/" + jobItem.total);
+        return;
+    }
+    while (repeat){
+        if (jobItem.total == 0 || jobItem.number < jobItem.total) {
+            repeat = executeJob(jobItem);
+            if (repeat) {
+                jobItem.number++;
+                if (jobItem.total > 0) {
+                    logV2(INFO, "JOB", "Nr of times executed: " + jobItem.number + "/" + jobItem.total);
+                }
+            }
+        }
+        else {
+            repeat = false;
+        }
+    }
+}
+
+function completeJob(jobItem){
+    var repeat = true;
+    if (jobItem.completed == null || !jobItem.completed) {
+        while (repeat) {
+            var complete = getPercentCompleted();
+            if (complete < 100) {
+                repeat = executeJob(jobItem);
+            }
+            else {
+                logV2(INFO, "JOB", "Completed");
+                jobItem.completed = true;
+                repeat = false;
+            }
+        }
+    }
+    else {
+        logV2(INFO, "JOB", "Job Already Completed");
+    }
+}
+
+function logJob(jobItem){
+    logV2(INFO, "JOB", "DistrictId: " + jobItem.districtId);
+    if (jobItem.chapter != null) {
+        logV2(INFO, "JOB", "Chapter: " + jobItem.chapter);
+    }
+    logV2(INFO, "JOB", "Id: " + jobItem.jobId);
+}
+
+function executeJob(jobItem){
+    var energy = getEnergy();
+    var success = false;
+    if (energy > jobItem.energy) {
+        if (executeMacroJob(jobItem) != SUCCESS) {
+            logV2(INFO, "JOB", "Problem Executing Job");
+            logV2(INFO, "JOB", "District: " + jobItem.district);
+            if (jobItem.chapter != null) {
+                logV2(INFO, "JOB", "Chapter: " + jobItem.chapter);
+            }
+            logV2(INFO, "JOB", "Id: " + jobItem.id);
+            success = false;
+        }
+        else {
+            success = true;
+        }
+    }
+    else {
+        logV2(INFO, "JOB", "Not Enough energy to do job. Needed: " + jobItem.energy + " / Left: " + energy);
+        success = false;
+    }
+    return success;
+}
+
+function executeMacroJob(jobItem){
+    var retCode = playMacro(JOB_FOLDER, "04_Job_Start.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS){
+        checkSaldo();
+        globalSettings.jobsCompleted++;
+    }
+    return retCode;
+}
+
+function findDistrict(jobItem){
+    var district = null;
+    jobsObj.districts.forEach( function (districtItem)
+    {
+        if (districtItem.id === jobItem.districtId){
+            district = districtItem;
+            return;
+        }
+    });
+    return district;
 }
 
 function checkIfLevelUp(){
 	var retCode = playMacro(COMMON_FOLDER, "12_GetLevel.iim", MACRO_INFO_LOGGING);
 	if (retCode == SUCCESS){
-		var msg = getLastExtract().toUpperCase();
+		var msg = getLastExtract(1, "Level", "281").toUpperCase();
 		msg = msg.replace("LEVEL ", "");
 		var level = parseInt(msg);
 		if (globalSettings.currentLevel == 0) {
@@ -137,8 +226,7 @@ function LogFile(path, fileId){
 
 function getEnergy(){
 	playMacro(JOB_FOLDER, "10_GetEnergy.iim", MACRO_INFO_LOGGING);
-	var energyInfo = getLastExtract(1);
-	//var staminaInfo = prompt("Stamina", "300/400");
+	var energyInfo = getLastExtract(1, "Energy Left", "500/900");
 	logV2(INFO, "ENERGY", "energy = " + energyInfo);
 	if (!isNullOrBlank(energyInfo)){
 		var tmp = energyInfo.split("/");
@@ -146,6 +234,18 @@ function getEnergy(){
 		return energy;
 	}
 	return 0;
+}
+
+function getPercentCompleted(){
+    playMacro(JOB_FOLDER, "11_PercentCompleted.iim", MACRO_INFO_LOGGING);
+    var percentInfo = getLastExtract(1, "Percent Completed", "50%");
+    logV2(INFO, "JOB", "%completed = " + percentInfo);
+    if (!isNullOrBlank(percentInfo)){
+        percentInfo = percentInfo.replace("%", "");
+        var energy = parseInt(percentInfo);
+        return percentInfo;
+    }
+    return 100;
 }
 
 function checkSaldo(){
@@ -165,7 +265,7 @@ function bank(saldo){
 
 function getSaldo(){
 	playMacro(COMMON_FOLDER, "11_GetSaldo.iim", MACRO_INFO_LOGGING);
-	var saldoInfo = getLastExtract(1);
+	var saldoInfo = getLastExtract(1, "Saldo", "$500");
 	//var saldoInfo = prompt("Saldo", "500");
 	logV2(INFO, "BANK", "saldoInfo = " + saldoInfo);
 	if (!isNullOrBlank(saldoInfo)){
