@@ -25,7 +25,7 @@ var COMMON_FOLDER = "MR/Common";
 var jobsObj = initObject(MR_JOBS_FILE);
 var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0};
 
-enableMacroPlaySimulation();
+//enableMacroPlaySimulation();
 
 	var listOfJobs = jobsObj.activeJobs;
     try {
@@ -52,7 +52,7 @@ function doJobs(listOfJobs){
 
 function processJob(jobItem){
 
-    var retCode = playMacro(JOB_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
+    var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
 	if (retCode == SUCCESS) {
         var district = findDistrict(jobItem);
         if (district == null) {
@@ -132,6 +132,7 @@ function completeJob(jobItem){
     if (jobItem.completed == null || !jobItem.completed) {
         while (repeat) {
             var complete = getPercentCompleted();
+            alert(complete);
             if (complete < 100) {
                 repeat = executeJob(jobItem);
             }
@@ -244,7 +245,8 @@ function getPercentCompleted(){
     var percentInfo = getLastExtract(1, "Percent Completed", "50%");
     logV2(INFO, "JOB", "%completed = " + percentInfo);
     if (!isNullOrBlank(percentInfo)){
-        percentInfo = percentInfo.replace("%", "");
+        percentInfo = percentInfo.replace("%", "").toUpperCase();
+        percentInfo = percentInfo.replace(" COMPLETE", "");
         var energy = parseInt(percentInfo);
         return percentInfo;
     }

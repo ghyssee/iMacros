@@ -37,7 +37,6 @@ var COMMON_FOLDER = "MR/Common";
 var txt="blabla&id='123456789'&blabla='test'";
 var regExp = /id='(.*)'[&|$]/;
 var matches = txt.match(regExp);
-window.console.log("test");
 for (var i = 0; i < matches.length; i++) {
     var str = matches[i];
     window.console.log(str);
@@ -96,7 +95,6 @@ function fightBoss(){
 	var exitLoop = false;
 	var counter = 0;
 	do {
-		var fighters = getFightList();
 		counter++;
 		var rival = extractRivalMobster();
 		if (rival > 0){
@@ -104,6 +102,7 @@ function fightBoss(){
 			var list = [fighter];
             processList(list, RIVAL_MOBSTER);
 		}
+		var fighters = getFightList();
 		var filteredFightersList = filterFightList(fighters);
 		processList(filteredFightersList, !RIVAL_MOBSTER);
 	}
@@ -159,13 +158,15 @@ function waitTillEnoughStamina(){
 function extractRivalMobster(){
 	//Rival mobsters alive: 18 / 20
 	logV2(INFO, "FIGHT", "Rival Mobsters");
-	var retCode = playMacro(FIGHT_FOLDER, "22_Extract_Rival.iim", MACRO_INFO_LOGGING);
+	var retCode = 0;
+	retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
+	retCode = playMacro(FIGHT_FOLDER, "22_Extract_Rival.iim", MACRO_INFO_LOGGING);
 	var mob = 0;
 	if (retCode == SUCCESS){
 		var msg = getLastExtract(1, "Rival", "20 / 20");
 		logV2(INFO, "FIGHT", "MSG: " + msg);
-		msg = msg.toUpperCase().replace ("RIVAL MOBSTERS ALIVE: ");
-		msg = msg.replace("/ 20").trim();;
+		msg = msg.toUpperCase().replace("RIVAL MOBSTERS ALIVE: ","");
+		msg = msg.replace("/ 20", "").trim();;
 		logV2(INFO, "FIGHT", "MSG PROCESSED: " + msg);
 		mob = parseInt(msg);
 	}
@@ -176,7 +177,6 @@ function attack(fighter, rivalMobster){
 	logV2(INFO, "FIGHT", "Attacking " + fighter.id);
 	var retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
 	checkHealth();
-	var retCode = 0
 	if (rivalMobster){
 		retCode = playMacro(FIGHT_FOLDER, "32_AttackRivalMobster_start.iim", MACRO_INFO_LOGGING);
 	}
@@ -317,18 +317,20 @@ function attackTillDeath(fighter, rivalMobster){
 						statusObj.status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
 						break;
 					}
+					var iced = false;
 					if (rivalMobster){
 						retCode = playMacro(FIGHT_FOLDER, "42_VictimRivalMobster_Attack.iim", MACRO_INFO_LOGGING);
 					}
 					else {
 						addMacroSetting("ID", fighter.id);
 						retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack", MACRO_INFO_LOGGING);
+						iced = checkIfIced();
 					}
 					firstAttack = false;
 					statusObj.totalStamina += 5;
 					nrOfAttacks++;
 					checkSaldo();
-					if (checkIfIced()){
+					if (iced){
 						CONSTANTS.ATTACKSTATUS.OK;
 						break;
 					}

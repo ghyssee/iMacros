@@ -1,5 +1,5 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
 SET !TIMEOUT_STEP 1
-FRAME F=1
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=jobevent&action=dojob&id=4
+'FRAME F=1
+TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=jobevent&action=dojob&id=1
 WAIT SECONDS=1
