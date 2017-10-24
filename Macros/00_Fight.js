@@ -96,12 +96,16 @@ function fightBoss(){
 	var counter = 0;
 	do {
 		counter++;
-		var rival = extractRivalMobster();
-		if (rival > 0){
-			var fighter = getFighterObject("RIVAL", "RIVAL " + rival, "0");
-			var list = [fighter];
-            processList(list, RIVAL_MOBSTER);
+		var rival = 0;
+		do {
+			rival = extractRivalMobster();
+			if (rival > 0) {
+				var fighter = getFighterObject("RIVAL", "RIVAL " + rival, "0");
+				var list = [fighter];
+				processList(list, RIVAL_MOBSTER);
+			}
 		}
+		while (rival > 0);
 		var fighters = getFightList();
 		var filteredFightersList = filterFightList(fighters);
 		processList(filteredFightersList, !RIVAL_MOBSTER);
@@ -324,8 +328,8 @@ function attackTillDeath(fighter, rivalMobster){
 					else {
 						addMacroSetting("ID", fighter.id);
 						retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack", MACRO_INFO_LOGGING);
-						iced = checkIfIced();
 					}
+					iced = checkIfIced();
 					firstAttack = false;
 					statusObj.totalStamina += 5;
 					nrOfAttacks++;

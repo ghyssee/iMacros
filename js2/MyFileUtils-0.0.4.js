@@ -147,11 +147,33 @@ function readFile(filename){
 	var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].createInstance(Components.interfaces.nsIFileInputStream);
 	istream.init(file, 0x01, 0444, 0);
 	istream.QueryInterface(Components.interfaces.nsILineInputStream);
+
+	// read lines into array
+	var line = {}, lines = [], hasmore;
+	var utf8Converter = Components.classes["@mozilla.org/intl/utf8converterservice;1"].
+	getService(Components.interfaces.nsIUTF8ConverterService);
+	do {
+	   hasmore = istream.readLine(line);
+		var data = utf8Converter.convertURISpecToUTF8 (line.value, "UTF-8");
+	  lines.push(data);
+	} while(hasmore);
+	istream.close();
+	istream = null;	file = null;
+	return lines;
+}
+
+function readFileOld(filename){
+	// open an input stream from file
+	var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
+	file.initWithPath(filename);
+	var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].createInstance(Components.interfaces.nsIFileInputStream);
+	istream.init(file, 0x01, 0444, 0);
+	istream.QueryInterface(Components.interfaces.nsILineInputStream);
 	// read lines into array
 	var line = {}, lines = [], hasmore;
 	do {
-	  hasmore = istream.readLine(line);
-	  lines.push(line.value);
+		hasmore = istream.readLine(line);
+		lines.push(line.value);
 	} while(hasmore);
 	istream.close();
 	istream = null;	file = null;

@@ -1,61 +1,19 @@
-﻿//saveLocalFile("c:\\temp\\test.txt", "test123");
-//createDirectory("c:\\temp\\eric");
+﻿var ONEDRIVEPATH = getOneDrivePath();
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\MyUtils-0.0.1.js"));
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\MyFileUtils-0.0.4.js"));
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\MyConstants-0.0.3.js"));
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\MacroUtils-0.0.4.js"));
 
-var DATASOURCE_DIR = "C:\\My Programs\\iMacros\\Datasources\\";
-var BASE_DIR = "C:\\My Programs\\iMacros\\";
-var CONFIG_DIR  = BASE_DIR + "config\\";
-var CONFIG_INI = CONFIG_DIR + "config.ini";
-var TMP_DIR = BASE_DIR + "tmp\\";
-var PROFILE_FILE = CONFIG_DIR + "profilesV2.json";
-var CRAFTMANAGER_FILE = CONFIG_DIR + "CraftManager.json";
-var INFO = 0; var ERROR = 1; WARNING = 2;
-var LOG_DIR = BASE_DIR + "logs\\";
-var LOG_FILE = LOG_DIR + "log." + getDateYYYYMMDD() + ".txt";
-var ERROR_LOG = LOG_DIR + "log.ERROR." + getDateYYYYMMDD() + ".txt";
-
-//var MAFIAWARS_FILE = "C:\\My Programs\\OneDrive\\iMacros\\config\\MafiaWarsV2.json";
-
-// construction worker EG+MT
-var tmp1 = "data:application/json;base64,eyJ0b2RheSI6MCwiYWNjZXB0R2lmdENvdW50IjowLCJzZW5kR2lmdENvdW50IjowLCJzZW5kQmFjayI6dHJ1ZSwic2VuZEludGVybmFsbHkiOnRydWUsImV4Y2x1ZGVkUGF0dGVybiI6InJlYWNoZWQgeW91ciBsaW1pdHxnb2xkIG1hc3Rlcnl8Y2Fubm90IGFjY2VwdCBtb3JlIiwiZGFpbHlMaW1pdCI6ImNhbm5vdCBhY2NlcHQgYW55IG1vcmUgRnJlZSBHaWZ0cyB0b2RheSIsImV4Y2x1ZGVkR2lmdHMiOnt9LCJhY3RpdmVGcmllbmRzIjp7fSwiY3VzdG9tTGlzdHMiOnsiTXlMaXN0IjpbIjExNzQ5ODA3NTYiLCIxMDAwMDAwMDg3Mzg1MzMiXX0sInVzZXJhY3Rpb25zIjp7fSwic2VsZWN0ZWRHaWZ0cyI6eyI0NTgiOnRydWV9LCJhY3RpdmVGUk1pbiI6MSwiaWdub3JlTGltaXRzIjpmYWxzZSwiaGlkZVVuY2hlY2tlZCI6dHJ1ZX0=";
-var tmp2 = "eyJ0b2RheSI6MCwiYWNjZXB0R2lmdENvdW50IjowLCJzZW5kR2lmdENvdW50IjowLCJzZW5kQmFjayI6dHJ1ZSwic2VuZEludGVybmFsbHkiOnRydWUsImV4Y2x1ZGVkUGF0dGVybiI6InJlYWNoZWQgeW91ciBsaW1pdHxnb2xkIG1hc3Rlcnl8Y2Fubm90IGFjY2VwdCBtb3JlIiwiZGFpbHlMaW1pdCI6ImNhbm5vdCBhY2NlcHQgYW55IG1vcmUgRnJlZSBHaWZ0cyB0b2RheSIsImV4Y2x1ZGVkR2lmdHMiOnt9LCJhY3RpdmVGcmllbmRzIjp7fSwiY3VzdG9tTGlzdHMiOnsiTXlMaXN0IjpbIjExNzQ5ODA3NTYiLCIxMDAwMDAwMDg3Mzg1MzMiXX0sInVzZXJhY3Rpb25zIjp7fSwic2VsZWN0ZWRHaWZ0cyI6eyI0NTgiOnRydWV9LCJhY3RpdmVGUk1pbiI6MSwiaWdub3JlTGltaXRzIjpmYWxzZSwiaGlkZVVuY2hlY2tlZCI6dHJ1ZX0=";
-var LTP_EXT = "_LTP.csv";
-var FF_SETTING_PREFIX = "data:application/json;base64,";
-
-
-var PROFILE_ERIC = "00_ERIC";
-var PROFILE_AMALIN = "01_AMALIN";
-var PROFILE_AARON = "02_AARON";
-var PROFILE_AJORIS = "03_AJORIS";
-var PROFILE_EG = "04_EG";
-var PROFILE_MT = "05_MT";
-
-var profileArray = [];
-profileArray[0] = [PROFILE_ERIC, "47155432"];
-profileArray[1] = [PROFILE_AMALIN, "48797921"];
-profileArray[2] = [PROFILE_AARON, "69892133"];
-profileArray[3] = [PROFILE_AJORIS, "84363679"];
-profileArray[4] = [PROFILE_EG, "143980259"];
-profileArray[5] = [PROFILE_MT, "114369514"];
-
-//document.cookie = 'facebook.com=; expires=Thu, 01-Jan-70 00:00:01 GMT;';
-//javascript:document.cookie = 'facebook.com=; expires=Thu, 01-Jan-70 00:00:01 GMT;'
-//var generator=window.open('','name','height=400,width=500');
-//generator.document.write('<p>THIS IS ONLY A TEST</p>');
-//content.document.cookie = 'about.com=; expires=Thu, 01-Jan-70 00:00:01 GMT;';
-//deleteCookie("facebook.com");
-//alert(getCookie("about.com"));
-//content.document.cookie = "facebook.com=; path=/";
-//alert(content.document.cookie.length);
-
-var macroSettings = [];
-
-Date.prototype.getDOY = function() {
-var onejan = new Date(this.getFullYear(),0,1);
-return Math.ceil((this - onejan) / 86400000);
-}
-
-var path = process.cwd();
-alert(path);
+var friendObj = initObject(MR_FRIENDS_FILE);
+var tmpId = "574486962757189";
+friendObj.fighters.forEach( function (arrayItem)
+{
+	if (arrayItem.id == tmpId){
+		alert(arrayItem.name);
+		return;
+	}
+});
+writeObject(friendObj, MR_FRIENDS_FILE);
 
 function randomNumber (from, to){
    var upper = to - from+1;
@@ -365,70 +323,6 @@ function decodeHtml(tmp){
    return tmp2;
 }
 
-
-function writeFile(fileName, data, overwrite) {
-	// file is nsIFile, data is a string
-	var file = new FileUtils.File(fileName);
-	var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].
-				   createInstance(Components.interfaces.nsIFileOutputStream);
-
-	// use 0x02 | 0x10 to open file for appending.
-	if (overwrite){
-		foStream.init(file, 0x02 | 0x08 | 0x20, 0666, 0); 
-	}
-	else {
-		foStream.init(file, 0x02 | 0x08 | 0x10, 0666, 0); 
-	}
-
-	// if you are sure there will never ever be any non-ascii text in data you can 
-	// also call foStream.write(data, data.length) directly
-	var converter = Components.classes["@mozilla.org/intl/converter-output-stream;1"].
-					createInstance(Components.interfaces.nsIConverterOutputStream);
-	converter.init(foStream, "UTF-8", 0, 0);
-	converter.writeString(data);
-	converter.close(); // this closes foStream
-}
-
-function writeObject(object, file){
-	var jstr = JSON.stringify(object, null, "   ");
-	writeFile(file, jstr, true);
-}
-
-function initProfiles(){
-	var profileObject = getEmptyProfile();
-	//profileObject.id = "00_ERIC";
-	//profileObject.linkFbListId = "03_AJORIS";
-	//profileArray.push(profileObject);
-	//profileObject = getEmptyProfile();
-	//profileObject.id = "01_AMALIN";
-	//profileArray.push(profileObject);
-	//profileObject = getEmptyProfile();
-	//profileObject.id = "02_AARON";
-	//profileArray.push(profileObject);
-	//profileObject = getEmptyProfile();
-	//profileObject.id = "03_AJORIS";
-	//profileArray.push(profileObject);
-	
-	log("INFO: Processing Profile file " + PROFILE_FILE);
-	if (fileExists(PROFILE_FILE)){
-		var lines = readFile(PROFILE_FILE);
-		if (lines != null){
-			for (var i=0; i < lines.length; i++){
-			   if (lines[i] != null && lines[i].trim != ""){
-					alert("+" + lines[i] + "+");
-					var profileObject = JSON.parse(lines[i]);
-					profileArray.push(profileObject);
-			   }
-			}
-		}
-	}
-	else {
-		alert("Profile file " + PROFILE_FILE + " not found!");
-	}
-	
-	
-}
-
 function getEmptyProfile(){
    return {"id":"","mwId":"","fbId":"","login":"","password":"", "alias":"","fbName":"","enabled":true,"fbList":"","linkFbListId":""}
 }
@@ -465,51 +359,6 @@ function getPropertyPartId(listOfPartIds, listOfPartNames){
 	var partId = parseInt(listOfPartIds.substr(daynum, 1));
 	alert(nrOfElements);
 	return listOfPartNames[partId-1];
-}
-
-function eShopPRS(){
-
-	for (var i=0; i < 300; i++){
-		macroPlay("other/eShopGetOrderNr.iim");
-		var orderNr = iimGetLastExtract(1);
-		orderNr = orderNr.trim();
-		iimDisplay (i.toString() + " " + orderNr);
-		if (orderNr == "10743820" || orderNr =="10743821") {
-			break;
-		}
-		macroPlay("other/eShopGetPRSId.iim");
-		var prs = iimGetLastExtract(1);
-		if (prs == ""){
-			// zet op on hold
-			macroPlay("other/eShopPRSOnHold.iim");
-		}
-		else {
-			macroPlay("other/eShopPRSSave.iim");
-		}
-	}
-}
-
-function addSetting(setting , value){
-	var tmpArray = [setting, value];
-	macroSettings.push(tmpArray);
-}
-
-	
-function testLogin(){
-
-var retcode = 0;
-for ( var i=0; i < 50; i++){
-	iimSet("login","eric.ghyssens@dommel.be");
-	iimSet("password", "toiki123");
-	iimPlay("fbLogin.iim");
-	retcode = iimPlay("fbLogoff.iim");
-	log("nr of logins = " + i);
-	if (retcode != 1){
-		break;
-	}
-}
-
-
 }
 
 function craftManager(profile, mwID){
@@ -573,93 +422,6 @@ function delCookies() {
 		var n=e>-1?c[i].substr(0,e):c[i];
 		log(n);
 		content.document.cookie=n+"=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
-	}
-}
-
-function getBase64Gifts(){
-	var jstr = '{"today":0,"acceptGiftCount":0,"sendGiftCount":0,"sendBack":true,"sendInternally":true,"excludedPattern":"reached your limit|gold mastery|cannot accept more","dailyLimit":"cannot accept any more Free Gifts today","excludedGifts":{},"activeFriends":{},"customLists":{"MyList":[]},"useractions":{},"selectedGifts":{},"activeFRMin":1,"ignoreLimits":false,"hideUnchecked":true}';
-	//var jstr = '{"today":0,"acceptGiftCount":0,"sendGiftCount":0,"sendBack":true,"sendInternally":true,"excludedPattern":"reached your limit|gold mastery|cannot accept more","dailyLimit":"cannot accept any more Free Gifts today","excludedGifts":{},"activeFriends":{},"customLists":{"MyList":["1174980756","100000008738533"]},"useractions":{},"selectedGifts":{},"activeFRMin":1,"ignoreLimits":false,"hideUnchecked":true}';
-	var myObject = JSON.parse(jstr);
-	var gifts = "100 redbag";
-	var giftArray = splitLine(gifts, " ");
-	for (var i=0; i < giftArray.length; i++){
-		if (giftArray[i].trim() != ""){
-			myObject.selectedGifts[giftArray[i].trim()] = true;
-		}
-	}
-	var tmpArray = splitLine("123 456", " ");
-	for (var i=0; i < tmpArray.length; i++){
-		myObject.customLists.MyList.push(tmpArray[i]);
-	}
-	//myObject.customLists.MyList = ["123", "456"];
-	alert(JSON.stringify(myObject));
-	return encodeBase64(JSON.stringify(myObject));
-}
-
-function deleteCookie(name)
-{
-var exp=new Date();
-exp.setTime(exp.getTime()-1);
-var cookieval=getCookie(name);
-content.document.cookie = name + "=" + cookieval; 
-alert(cookieval);
-expires= exp.toGMTString();
-}
-
-function getCookie(name)
-{
-var arg1 = name + "=";
-var arg2 = arg1.length;
-content.document.cookie = name; 
-var arg3 = content.document.cookie.length;
-var i = 0;
-while(i < arg3)
-{
-var j = i + arg2;
-if (content.document.cookie.substring(i,j) == arg1)
-return getCookieVal(i);
-i = content.document.cookie.indexOf(" ", i) + 1;
-if (i == 0) break;
-}
-return null;
-}
-
-function getCookieVal(args4)
-{
-var endstr=content.document.cookie.indexOf(";",args4);
-if(endstr==-1)
-{
-endstr=content.document.cookie.length;
-}
-return unescape(content.document.cookie.substring(args4,endstr));
-}
-
-function encodeGifts(){
-
-	var tmp = "{\"today\":1,\"acceptGiftCount\":0,\"sendGiftCount\":1,\"sendBack\":true,\"sendInternally\":true,\"excludedPattern\":\"reached your limit|gold mastery|cannot accept more\",\"dailyLimit\":\"cannot accept any more Free Gifts today\",\"excludedGifts\":{},\"activeFriends\":{},\"customLists\":{\"MyList\":[\"1174980756\",\"100000008738533\"]},\"useractions\":{},\"selectedGifts\":%GIFTS%,\"activeFRMin\":1,\"ignoreLimits\":false,\"hideUnchecked\":true}";
-	var gifts = "{\"100\":true,\"422\":true,\"redbag\":true,\"400\":true}";
-	var prefix = "data:application/json;base64,";
-	tmp = tmp.replace("%GIFTS%", gifts);
-	dec = encodeBase64(tmp);
-	alert(dec);
-}
-
-function removePath(filename){
-	var strippedFilename = null;
-	if (filename != null){
-	}
-	return strippedFilename;
-}
-
-
-function tmp1(){
-	var excludeFilter = [".PROCESSING", ".DONE"];
-	var listOfFiles = listFiles(DATASOURCE_DIR, "MWConfig.ini.", excludeFilter);
-	if (listOfFiles != null && listOfFiles.length > 0){
-		listOfFiles.sort();
-		for (var i=0; i < listOfFiles.length; i++){
-			alert(listOfFiles[i]);
-		}
 	}
 }
 
@@ -821,51 +583,6 @@ function executeUrl(profile, csvFile){
 	while (url != null && url.length > 0);
 }
 
-function getResponseFromUrl(){
-	
-	var ret = -1;
-	var retcode = 0;
-	iimSet("text", "You");
-	retcode = iimPlay("MWLimitedTimePropertiesGetResponse.iim");
-	var txt = null;
-	txt=iimGetLastExtract(1).trim();
-	if (txt != "#EANF#"){
-		log(txt);
-		if (txt.startsWith("You have already sent 10 parts today")) return 0;
-		if (txt.startsWith("You gave your friend")) return 1;
-		if (txt.startsWith("Your Friend just received")) return 2;
-		if (txt.startsWith("You have already sent parts from this feed")) return 3;
-		return -1;
-	}
-	else {
-		iimSet("text", "All rewards from this feed");
-		retcode = iimPlay("MWLimitedTimePropertiesGetResponse.iim");
-		txt=iimGetLastExtract(1);
-		if (txt != "#EANF#"){
-			return 4;
-		}
-		else {
-			iimSet("text", "Thanks for helping");
-			retcode = iimPlay("MWLimitedTimePropertiesGetResponse.iim");
-			txt=iimGetLastExtract(1);
-			if (txt != "#EANF#"){
-				return 5;
-			}
-			else {
-				iimSet("text", "This feed has expired");
-				retcode = iimPlay("MWLimitedTimePropertiesGetResponse.iim");
-				txt=iimGetLastExtract(1);
-				if (txt != "#EANF#"){
-					return 6;
-				}
-				else {
-					return -1;
-				}
-			}
-		}
-	}
-}
-
 
 // public method for decoding
 function decodeBase64 (input) {
@@ -992,420 +709,12 @@ function _utf8_encode (string) {
 	return utftext;
 }
 
-function changeSet(){
-// prefs is an nsIPrefBranch
-
-// Example 1: getting Unicode value
-var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch("extensions.mwaddonclient.");
-//alert(prefs.getBoolPref("cookieonstart"));
-//alert(value);
-// select construction worker only
-var tmp="data:application/json;base64,eyJ0b2RheSI6NiwiYWNjZXB0R2lmdENvdW50IjowLCJzZW5kR2lmdENvdW50Ijo0LCJzZW5kQmFjayI6dHJ1ZSwic2VuZEludGVybmFsbHkiOnRydWUsImV4Y2x1ZGVkUGF0dGVybiI6InJlYWNoZWQgeW91ciBsaW1pdHxnb2xkIG1hc3Rlcnl8Y2Fubm90IGFjY2VwdCBtb3JlIiwiZGFpbHlMaW1pdCI6ImNhbm5vdCBhY2NlcHQgYW55IG1vcmUgRnJlZSBHaWZ0cyB0b2RheSIsImV4Y2x1ZGVkR2lmdHMiOnt9LCJhY3RpdmVGcmllbmRzIjp7fSwiY3VzdG9tTGlzdHMiOnsiTXlMaXN0IjpbIjEwMDAwMDAwODczODUzMyJdfSwidXNlcmFjdGlvbnMiOnt9LCJzZWxlY3RlZEdpZnRzIjp7IjQ1OCI6dHJ1ZX0sImFjdGl2ZUZSTWluIjoxLCJpZ25vcmVMaW1pdHMiOmZhbHNlLCJoaWRlVW5jaGVja2VkIjp0cnVlfQ==";
-
-var value = prefs.getCharPref("userscriptFBMWAddon_143980259_fgopt", Components.interfaces.nsISupportsString);
-prefs.setCharPref("userscriptFBMWAddon_143980259_fgopt", tmp);
-
-//extensions.mwaddonclient.userscriptFBMWAddon_114369514_fgopt
-
-//alert(value);
-// Example 2: setting Unicode value
-//var str = Components.classes["@mozilla.org/supports-string;1"]
-//      .createInstance(Components.interfaces.nsISupportsString);
-//str.data = "some non-ascii text";
-//prefs.setComplexValue("preference.with.non.ascii.value", 
-//      Components.interfaces.nsISupportsString, str);
-}
-
-
-
-function totest() {
-
-var mwConfig = "";
-var listConfig = "";
-var profileArray = [];
-var SIMULATION = false;
-profileArray[0] = ["00_ERIC", "ghyssens.eric@gmail.com", "Yorki1997", true, null, null];
-profileArray[1] = ["01_AMALIN", "yorki.dummy04@dommel.be", "toiki123", true, null, null];
-profileArray[2] = ["02_AARON", "dummy01@dommel.be", "toiki123", true, null, null];
-profileArray[3] = ["03_AJORIS", "dummy02@dommel.be", "toiki123", true, null, null];
-profileArray[4] = ["04_EG", "eric.ghyssens@dommel.be", "toiki123", true, null, null];
-profileArray[5] = ["05_MT", "lorang.marie.therese@dommel.be", "gizmo1952", true, null, null];
-
-var lines = readMWFile("C:\\My Programs\\iMacros\\Datasources\\MWConfig.ini");
-//window.document.write("Hello World");
-for (var i = 0; i < lines.length; i++){
-	var line = splitLine(lines[i].trim(), "=");
-	if (line == null){
-		log("WARNING: The following line is ignored : " + lines[i]);
-	}
-	else {
-		switch (line[0]) {
-			case "mwconfig": 
-				mwConfig = line[1];
-				alert("ConfigurationMW = " + mwConfig);
-				break;
-			case "profile.status":
-				var fields = splitLine(line[1], ",");
-				if (fields != null && fields.length >= 2){
-					var profile = getProfile(fields[0], profileArray);
-					alert ("before " + profile);
-					profile[3] = fields[1];
-					if (fields.length == 3){
-						profile[4] = fields[2];
-					}
-					alert (profile);
-				}
-				else {
-					log("Error with line " + lines[i]);
-				}
-				break;
-			case "profile.status.lists":
-				var fields = splitLine(line[1], ",");
-				if (fields != null && fields.length >= 2){
-					var profile = getProfile(fields[0], profileArray);
-					alert ("before " + profile);
-					profile[3] = fields[1];
-					if (fields.length == 3){
-						profile[5] = fields[2];
-					}
-					alert ("Profile Lists = " + profile);
-				}
-				else {
-					log("Error with line " + lines[i]);
-				}
-				break;
-			case "start" :
-			   alert("start");
-			   break;
-			case "simulation" :
-			   if (line[1].toUpperCase() == "TRUE"){
-				  SIMULATION = true;
-			   }
-			   else {
-				  SIMULATION = false;
-			   }
-			   alert("simulation = " + SIMULATION);
-			   break;
-			case "list" :
-				alert("list");
-				break;
-			case "listconfig" :
-				listConfig = line[1];
-				alert("listconfig = " + listConfig);
-			   break;
-			default: 
-				log("WARNING : Following line is ignored: " + lines[i]);
-				alert(line);
-		}
-	}
-}
-
-for (var i=0; i < profileArray.length; i++){
-	var profile = profileArray[i];
-	var str = "";
-	for (var j=0; j < profile.length; j++){
-		str += profile[j] + "|";
-	}
-	log (str);
-}
-}
-
-function getProfile(profileID, tmpArray){
-
-   for (var i=0; i < tmpArray.length; i++){
-      if (tmpArray[i][0] == profileID){
-	     return tmpArray[i];
-	  }
-   }
-   return null;
-}
-  
-
-
-function testRandom(){
-
-var myArray2 = [0,0,0,0,0,0,0,0];
-for (var i = 0; i < 100; i++){
-   myArray2[randomNumber(0,8)]++;
-}
-alert (myArray2);
-}
-
-function readCSV(){
-	
-	var line=1;
-	var url;
-	
-	do {
-	   iimSet("line",line.toString());
-	   iimSet("file", "01_AMALIN.csv");
-	   retcode = iimPlay("readCSV.iim");
-	   //iimDisplay("retcode = " + retcode);
-	   url = iimGetLastExtract(1);
-	   if (url != null && url.length > 0){
-	   
-		   iimDisplay("url = " + url);
-		   iimSet("url",url);
-		   //retcode = iimPlay("fbExecuteUrl.iim");
-		   //if (retcode != 1){
-			 // log("Problem executing url " + url);
-		   //}
-		   //screenshot(folder, "ss");
-		   //iimPlay("fbClose.iim");
-		   line++;
-	   }
-	}
-	while (url != null && url.length > 0);
-}
-
-function fileExist(fileName) {
-        var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-        file.initWithPath(fileName);
-        return file.exists();
-}
-
-function renameFile(oldFileName, directory, newFileName) {
-        var newDir = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-        var oldFile = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-
-        newDir.initWithPath(directory);
-		createDirectory(directory);
-        oldFile.initWithPath(oldFileName);
-		oldFile.moveTo(newDir, newFileName);
-        return true;
-}
-
-
-function tmp(){
-
-var retcode = 0;
-//for (var i=1; i < 5; i++){
-	//iimSet("pos", i.toString());
-	retcode = iimPlay("test.iim");
-	if (retcode == 1){
-		var url = iimGetLastExtract(1);
-		var title = iimGetLastExtract(2);
-		//alert("Title = " + title + "\nUrl = " + url);
-		if (url.substring(0, 5) != "#EANF") {
-		   saveMacroInfo("tmp.csv", "1" + ";" + title + ";" + url);
-		 }
-	}
-}
-
-	
-// Give 2x Loot Boost
-
-// Help Eric (=> job Help
-// Help xxx => War Help
-// Send Parts
-// Send
-// Get Parts
-// Join now
-// Give and Get One
-// Send Lath Strips
-// Send English Bricks
-
-
-
-// Send energy
-
-
-// ignore these
-// Get Daily Take Reward
-// Send Power Pack
-
-
-
-
-
-function getDateYYYYMMDD(){
-//   var d1=new Date();
-//   return d1.toString('yyyyMMdd');
-   
-	var d = new Date();
-	var curr_date = d.getDate();
-	var curr_month = d.getMonth();
-	curr_month++;
-	var curr_year = d.getFullYear();
-	return ("" + curr_year + pad(curr_month,2) + pad(curr_date,2));
-	   
-}
-
-function pad(number, length) {
-   
-    var str = '' + number;
-    while (str.length < length) {
-        str = '0' + str;
-    }
-   
-    return str;
-
-}
-
-function saveLocalFile(filename, outputText) {
-        var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-        file.initWithPath(filename);
-        if (file.exists() === false) {
-            file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 420);
-        }
-        var outputStream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
-        outputStream.init(file, 0x04 | 0x10, 420, 0);
-        outputStream.write(outputText, outputText.length);
-		var newline = "fsdfs\r\n";
-        outputStream.write(newline, newline.length);
-        outputStream.close();
-        return true;
-}
-
-function createDirectory(tmpdir) {
-        var directory = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-        directory.initWithPath(tmpdir);
-        if (directory.exists() === false) {
-            directory.create(Components.interfaces.nsIFile.DIRECTORY_TYPE, 420);
-        }
-        return true;
-}
-
-function saveMacroInfo(csv, outputText) {
-        //var filename = "c:\\My Programs\\iMacros\\datasources\\" + csv;
-		var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-        file.initWithPath(csv);
-        if (file.exists() === false) {
-            file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 420);
-        }
-        var outputStream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
-        outputStream.init(file, 0x04 | 0x10, 420, 0);
-        outputStream.write(outputText, outputText.length);
-		var newline = "\r\n";
-        outputStream.write(newline, newline.length);
-        outputStream.close();
-        return true;
-}
-
-function pausecomp(ms) {
-ms += new Date().getTime();
-while (new Date() < ms){}
-} 
-
-function log(outputText, filename) {
-        //var filename = "C:\\My Programs\\iMacros\\logs\\log.Test.txt";
-	    var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-        file.initWithPath(filename);
-        if (file.exists() === false) {
-            file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 420);
-        }
-        var outputStream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
-        outputStream.init(file, 0x04 | 0x10, 420, 0);
-        outputStream.write(outputText, outputText.length);
-		var newline = "\r\n";
-        outputStream.write(newline, newline.length);
-        outputStream.close();
-        return true;
-}
-
-function readFile(filename){
-
-	// open an input stream from file
-	var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-    file.initWithPath(filename);
-	var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].createInstance(Components.interfaces.nsIFileInputStream);
-	istream.init(file, 0x01, 0444, 0);
-	istream.QueryInterface(Components.interfaces.nsILineInputStream);
-	 
-	// read lines into array
-	var line = {}, lines = [], hasmore;
-	do {
-	  hasmore = istream.readLine(line);
-	  lines.push(line.value);
-	} while(hasmore);
-	 
-	istream.close();
-	
-	return lines;
-
-}
-
-function readIniFileSection(filename, section){
-
-	// open an input stream from file
-	var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-    file.initWithPath(filename);
-	var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].createInstance(Components.interfaces.nsIFileInputStream);
-	istream.init(file, 0x01, 0444, 0);
-	istream.QueryInterface(Components.interfaces.nsILineInputStream);
-	 
-	// read lines into array
-	var line = {}, lines = [], hasmore, iniLine, found = false;
-	do {
-	  hasmore = istream.readLine(line);
-	  iniLine = line.value.trim();
-	  if (found == true){
-		if (iniLine.startsWith("[")){
-			hasmore = false;
-		}
-		else {
-			if (iniLine != ""){
-				lines.push(iniLine);
-			}
-		}
-	  }
-	  else if (iniLine == "[" + section + "]") {
-		found = true;
-	  }
-	  
-	} while(hasmore);
-	 
-	istream.close();
-	
-	return lines;
-
-}
-
-function getIniParameter(iniLines, key){
-	for (var nrOfLines=0; nrOfLines < iniLines.length; nrOfLines++){
-		var fields = splitLine(iniLines[nrOfLines], "=");
-		if (fields.length == 2){
-			if (fields[0] == key){
-				return fields[1];
-			}
-		}
-		else {
-			log("WARNING: Invalid Line " + iniLines[nrOfLines]);
-		}
-	}
-	return null;
-}
-
 function splitLine(line){
 	   var fields = null;
 	   if (line != null && line != ""){
 		   fields = line.split(";");
 	   }
 	   return fields;
-}
-
-function readMWFile(filename){
-
-	// open an input stream from file
-	var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-    file.initWithPath(filename);
-	var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].createInstance(Components.interfaces.nsIFileInputStream);
-	istream.init(file, 0x01, 0444, 0);
-	istream.QueryInterface(Components.interfaces.nsILineInputStream);
-	 
-	// read lines into array
-	var line = {}, lines = [], hasmore;
-	do {
-	  hasmore = istream.readLine(line);
-	  if (line.value != null && line.value != "" && !line.value.startsWith(";")){
-		lines.push(line.value);
-	  }
-	} while(hasmore);
-	 
-	istream.close();
-	
-	return lines;
-
 }
 
 function splitLine(line, seperator){
@@ -1423,162 +732,6 @@ function checkAndSplitLine(line, seperator, nrOfFields){
       return null;
    }
    return fields;
-}
-
-function deleteFile(fileName) {
-        var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-        file.initWithPath(fileName);
-		if (file.exists()){
-			file.remove(false);
-			return true;
-		}
-		return false;
-}
-
-function fileExists(fileName) {
-        var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-        file.initWithPath(fileName);
-        return file.exists();
-}
-
-function convertToNumber (sNumber, defaultNumber) {
-
- if (sNumber == null) return defaultNumber;
- if (isNaN(sNumber)) return defaultNumber;
- return parseInt(sNumber);
-}
-
-function save(saveFile, outputText) {
-        var filename = saveFile;
-	    var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-        file.initWithPath(filename);
-        if (file.exists() === false) {
-            file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 420);
-        }
-        var outputStream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
-        outputStream.init(file, 0x04 | 0x10, 420, 0);
-        outputStream.write(outputText, outputText.length);
-		var newline = "\r\n";
-        outputStream.write(newline, newline.length);
-        outputStream.close();
-        return true;
-}
-
-function updateIniFile(filename, section, key, value) {
-	// open an input stream from file
-	var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-    file.initWithPath(filename);
-	var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].createInstance(Components.interfaces.nsIFileInputStream);
-	istream.init(file, 0x01, 0444, 0);
-	istream.QueryInterface(Components.interfaces.nsILineInputStream);
-	 
-	var tmpFile = TMP_DIR + "config.ini";
-	
-	// open an output stream
-	var outputFile = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-	outputFile.initWithPath(tmpFile);
-	if (outputFile.exists()) {
-		outputFile.remove(false);
-	}
-	outputFile.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 420);
-	
-
-		// read lines into array
-	var line = {}, lines = [], hasmore, iniLine, found = false;
-	do {
-	  hasmore = istream.readLine(line);
-	  iniLine = line.value.trim();
-	  if (found == true){
-		if (iniLine.startsWith("[")){
-			hasmore = false;
-		}
-		else {
-			if (iniLine != ""){
-				var fields = splitLine(iniLine, "=");
-				if (fields[0] == key){
-					iniLine = key + "=" + value;
-				}
-				lines.push(iniLine);
-			}
-		}
-	  }
-	  else if (iniLine == "[" + section + "]") {
-		found = true;
-	  }
-	  //outputStream.write(iniLine, iniLine.length);
-	  save(tmpFile, iniLine);
-	  
-	} while(hasmore);
-	 
-	istream.close();
-	//outputStream.close();
-	
-	return true;
-}
-
-function macroPlay(macroName, logError, onErrorRetry){
-	var ret = 0; var retries = 0;
-	var ok = false;
-	do {
-		//for (var nr=0; nr < macroSettings.length; nr++){
-			//iimSet(macroSettings[i][0], macroSettings[i][1]);
-			//log(macroSettings[nr][0] + " , " + macroSettings[nr][1]);
-		//}
-		//return 1;
-		
-		
-		ret = iimPlay(macroName);
-		if (ret != 1 && (logError == null || logError == true)){
-			log("ERROR: (" + ret + ") retries = " + retries + " " + iimGetLastError(1));
-		}
-		if (ret == 1){
-			ok = true;
-		}
-		else if (onErrorRetry != null && onErrorRetry == true && ret == -933){
-			ok = false;
-			retries++;
-		}
-		else {
-			ok = true;
-		}
-	}
-	while (ok == false && retries < 5);
-	return ret;
-}
-
-function initObject(fileName, arrayOfObjects){
-	log("INFO: Processing JSON file " + fileName);
-	if (fileExists(fileName)){
-		var lines = readFile(fileName);
-		if (lines != null){
-			if (lines.length == 1 && arrayOfObjects == null){
-			   return JSON.parse(lines[0]);
-			}
-			else if (lines.length > 1 && arrayOfObjects == null){
-				var jsonStr = "";
-				for (var i=0; i < lines.length; i++){
-					if (lines[i] != null && lines[i].trim() != ""){
-						jsonStr = jsonStr + lines[i].trim();
-					}
-				}
-				return JSON.parse(jsonStr);
-			}
-			else {
-				for (var i=0; i < lines.length; i++){
-					if (lines[i] != null && lines[i].trim() != ""){
-						var profileObject = JSON.parse(lines[i]);
-						arrayOfObjects.push(profileObject);
-					}
-				}
-				return arrayOfObjects;
-			}
-		}
-	}
-	else {
-		var errorMsg = "File " + fileName + " not found!";
-		alert(errorMsg);
-		throw new Error(errorMsg);
-	}
 }
 
 function initializeCraftManager(cmObject){
@@ -1660,35 +813,6 @@ function findNewYorkPropertyById(cmObject, id){
 	return null;
 }
 
-function writeObject(object, file){
-	var jstr = JSON.stringify(object, null, "   ");
-	writeFile(file, jstr, true);
-}
-
-function isNullOrBlank(param){
-   if (param != null && param != "#EANF#" && param != ""){
-      return false;
-   }
-   return true;
-}
-
-
-function isNumeric(param){
-	if (param == null || isNaN(Number(param))){
-		return false;
-	}
-	return true;
-}
-
-/*
-function escapeRegExp(string) {
-    return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
-}
-
-function replaceAll(string1, find, replace) {
-  return string1.replace(new RegExp(escapeRegExp(find), 'g'), replace);
-}
-*/
 function encodeMafiaWarsUrl(url){
 
 if (url == null) return null;
@@ -1726,24 +850,6 @@ function escapeRegExp(string) {
     return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
 }
 
-function logV2(type, profileObject, outputText, logFile){
-	switch (type) {
-		case ERROR:
-			log("Profile = " + profileObject.id, ERROR_LOG);
-			log(outputText, ERROR_LOG);
-			break;
-		case WARNING:
-			log("WARN: " + outputText, logFile);
-			break;
-		case INFO:
-			log("INFO: " + outputText, logFile);
-			break;
-		default:
-			log(outputText, logFile);
-			break;
-   }
-}
-
 function extractUrlFromHtml(htmlCode){
 	var START_LINK = "link:";
 	if (htmlCode == null) return null;
@@ -1756,4 +862,56 @@ function extractUrlFromHtml(htmlCode){
 	var url = htmlCode.substr(start+START_LINK.length+1, end-start-START_LINK.length-1);
 	url = decodeHtml(url);
 	return url;
+}
+
+function readScript(filename){
+
+	// open an input stream from file
+	var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
+	file.initWithPath(filename);
+	var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].createInstance(Components.interfaces.nsIFileInputStream);
+	istream.init(file, 0x01, 0444, 0);
+	istream.QueryInterface(Components.interfaces.nsILineInputStream);
+
+	// read lines into array
+	var script = "";
+	var line = {}, lines = [], hasmore;
+	do {
+		hasmore = istream.readLine(line);
+		script += line.value + "\r\n";
+	} while(hasmore);
+
+	istream.close();
+
+	return script;
+
+}
+
+function getRegistrySetting(branch, key){
+	var wrk = Components.classes["@mozilla.org/windows-registry-key;1"]
+		.createInstance(Components.interfaces.nsIWindowsRegKey);
+	var id = null;
+	try {
+		wrk.open(wrk.ROOT_KEY_CURRENT_USER,
+			branch,
+			wrk.ACCESS_READ);
+		id = wrk.readStringValue(key);
+	}
+	catch (err) {
+	}
+	wrk.close();
+	return id;
+}
+
+function getOneDrivePath(){
+	var id = getRegistrySetting("SOFTWARE\\Microsoft\\OneDrive", "UserFolder");
+	if (id == null){
+		id = getRegistrySetting("SOFTWARE\\Microsoft\\SkyDrive", "UserFolder");
+	}
+	if (id == null){
+		var errorMsg = "OneDrive Not Installed on this computer. Please Install it to use this script!";
+		alert(errorMsg);
+		throw errorMsg;
+	}
+	return id;
 }

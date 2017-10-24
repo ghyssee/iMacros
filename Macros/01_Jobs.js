@@ -31,7 +31,7 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0};
     try {
 		do {
             doJobs(listOfJobs);
-            waitV2("5");
+            waitV2("60");
         }
         while (true);
 	 }
@@ -132,7 +132,6 @@ function completeJob(jobItem){
     if (jobItem.completed == null || !jobItem.completed) {
         while (repeat) {
             var complete = getPercentCompleted();
-            alert(complete);
             if (complete < 100) {
                 repeat = executeJob(jobItem);
             }
