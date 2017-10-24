@@ -52,22 +52,10 @@ var macroSettings = [];
 Date.prototype.getDOY = function() {
 var onejan = new Date(this.getFullYear(),0,1);
 return Math.ceil((this - onejan) / 86400000);
-} 
+}
 
-var cmObject = {};
-var profileArray = [];
-var profileObject;
-//initProfiles();
-//var mwObj = initObject(MAFIAWARS_FILE);
-
-var prefix = "MafiaWars/BossFight/";
-var info = "<div class=\"boss-city-hud-generic-ch boss-city-hud-generic-ch-2 _inactive\" style=\"outline: 1px solid blue;\"><div class=\"title-txt\">";
-var nr = Math.floor((Math.random() * 5) + 1); 
-var info = "3.03K";
-				var tmpInfo = replaceAll(info, "/", ",");
-				tmpInfo = replaceAll(tmpInfo, "K", "");
-var energy =  parseFloat(tmpInfo)*1000;
-alert(energy);
+var path = process.cwd();
+alert(path);
 
 function randomNumber (from, to){
    var upper = to - from+1;
@@ -75,6 +63,7 @@ function randomNumber (from, to){
    var random = Math.floor((Math.random()*upper))+from;
    return random;
 }
+
 function bossFight(){
 	var retCode = initBossFight();
 	if (retCode == 1){
