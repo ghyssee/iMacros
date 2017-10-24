@@ -39,30 +39,6 @@ function save(saveFile, outputText) {
         return true;
 }
 
-function writeFileOld(fileName, data, overwrite) {
-	// file is nsIFile, data is a string
-	var file = new FileUtils.File(fileName);
-	var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].
-				   createInstance(Components.interfaces.nsIFileOutputStream);
-
-	// use 0x02 | 0x10 to open file for appending.
-	if (overwrite){
-		foStream.init(file, 0x02 | 0x08 | 0x20, 0666, 0); 
-	}
-	else {
-		foStream.init(file, 0x02 | 0x08 | 0x10, 0666, 0); 
-	}
-
-	// if you are sure there will never ever be any non-ascii text in data you can 
-	// also call foStream.write(data, data.length) directly
-	var converter = Components.classes["@mozilla.org/intl/converter-output-stream;1"].
-					createInstance(Components.interfaces.nsIConverterOutputStream);
-	converter.init(foStream, "UTF-8", 0, 0);
-	converter.writeString(data);
-	converter.close(); // this closes foStream
-	file = null; foStream = null; converter = null;
-}
-
 function writeFile(fileName, data, overwrite) {
 		// file is nsIFile, data is a string
 	// file is nsIFile, data is a string
