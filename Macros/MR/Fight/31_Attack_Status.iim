@@ -1,7 +1,4 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
 SET !TIMEOUT_STEP 1
-'FRAME NAME="iframe_canvas_fb_https"
-'FRAME F=1
+FRAME F={{FRAME}}
 TAG POS=1 TYPE=DIV ATTR=ID:attack-msg EXTRACT=TXT
-'It looks like Λ ξ § ❆ Healthreducer is already smashed to pieces.
-'You decide to let them go for now.

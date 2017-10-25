@@ -49,6 +49,7 @@ var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0
 
 	 try {
 	 	fightBoss();
+		 //alert(checkIfIced());
 	 }
 	 catch (ex) {
 	 	if (ex.name != USER_CANCEL) {
@@ -77,7 +78,9 @@ function fightBoss(){
 	do {
 		counter++;
 		var rival = 0;
+
 		do {
+
 			rival = extractRivalMobster();
 			if (rival > 0) {
 				var fighter = getFighterObject("RIVAL", "RIVAL " + rival, "0");
@@ -86,6 +89,7 @@ function fightBoss(){
 			}
 		}
 		while (rival > 0);
+
 		var fighters = getFightList();
 		var filteredFightersList = filterFightList(fighters);
 		processList(filteredFightersList, !RIVAL_MOBSTER);
@@ -232,6 +236,24 @@ function attack(fighter, rivalMobster){
 	return statusObj;
 }
 
+function getVictimHealth(){
+	var health = -1;
+	retCode = playMacro(FIGHT_FOLDER, "40_Victim_Health", MACRO_INFO_LOGGING);
+	if (retCode == SUCCESS) {
+		var healthMsg = getLastExtract(1, "Victim Health", "50%");
+		if (!isNullOrBlank(healthMsg)) {
+			healthMsg = healthMsg.replace("%", "");
+			logV2(INFO, "ATTACK", "Victim Health: " + healthMsg);
+            health = parseInt(healthMsg);
+		}
+		else {
+            logV2(INFO, "ATTACK", "Problem extracting Victim Health (Empty))");
+        }
+	}
+	return health;
+
+}
+
 function attackTillDeath(fighter, rivalMobster){
 	logV2(INFO, "ATTACK", "Attack Figther " + fighter.id);
 	var alive = true;
@@ -243,17 +265,10 @@ function attackTillDeath(fighter, rivalMobster){
 	var nrOfHeals = 0;
 	var originalHealth = 0;
 	do {
-		retCode = playMacro(FIGHT_FOLDER, "40_Victim_Health", MACRO_INFO_LOGGING);
-		if (retCode == SUCCESS){
-			var health = getLastExtract(1, "Victim Health", "50%");
-			health = health.replace("%", "");
-			logV2(INFO, "ATTACK", "Victim Health: " + health);
-			health = parseInt(health);
+		var health = getVictimHealth();
+		if (health > -1){
 			if (firstAttack) {
 				originalHealth = health;
-			}
-			if (isNullOrBlank(health)){
-				break;
 			}
 			if (previousHealth < health){
 				logV2(INFO, "ATTACK", "Victim healed: " + fighter.id);
@@ -309,18 +324,20 @@ function attackTillDeath(fighter, rivalMobster){
 						addMacroSetting("ID", fighter.id);
 						retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack", MACRO_INFO_LOGGING);
 					}
-					iced = checkIfIced();
 					firstAttack = false;
 					statusObj.totalStamina += 5;
 					nrOfAttacks++;
 					checkSaldo();
-					if (iced){
-						CONSTANTS.ATTACKSTATUS.OK;
-						break;
-					}
 					// maybe todo: check status of fight. If Message starts with "It looks like"
 					// Opponent was already dead and no stamina is spent
 					// maybe also check if is iced by you
+					health = getVictimHealth();
+					if (health == 0){
+						waitV2("1");
+						checkIfIced();
+						CONSTANTS.ATTACKSTATUS.OK;
+						break;
+					}
 					
 					if (retCode != SUCCESS){
 						statusObj.status = CONSTANTS.ATTACKSTATUS.PROBLEM;
@@ -538,7 +555,7 @@ function getFighterObject(id, name, level){
 	return {"id":id, "name":name, "level": level, "skip": false};
 }
 
-function getStatusObject(l){
+function getStatusObject(){
 	return {"status":null, 
 	        "totalStamina":0,
 			"iced": 0
@@ -599,24 +616,23 @@ function extractLevelFromString(text){
 
 
 function extractIdFromString(text){
-var regExp = /id=(.*)"[ |$]/;
-var matches = text.match(regExp);
-if (matches != null && matches.length > 0){
-	return matches[matches.length-1];
-}
-return text;
-
+    var regExp = /id=(.*)"[ |$]/;
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return matches[matches.length-1];
+    }
+    return text;
 }
 
 function extractExperience(text){
-text = text.toUpperCase().replace(/,/g, "");
-var regExp = /(?:.*)[0-9]{1,10} \((.*) TO LEVEL/; //5,886 (1,264 to level)
-var matches = text.match(regExp);
-var exp = 0;
-if (matches != null && matches.length > 0){
-	exp = parseInt(matches[matches.length-1]);
-}
-return exp;
+    text = text.toUpperCase().replace(/,/g, "");
+    var regExp = /(?:.*)[0-9]{1,10} \((.*) TO LEVEL/; //5,886 (1,264 to level)
+    var matches = text.match(regExp);
+    var exp = 0;
+    if (matches != null && matches.length > 0){
+        exp = parseInt(matches[matches.length-1]);
+    }
+    return exp;
 
 }
 
