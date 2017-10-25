@@ -364,6 +364,9 @@ function getFirefoxProfilePath(){
 }
 
 function logError(ex){
+    //logV2(INFO, "ERROR", "Filename: " + ex.fileName);
     logV2(INFO, "ERROR", "Line Number: " + ex.lineNumber);
+    logV2(INFO, "ERROR", "Name       : " + ex.name);
     logV2(INFO, "ERROR", "Message    : " + ex.message);
+    //logV2(INFO, "ERROR", "Stack    : " + ex.stack);
 }

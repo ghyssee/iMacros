@@ -26,6 +26,18 @@ var MACRO_PLAY_LOGGING = false;
 
 var MACRO_SETTINGS = [];
 
+var USER_CANCEL = "UserCancelError";
+
+function UserCancelError(message) {
+    this.name = USER_CANCEL;
+    this.message = 'User Cancel';
+    var error = new Error(this.message);
+    error.name = this.name;
+    this.stack = error.stack;
+    this.lineNumber = error.lineNumber;
+}
+UserCancelError.prototype = Object.create(Error.prototype);
+
 function enableMacroPlaySimulation(){
 	MACRO_PLAY_SIMULATION = true;
 }
@@ -120,7 +132,7 @@ function waitV2(seconds){
 	iimSet("seconds", seconds);
 	retcode = iimPlay("Wait.iim");
 	if (retcode == CANCELED_BY_USER){
-		throw new Error("Canceled By User");
+        throw new UserCancelError();
 	}
 	return retcode;
 }
@@ -134,7 +146,7 @@ function simpleMacroPlayFolder(macroName, folder){
 	var ret = iimPlay(folderName + "/" + macroName);
 	logV2(INFO, "PLAY", "Return code = " + ret);
 	if (ret == CANCELED_BY_USER) {
-		throw new Error("Canceled By User");
+        throw new UserCancelError();
 	}
 	return ret;
 }
@@ -184,7 +196,7 @@ function macroPlay(macroName, logError, onErrorRetry, logging){
 		}
 		if (ret == CANCELED_BY_USER) {
 			// canceled by user
-			throw new Error("Canceled By User");
+			throw new UserCancelError();
 		}
 		if (ret != 1 && (logError == null || logError == true)){
 			log("ERROR: (" + ret + ") retries = " + retries + " " + iimGetLastError(1));

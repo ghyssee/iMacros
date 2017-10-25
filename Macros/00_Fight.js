@@ -47,38 +47,19 @@ var friendObj = initObject(MR_FRIENDS_FILE);
 var fighterObj = initObject(MR_FIGHTERS_FILE);
 var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0, "skippedHealth": 0, "maxHealed": 0, "heals": 0};
 
-/*
-var tmpFighter = [];
-tmpFighter.push(getFighterObject("1", "dfsfds", 200));
-tmpFighter.push(getFighterObject("10", "10qfddfsfds", 200));
-tmpFighter.push(getFighterObject("11", "11fdfdfsfds", 200));
-tmpFighter.push(getFighterObject("100", "11fdfdfsfds", 200));
-tmpFighter.push(getFighterObject("200", "11fdfdfsfds", 200));
-
-var filtered = filterFightList(tmpFighter);
-
-filtered.forEach( function (arrayItem)
-	{
-		window.console.log("Filtered Id:" + arrayItem.id);
-	});
-	var tmp = '<a href="#" class="ajax_request" data-params="controller=profile&amp;action=view&amp;id=1700086423343089" style="outline: 1px solid blue;">tania</a>';
-	/*
-	var lst = getFightList();
-lst.forEach( function (arrayItem)
-	{
-		window.console.log("Filtered name:" + arrayItem.name);
-	});
-	
-	
-	 //attack(getFighterObject(prompt("Player ID","700943793423304"), "11fdfdfsfds", 200));
-	*/ 
-	
-
 	 try {
-		fightBoss();
+	 	fightBoss();
 	 }
 	 catch (ex) {
-	    logError(ex);
+	 	if (ex.name != USER_CANCEL) {
+            logError(ex);
+        }
+        if (ex instanceof UserCancelError){
+	 		// do nothing
+		}
+		else {
+            logError(ex);
+        }
 		logV2(INFO, "SUMMARY", "Total Iced: " + globalSettings.iced);
 		logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
 		logV2(INFO, "SUMMARY", "Nr Of Attacks: " + globalSettings.nrOfAttacks);
@@ -87,7 +68,6 @@ lst.forEach( function (arrayItem)
 		logV2(INFO, "SUMMARY", "Max Healed: " + globalSettings.maxHealed);
 		logV2(INFO, "SUMMARY", "Heals: " + globalSettings.heals);
 	}
-
 
 function fightBoss(){
 	
