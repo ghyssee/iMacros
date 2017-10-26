@@ -48,8 +48,9 @@ var fighterObj = initObject(MR_FIGHTERS_FILE);
 var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0, "skippedHealth": 0, "maxHealed": 0, "heals": 0};
 
 	 try {
-	 	fightBoss();
-		 //alert(checkIfIced());
+		 var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
+	 	 fight();
+         //evaluateBossMessage();
 	 }
 	 catch (ex) {
 	 	if (ex.name != USER_CANCEL) {
@@ -71,8 +72,61 @@ var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0
 	}
 
 function fightBoss(){
+    logV2(INFO, "BOSS", "Start Boss Fight");
+    var retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS){
+        bossObj = evaluateBossMessage();
+        if (bossObj.status == 1){
+            // check boss health
+            // attack Boss
+        }
+    }
+    else {
+        logV2(INFO, "BOSS", "Problem Starting Boss Fight");
+    }
+
+}
+
+function evaluateBossMessage() {
+    //There are no bosses available to fight. Please try coming back in 20 hours, 57 minutes.
+    //var retCode = playMacro(FIGHT_FOLDER, "71_Boss_Message.iim", MACRO_INFO_LOGGING);
+    retCode = SUCCESS;
+    var bossObj = {"status": 0, "hours": null, "minutes": null};
+    if (retCode == SUCCESS){
+        //var msg = getLastExtract(1, "Boss Message", "There are no bosses available to fight. Please try coming back in 20 hours, 57 minutes.");
+        var msg = "There are no bosses available to fight. Please try coming back in 20 hours, 57 minutes.";
+        if (!isNullOrBlank(msg)){
+            msg = msg.toUpperCase();
+            logV2(INFO, "BOSS", "Boss Message: " + msg);
+            //alert(msg + "/" + msg.indexOf("THERE ARE No BOSSES AVAILABLE"));
+            if (msg.indexOf("THERE ARE NO BOSSES AVAILABLE") !== -1){
+                var regExp = /BACK IN ([0-9]{1,2}) HOURS, ([0-9]{1,2}) MINUTES/;
+                var matches = msg.match(regExp);
+                if (matches != null && matches.length > 1){
+                    bossObj.minutes = matches[matches.length-1];
+                    bossObj.hours = matches[matches.length-2];
+                    alert(bossObj.hours + ":" + bossObj.minutes);
+                }
+                else {
+                    logV2(INFO, "BOSS", "No Time Found");
+                }
+            }
+            else {
+                logV2(INFO, "BOSS", "BOSS AVAILABLE ???");
+            }
+        }
+        else {
+            logV2(INFO, "BOSS", "Problem Extracting Boss Message");
+        }
+    }
+    else {
+        logV2(INFO, "BOSS", "Problem Getting Boss Message");
+    }
+    return bossObj;
+}
+
+function fight(){
 	
-	var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
 	var exitLoop = false;
 	var counter = 0;
 	do {
@@ -192,7 +246,7 @@ function attack(fighter, rivalMobster){
 					if (!rivalMobster) {
 						addFighter(fighter);
 					}
-					if (checkIfIced()){
+					if (getVictimHealth() ==0){
 						statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 						break;
 					}
@@ -212,7 +266,7 @@ function attack(fighter, rivalMobster){
 					globalSettings.stolenIces++;
 					break;
 				case CONSTANTS.OPPONENT.LOST :
-					checkIfIced();
+                    getVictimHealth();
 					logV2(INFO, "FIGHT", "Add Stronger Opponent: " + fighter.id);
 					addStrongerOpponent(fighter);
 					fighter.skip = true;
@@ -245,6 +299,10 @@ function getVictimHealth(){
 			healthMsg = healthMsg.replace("%", "");
 			logV2(INFO, "ATTACK", "Victim Health: " + healthMsg);
             health = parseInt(healthMsg);
+            if (health == 0){
+                waitV2("1");
+                checkIfIced();
+            }
 		}
 		else {
             logV2(INFO, "ATTACK", "Problem extracting Victim Health (Empty))");
@@ -333,8 +391,6 @@ function attackTillDeath(fighter, rivalMobster){
 					// maybe also check if is iced by you
 					health = getVictimHealth();
 					if (health == 0){
-						waitV2("1");
-						checkIfIced();
 						CONSTANTS.ATTACKSTATUS.OK;
 						break;
 					}
