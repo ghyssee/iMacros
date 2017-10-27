@@ -3,4 +3,4 @@ SET !TIMEOUT_STEP 1
 'FRAME NAME="iframe_canvas_fb_https"
 FRAME F={{FRAME}}
 TAG POS=1 TYPE=A ATTR=DATA-PARAMS:action=dss&controller=fight&id={{ID}}&tab=0&amt=5
-'WAIT SECONDS=1
+WAIT SECONDS=0.1

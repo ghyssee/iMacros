@@ -3,6 +3,7 @@ eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\MyUtils-0.0.1.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\MyFileUtils-0.0.4.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\MyConstants-0.0.3.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\MacroUtils-0.0.4.js"));
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\DateAdd.js"));
 
 var localConfigObject = null;
 var NODE_ID = "";
@@ -45,12 +46,14 @@ window.console.log(MR_DIR);
 var fightersToExclude = initObject(MR_FIGHTERS_EXCLUDE_FILE);
 var friendObj = initObject(MR_FRIENDS_FILE);
 var fighterObj = initObject(MR_FIGHTERS_FILE);
-var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0, "skippedHealth": 0, "maxHealed": 0, "heals": 0};
+var configMRObj = initObject(MR_CONFIG_FILE);
+var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0, "skippedHealth": 0, "maxHealed": 0, "heals": 0,
+                      "boss": {"attacks": 0}};
 
 	 try {
 		 var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
 	 	 fight();
-         //evaluateBossMessage();
+         //fightBoss();
 	 }
 	 catch (ex) {
 	 	if (ex.name != USER_CANCEL) {
@@ -73,46 +76,116 @@ var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0
 
 function fightBoss(){
     logV2(INFO, "BOSS", "Start Boss Fight");
-    var retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
-    if (retCode == SUCCESS){
-        bossObj = evaluateBossMessage();
-        if (bossObj.status == 1){
-            // check boss health
-            // attack Boss
+    var bossStartTime = formatStringYYYYMMDDHHMISSToDate(configMRObj.defeatedOn);
+    var currDate = new Date();
+    if (bossStartTime < currDate) {
+        var retCode = playMacro(FIGHT_FOLDER, "70_Boss_Start.iim", MACRO_INFO_LOGGING);
+        if (retCode == SUCCESS) {
+            bossObj = evaluateBossMessage();
+            if (bossObj.status == 1) {
+            }
+        }
+        else {
+            logV2(INFO, "BOSS", "Problem Starting Boss Fight");
         }
     }
     else {
-        logV2(INFO, "BOSS", "Problem Starting Boss Fight");
-    }
+        logV2(INFO, "BOSS", "Start Time is at: " + bossStartTime);
+	}
 
 }
 
+function attackBoss(){
+    var bossHealth = -1
+    var retCode = 0;
+    do {
+        var stamina = getStamina();
+        if (stamina >= 5) {
+            checkHealth();
+            bossHealth = getBossHealth();
+            if (bossHealth == 0) {
+                logV2(INFO, "BOSS", "Boss is dead!!!");
+            }
+            else if (checkBossHealth < 0) {
+                // do nothing, problem getting boss health
+                break;
+            }
+            else {
+                retCode = playMacro(FIGHT_FOLDER, "73_Boss_Attack.iim", MACRO_INFO_LOGGING);
+                if (retCode == SUCCESS) {
+                    globalSettings.boss.attacks++;
+                }
+                else
+                {
+                    logV2(INFO, "BOSS", "Problem attacking boss");
+                 break;
+                }
+            }
+        }
+        else {
+            logV2(INFO, "BOSS", "Not Enough Stamina");
+            break;
+        }
+    }
+    while (bossHealth > 0);
+}
+
+function getBossHealth(){
+    logV2(INFO, "FIGHT", "Checking Health");
+    var health = -1;
+    retCode = playMacro(FIGHT_FOLDER, "72_Boss_Health", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS) {
+        var healthMsg = getLastExtract(1, "Boss Health", "50%");
+        if (!isNullOrBlank(healthMsg)) {
+            var list = healthMsg.split('/');
+            logV2(INFO, "BOSS", "Boss Health: " + healthMsg);
+            if (list != null && list.length == 2) {
+                health = parseInt(list[0]);
+            }
+            else {
+                logV2(INFO, "BOSS", "Problem Parsing health");
+            }
+        }
+        else {
+            logV2(INFO, "BOSS", "Problem Extracting health");
+        }
+    }
+    else {
+        logV2(INFO, "BOSS", "Problem Getting Boss Health");
+    }
+    return health;
+}
+
+
 function evaluateBossMessage() {
-    //There are no bosses available to fight. Please try coming back in 20 hours, 57 minutes.
-    //var retCode = playMacro(FIGHT_FOLDER, "71_Boss_Message.iim", MACRO_INFO_LOGGING);
-    retCode = SUCCESS;
+    var retCode = playMacro(FIGHT_FOLDER, "71_Boss_Message.iim", MACRO_INFO_LOGGING);
     var bossObj = {"status": 0, "hours": null, "minutes": null};
     if (retCode == SUCCESS){
-        //var msg = getLastExtract(1, "Boss Message", "There are no bosses available to fight. Please try coming back in 20 hours, 57 minutes.");
-        var msg = "There are no bosses available to fight. Please try coming back in 20 hours, 57 minutes.";
+        var msg = getLastExtract(1, "Boss Message", "There are no bosses available to fight. Please try coming back in 20 hours, 57 minutes.");
         if (!isNullOrBlank(msg)){
             msg = msg.toUpperCase();
             logV2(INFO, "BOSS", "Boss Message: " + msg);
-            //alert(msg + "/" + msg.indexOf("THERE ARE No BOSSES AVAILABLE"));
             if (msg.indexOf("THERE ARE NO BOSSES AVAILABLE") !== -1){
                 var regExp = /BACK IN ([0-9]{1,2}) HOURS, ([0-9]{1,2}) MINUTES/;
                 var matches = msg.match(regExp);
                 if (matches != null && matches.length > 1){
-                    bossObj.minutes = matches[matches.length-1];
-                    bossObj.hours = matches[matches.length-2];
-                    alert(bossObj.hours + ":" + bossObj.minutes);
+                    bossObj.status = 0;
+                    date = new Date();
+                    date = dateAdd(date, parseInt(bossObj.minutes), 'minutes');
+                    date = dateAdd(date, parseInt(bossObj.hours), 'hours');
+                    var formattedDate = formatDateToYYYYMMDDHHMISS(date);
+                    //var newD = formatStringYYYYMMDDHHMISSToDate(formattedDate);
+                    configMRObj.defeatedOn = formattedDate;
+                    writeObject(configMRObj, MR_CONFIG_FILE);
+
                 }
                 else {
                     logV2(INFO, "BOSS", "No Time Found");
                 }
             }
             else {
-                logV2(INFO, "BOSS", "BOSS AVAILABLE ???");
+                bossObj.status = 1;
+            	logV2(INFO, "BOSS", "BOSS AVAILABLE ???");
             }
         }
         else {
@@ -300,7 +373,7 @@ function getVictimHealth(){
 			logV2(INFO, "ATTACK", "Victim Health: " + healthMsg);
             health = parseInt(healthMsg);
             if (health == 0){
-                waitV2("1");
+                waitV2("0.5");
                 checkIfIced();
             }
 		}
@@ -322,11 +395,12 @@ function attackTillDeath(fighter, rivalMobster){
 	var firstAttack = true;
 	var nrOfHeals = 0;
 	var originalHealth = 0;
+	var health = 0;
 	do {
-		var health = getVictimHealth();
 		if (health > -1){
 			if (firstAttack) {
 				originalHealth = health;
+                health = getVictimHealth();
 			}
 			if (previousHealth < health){
 				logV2(INFO, "ATTACK", "Victim healed: " + fighter.id);
@@ -374,7 +448,6 @@ function attackTillDeath(fighter, rivalMobster){
 						statusObj.status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
 						break;
 					}
-					var iced = false;
 					if (rivalMobster){
 						retCode = playMacro(FIGHT_FOLDER, "42_VictimRivalMobster_Attack.iim", MACRO_INFO_LOGGING);
 					}
@@ -538,7 +611,7 @@ function getExperience(){
 
 
 function checkHealth(){
-	logV2(INFO, "BOSS", "Checking Health");
+	logV2(INFO, "FIGHT", "Checking Health");
 	var health = 0;
 	health = getHealth();
 	while (health < 10){
