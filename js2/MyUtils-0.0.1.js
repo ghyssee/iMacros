@@ -18,6 +18,13 @@ Date.prototype.getDOY = function () {
 	return Math.ceil((this - onejan) / 86400000);
 }
 
+if(!String.prototype.startsWith){
+	String.prototype.startsWith = function (str) {
+		if (str == null) return false;
+		return this.substring(0, str.length) === str;
+	}
+}
+
 String.prototype.repeat = function(count) {
     if (count < 1) return '';
     var result = '', pattern = this.valueOf();
@@ -28,7 +35,7 @@ String.prototype.repeat = function(count) {
     return result + pattern;
   };
 
- 
+
 function endsWith(str, suffix) {
     return str.match(suffix+"$")==suffix;
 }

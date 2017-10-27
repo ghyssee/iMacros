@@ -1,0 +1,3 @@
+﻿BOSS Dead Message:
+
+You WON the fight!You attacked Anton Burns using 5 stamina. You dealt 103 damage and took 10 damage.You gained 23 experience.You have defeated Anton Burns!You have now killed 37 bosses. Your health and stamina have been refilled.You earned 20 gang points.ShareYou found an item: Welding Goggles!

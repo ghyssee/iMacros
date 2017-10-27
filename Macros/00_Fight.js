@@ -25,7 +25,10 @@ var CONSTANTS = Object.freeze({
 	"ATTACKSTATUS" : {
 		"OK" : 0,
 		"PROBLEM": -1,
-		"NOSTAMINA": 2
+		"NOSTAMINA": 2,
+		"BOSSDEFATED": 1,
+		"BOSSALREADYDEAD": 3,
+		"UNKNOWN": 4
 	}
 });
 
@@ -52,8 +55,9 @@ var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0
 
 	 try {
 		 var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
+         startFightBoss();
 	 	 fight();
-         //fightBoss();
+	 	 evaluateBossMessage();
 	 }
 	 catch (ex) {
 	 	if (ex.name != USER_CANCEL) {
@@ -74,60 +78,104 @@ var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0
 		logV2(INFO, "SUMMARY", "Heals: " + globalSettings.heals);
 	}
 
-function fightBoss(){
+function startFightBoss(){
     logV2(INFO, "BOSS", "Start Boss Fight");
-    var bossStartTime = formatStringYYYYMMDDHHMISSToDate(configMRObj.defeatedOn);
-    var currDate = new Date();
-    if (bossStartTime < currDate) {
-        var retCode = playMacro(FIGHT_FOLDER, "70_Boss_Start.iim", MACRO_INFO_LOGGING);
-        if (retCode == SUCCESS) {
-            bossObj = evaluateBossMessage();
-            if (bossObj.status == 1) {
-            }
+    if (configMRObj.boss.defeatedOn !== null){
+        var bossStartTime = formatStringYYYYMMDDHHMISSToDate(configMRObj.boss.defeatedOn);
+        var currDate = new Date();
+        if (bossStartTime < currDate) {
+            fightBoss();
         }
         else {
-            logV2(INFO, "BOSS", "Problem Starting Boss Fight");
+            logV2(INFO, "BOSS", "Start Time is at: " + bossStartTime);
+	    }
+	}
+	else {
+	    fightBoss();
+	}
+
+}
+
+function fightBoss(){
+    var retCode = playMacro(FIGHT_FOLDER, "70_Boss_Start.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS) {
+        bossObj = evaluateBossMessage();
+        logV2(INFO, "BOSS", "Status: " + bossObj.status);
+        switch (bossObj.status){
+            case CONSTANTS.ATTACKSTATUS.OK:
+                attackBoss();
+                break;
+            case CONSTANTS.ATTACKSTATUS.PROBLEM:
+                break;
+            case CONSTANTS.ATTACKSTATUS.NOSTAMINA:
+                break;
+            case CONSTANTS.ATTACKSTATUS.BOSSDEFATED:
+                break;
+            default:
+                break;
         }
     }
     else {
-        logV2(INFO, "BOSS", "Start Time is at: " + bossStartTime);
-	}
+        logV2(INFO, "BOSS", "Problem Starting Boss Fight");
+    }
+}
 
+function evaluateBossResult(){
+    var retCode = playMacro(FIGHT_FOLDER, "75_Boss_Attack_Result.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS){
+        var msg = getLastExtract(1, "Boss Attack Result", 'You WON the fight');
+        msg = msg.toUpperCase();
+        logV2(INFO, "BOSS", "Boss Result: " + msg);
+        if (msg.startsWith('YOU WON THE FIGHT')){
+        }
+        else if (msg.startsWith("You DO NOT FEEL HEALTHY")){
+        }
+    }
+    else {
+    }
 }
 
 function attackBoss(){
     var bossHealth = -1
     var retCode = 0;
-    do {
-        var stamina = getStamina();
-        if (stamina >= 5) {
-            checkHealth();
-            bossHealth = getBossHealth();
-            if (bossHealth == 0) {
-                logV2(INFO, "BOSS", "Boss is dead!!!");
-            }
-            else if (checkBossHealth < 0) {
-                // do nothing, problem getting boss health
-                break;
-            }
-            else {
-                retCode = playMacro(FIGHT_FOLDER, "73_Boss_Attack.iim", MACRO_INFO_LOGGING);
+    retCode = playMacro(FIGHT_FOLDER, "73_Boss_StartAttack.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS) {
+        do {
+            var stamina = getStamina();
+            if (stamina >= 5) {
+                checkHealth();
                 if (retCode == SUCCESS) {
-                    globalSettings.boss.attacks++;
+                    retCode = playMacro(FIGHT_FOLDER, "74_Boss_Attack.iim", MACRO_INFO_LOGGING);
+                        bossHealth = getBossHealth();
+                        if (bossHealth == 0) {
+                            logV2(INFO, "BOSS", "Boss is dead!!!");
+                            alert("BOSS IS DEAD");
+                            break;
+                        }
+                        else if (bossHealth < 0) {
+                            break;
+                        }
+                        else {
+                            evaluateBossResult();
+                        }
+                        globalSettings.boss.attacks++;
+                    }
+                    else
+                    {
+                        logV2(INFO, "BOSS", "Problem With Attacking boss");
+                        break;
+                    }
                 }
-                else
-                {
-                    logV2(INFO, "BOSS", "Problem attacking boss");
-                 break;
+                else {
+                    logV2(INFO, "BOSS", "Not Enough Stamina");
+                    break;
                 }
-            }
         }
-        else {
-            logV2(INFO, "BOSS", "Not Enough Stamina");
-            break;
-        }
+        while (bossHealth > 0);
     }
-    while (bossHealth > 0);
+    else {
+        logV2(INFO, "BOSS", "Problem With Start Attacking boss");
+    }
 }
 
 function getBossHealth(){
@@ -135,9 +183,10 @@ function getBossHealth(){
     var health = -1;
     retCode = playMacro(FIGHT_FOLDER, "72_Boss_Health", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
-        var healthMsg = getLastExtract(1, "Boss Health", "50%");
+        var healthMsg = getLastExtract(1, "Boss Health", "27,356/34,775");
         if (!isNullOrBlank(healthMsg)) {
-            var list = healthMsg.split('/');
+			healthMsg = healthMsg.replace(/,/g, '');
+			var list = healthMsg.split('/');
             logV2(INFO, "BOSS", "Boss Health: " + healthMsg);
             if (list != null && list.length == 2) {
                 health = parseInt(list[0]);
@@ -159,40 +208,48 @@ function getBossHealth(){
 
 function evaluateBossMessage() {
     var retCode = playMacro(FIGHT_FOLDER, "71_Boss_Message.iim", MACRO_INFO_LOGGING);
-    var bossObj = {"status": 0, "hours": null, "minutes": null};
+    var bossObj = {"status": CONSTANTS.ATTACKSTATUS.UNKNOWN};
     if (retCode == SUCCESS){
         var msg = getLastExtract(1, "Boss Message", "There are no bosses available to fight. Please try coming back in 20 hours, 57 minutes.");
         if (!isNullOrBlank(msg)){
             msg = msg.toUpperCase();
             logV2(INFO, "BOSS", "Boss Message: " + msg);
+            alert(msg);
             if (msg.indexOf("THERE ARE NO BOSSES AVAILABLE") !== -1){
                 var regExp = /BACK IN ([0-9]{1,2}) HOURS, ([0-9]{1,2}) MINUTES/;
                 var matches = msg.match(regExp);
                 if (matches != null && matches.length > 1){
+                    var minutes = matches[2];
+                    var hours = matches[1];
                     bossObj.status = 0;
                     date = new Date();
-                    date = dateAdd(date, parseInt(bossObj.minutes), 'minutes');
-                    date = dateAdd(date, parseInt(bossObj.hours), 'hours');
+                    alert(minutes + "/" + hours);
+                    date = dateAdd(date, parseInt(minutes), 'minutes');
+                    date = dateAdd(date, parseInt(hours), 'hours');
                     var formattedDate = formatDateToYYYYMMDDHHMISS(date);
                     //var newD = formatStringYYYYMMDDHHMISSToDate(formattedDate);
-                    configMRObj.defeatedOn = formattedDate;
+                    configMRObj.boss.defeatedOn = formattedDate;
                     writeObject(configMRObj, MR_CONFIG_FILE);
-
+					bossObj.status = CONSTANTS.ATTACKSTATUS.BOSSALREADYDEAD;
                 }
                 else {
-                    logV2(INFO, "BOSS", "No Time Found");
+					bossObj.status = CONSTANTS.ATTACKSTATUS.PROBLEM;
+					logV2(INFO, "BOSS", "No Time Found");
                 }
             }
-            else {
-                bossObj.status = 1;
+            else if (msg.startsWith("ANTON")) {
+                bossObj.status = CONSTANTS.ATTACKSTATUS.OK;
             	logV2(INFO, "BOSS", "BOSS AVAILABLE ???");
+				alert("BOSS AVAIL");
             }
         }
         else {
+			bossObj.status = CONSTANTS.ATTACKSTATUS.PROBLEM;
             logV2(INFO, "BOSS", "Problem Extracting Boss Message");
         }
     }
     else {
+		bossObj.status = CONSTANTS.ATTACKSTATUS.PROBLEM;
         logV2(INFO, "BOSS", "Problem Getting Boss Message");
     }
     return bossObj;
