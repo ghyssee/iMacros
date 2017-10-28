@@ -33,8 +33,6 @@ var CONSTANTS = Object.freeze({
 });
 
 init();
-//var	configObject = initObject(CONFIG_JSON_FILE);
-//var mwObject = initObject(MAFIAWARS_JSON_FILE);
 var FIGHT_FOLDER = "MR/Fight";
 var COMMON_FOLDER = "MR/Common";
 
@@ -50,14 +48,24 @@ var fightersToExclude = initObject(MR_FIGHTERS_EXCLUDE_FILE);
 var friendObj = initObject(MR_FRIENDS_FILE);
 var fighterObj = initObject(MR_FIGHTERS_FILE);
 var configMRObj = initObject(MR_CONFIG_FILE);
-var globalSettings = {"iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0, "skippedHealth": 0, "maxHealed": 0, "heals": 0,
+var globalSettings = {"maxLevel": 600, "iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0, "skippedHealth": 0, "maxHealed": 0, "heals": 0,
                       "boss": {"attacks": 0}};
 
 	 try {
 		 var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
-         startFightBoss();
-	 	 fight();
-	 	 evaluateBossMessage();
+		 var stamina = 0;
+		 do  {
+             stamina = getStamina();
+             if (stamina < 10){
+                 waitTillEnoughStamina();
+             }
+             startFightBoss();
+             stamina = getStamina();
+             if (stamina > 10) {
+                 fight();
+             }
+         }
+         while (true);
 	 }
 	 catch (ex) {
 	 	if (ex.name != USER_CANCEL) {
@@ -149,7 +157,6 @@ function attackBoss(){
                         bossHealth = getBossHealth();
                         if (bossHealth == 0) {
                             logV2(INFO, "BOSS", "Boss is dead!!!");
-                            alert("BOSS IS DEAD");
                             break;
                         }
                         else if (bossHealth < 0) {
@@ -214,7 +221,6 @@ function evaluateBossMessage() {
         if (!isNullOrBlank(msg)){
             msg = msg.toUpperCase();
             logV2(INFO, "BOSS", "Boss Message: " + msg);
-            alert(msg);
             if (msg.indexOf("THERE ARE NO BOSSES AVAILABLE") !== -1){
                 var regExp = /BACK IN ([0-9]{1,2}) HOURS, ([0-9]{1,2}) MINUTES/;
                 var matches = msg.match(regExp);
@@ -223,7 +229,6 @@ function evaluateBossMessage() {
                     var hours = matches[1];
                     bossObj.status = 0;
                     date = new Date();
-                    alert(minutes + "/" + hours);
                     date = dateAdd(date, parseInt(minutes), 'minutes');
                     date = dateAdd(date, parseInt(hours), 'hours');
                     var formattedDate = formatDateToYYYYMMDDHHMISS(date);
@@ -240,7 +245,6 @@ function evaluateBossMessage() {
             else if (msg.startsWith("ANTON")) {
                 bossObj.status = CONSTANTS.ATTACKSTATUS.OK;
             	logV2(INFO, "BOSS", "BOSS AVAILABLE ???");
-				alert("BOSS AVAIL");
             }
         }
         else {
@@ -635,12 +639,6 @@ function LogFile(path, fileId){
 	this.fullPath = function() { return this.path + "log." + this.fileId + (NODE_ID == "" ? "" : "." + NODE_ID) + "." + getDateYYYYMMDD() + ".txt"};
 }
 
-function checkStamina(){
-	logV2(INFO, "BOSS", "Getting Stamina");
-	var stamina = 0;
-	stamina = getStamina();
-}
-
 function getStamina(){
 	playMacro(FIGHT_FOLDER, "52_GetStamina.iim", MACRO_INFO_LOGGING);
 	var staminaInfo = getLastExtract(1, "Stamina Left", "300/400");
@@ -758,12 +756,13 @@ function filterFightList(fightList){
 			if (!findFighter(fightersToExclude.fighters, fighter.id)){
 				// lookup friends list
 				if (!findFighter(friendObj.fighters, fighter.id)){
-						if (fighter.level <= 450){
-							filteredList.push(fighter);
-						}
-						else {
-							logV2(INFO, "FIGHTLIST", "High Level: " + fighter.id + " / Level: " + fighter.level);
-						}
+					var maxLevel = globalSettings.currentLevel === 0 ? globalSettings.maxLevel : (globalSettings.currentLevel + 200);
+					if (fighter.level <= maxLevel){
+						filteredList.push(fighter);
+					}
+					else {
+						logV2(INFO, "FIGHTLIST", "High Level: " + fighter.id + " / Level: " + fighter.level);
+					}
 				}
 				else {
 					logV2(INFO, "FIGHTLIST", "Friend Found: " + fighter.id);
