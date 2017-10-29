@@ -644,6 +644,7 @@ function getStamina(){
 	var staminaInfo = getLastExtract(1, "Stamina Left", "300/400");
 	logV2(INFO, "STAMINA", "stamina = " + staminaInfo);
 	if (!isNullOrBlank(staminaInfo)){
+        staminaInfo = staminaInfo.replace(/,/g, '');
 		var tmp = staminaInfo.split("/");
 		var stamina = parseInt(tmp[0]);
 		return stamina;
@@ -828,7 +829,10 @@ function heal(){
 }
 
 function closePopup(){
-	playMacro(FIGHT_FOLDER, "02_Close_Popup.iim", MACRO_INFO_LOGGING);
+	var retCode = playMacro(COMMON_FOLDER, "02_ClosePopup.iim", MACRO_INFO_LOGGING);
+	if (retCode == SUCCESS){
+		logV2(INFO, "POPUP", "Popup Closed");
+	}
 }
 
 function getHealth(){

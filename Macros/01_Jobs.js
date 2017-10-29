@@ -69,6 +69,7 @@ function processJob(jobItem){
                 }
             }
             if (jobItem.energy == null || jobItem.exp == null){
+                addMacroSetting("ID", jobItem.jobId);
                 retCode = playMacro(JOB_FOLDER, "03_Job_Energy.iim", MACRO_INFO_LOGGING);
                 // Get Energy + Experience
                 if (retCode == SUCCESS) {
@@ -113,7 +114,8 @@ function repeatJob(jobItem){
     }
     while (repeat){
         if (jobItem.total == 0 || jobItem.number < jobItem.total) {
-            repeat = executeJob(jobItem);
+            var complete = getPercentCompleted(jobItem);
+            repeat = executeJob(jobItem, complete);
             if (repeat) {
                 jobItem.number++;
                 if (jobItem.total > 0) {
@@ -131,9 +133,9 @@ function completeJob(jobItem){
     var repeat = true;
     if (jobItem.completed == null || !jobItem.completed) {
         while (repeat) {
-            var complete = getPercentCompleted();
+            var complete = getPercentCompleted(jobItem);
             if (complete < 100) {
-                repeat = executeJob(jobItem);
+                repeat = executeJob(jobItem, complete);
             }
             else {
                 logV2(INFO, "JOB", "Completed");
@@ -155,7 +157,7 @@ function logJob(jobItem){
     logV2(INFO, "JOB", "Id: " + jobItem.jobId);
 }
 
-function executeJob(jobItem){
+function executeJob(jobItem, completed){
     var energy = getEnergy();
     var success = false;
     if (energy > jobItem.energy) {
@@ -170,6 +172,14 @@ function executeJob(jobItem){
         }
         else {
             success = true;
+            var completeAfter = getPercentCompleted(jobItem);
+            logV2(INFO, "JOB", "Completed: " + completed + " / " + completeAfter);
+            logV2(INFO, "JOB", "CompleteAfter: " + (completeAfter === 100));
+            logV2(INFO, "JOB", "completed: " + (completed < 100));
+            if ((completeAfter === 100) && (completed < 100)){
+                logV2(INFO, "JOB", "Close Popup For Skill Point");
+                closePopup();
+            }
         }
     }
     else {
@@ -179,7 +189,8 @@ function executeJob(jobItem){
     return success;
 }
 
-function executeMacroJob(jobItem){
+function executeMacroJob(jobItem) {
+    addMacroSetting("ID", jobItem.jobId);
     var retCode = playMacro(JOB_FOLDER, "04_Job_Start.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS){
         checkSaldo();
@@ -232,22 +243,32 @@ function getEnergy(){
 	var energyInfo = getLastExtract(1, "Energy Left", "500/900");
 	logV2(INFO, "ENERGY", "energy = " + energyInfo);
 	if (!isNullOrBlank(energyInfo)){
-		var tmp = energyInfo.split("/");
+        energyInfo = energyInfo.replace(/,/g, '');
+	    var tmp = energyInfo.split("/");
 		var energy = parseInt(tmp[0]);
 		return energy;
 	}
 	return 0;
 }
 
-function getPercentCompleted(){
-    playMacro(JOB_FOLDER, "11_PercentCompleted.iim", MACRO_INFO_LOGGING);
-    var percentInfo = getLastExtract(1, "Percent Completed", "50%");
-    logV2(INFO, "JOB", "%completed = " + percentInfo);
-    if (!isNullOrBlank(percentInfo)){
-        percentInfo = percentInfo.replace("%", "").toUpperCase();
-        percentInfo = percentInfo.replace(" COMPLETE", "");
-        var energy = parseInt(percentInfo);
-        return percentInfo;
+function getPercentCompleted(jobItem){
+    addMacroSetting("ID", jobItem.jobId);
+    var retCode = playMacro(JOB_FOLDER, "11_PercentCompleted.iim", MACRO_INFO_LOGGING);
+    if (retCode === SUCCESS) {
+        var percentInfo = getLastExtract(1, "Percent Completed", "50%");
+        logV2(INFO, "JOB", "%completed = " + percentInfo);
+        if (!isNullOrBlank(percentInfo)) {
+            percentInfo = percentInfo.replace("%", "").toUpperCase();
+            percentInfo = percentInfo.replace(" COMPLETE", "");
+            var energy = parseInt(percentInfo);
+            return parseInt(percentInfo);
+        }
+        else {
+            logV2(INFO, "JOB", "Problem Extracting Percent Completed");
+        }
+    }
+    else {
+        logV2(INFO, "JOB", "Problem getting Percent Completed");
     }
     return 100;
 }
@@ -287,7 +308,7 @@ function getStatusObject(l){
 }
 
 function closePopup(){
-	playMacro(FIGHT_FOLDER, "02_Close_Popup.iim", MACRO_INFO_LOGGING);
+	playMacro(COMMON_FOLDER, "02_Close_Popup.iim", MACRO_INFO_LOGGING);
 }
 
 function init(){
