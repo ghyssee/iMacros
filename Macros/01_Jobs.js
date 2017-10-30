@@ -308,7 +308,7 @@ function getStatusObject(l){
 }
 
 function closePopup(){
-	playMacro(COMMON_FOLDER, "02_Close_Popup.iim", MACRO_INFO_LOGGING);
+	playMacro(COMMON_FOLDER, "02_ClosePopup.iim", MACRO_INFO_LOGGING);
 }
 
 function init(){

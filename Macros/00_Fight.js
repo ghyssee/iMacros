@@ -824,8 +824,10 @@ function extractExperience(text){
 
 function heal(){
 	logV2(INFO, "TEST", "Healing...");
-	playMacro(FIGHT_FOLDER, "10_Heal.iim", MACRO_INFO_LOGGING);
-	closePopup();
+	var retCode = playMacro(FIGHT_FOLDER, "10_Heal.iim", MACRO_INFO_LOGGING);
+	if (retCode == SUCCESS) {
+        closePopup();
+    }
 }
 
 function closePopup(){
