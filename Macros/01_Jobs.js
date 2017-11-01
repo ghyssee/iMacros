@@ -1,8 +1,9 @@
 ﻿var ONEDRIVEPATH = getOneDrivePath();
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\MyUtils-0.0.1.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\MyFileUtils-0.0.4.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\MyConstants-0.0.3.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js2\\MacroUtils-0.0.4.js"));
+var MACROS_PATH = getMacrosPath();
+eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\\MyConstants-0.0.3.js"));
+eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 
 var localConfigObject = null;
 var NODE_ID = "";
@@ -392,4 +393,21 @@ function getOneDrivePath(){
 		throw errorMsg;
 	}
 	return id;
+}
+
+
+function getMacrosPath(){
+    var value = getFirefoxSetting("extensions.imacros.",  "defsavepath");
+    if (value == null){
+        throw new Error("iMacros Probably not installed...");
+    }
+    return value;
+}
+
+function getFirefoxSetting(branch, key){
+
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch(branch);
+
+    var value = prefs.getCharPref(key, Components.interfaces.nsISupportsString);
+    return value;
 }

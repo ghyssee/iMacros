@@ -1,4 +1,4 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
 'FRAME F=1
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=jobevent&action=pih
+TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=jobevent&action=*
 WAIT SECONDS=1
