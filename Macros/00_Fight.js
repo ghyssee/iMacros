@@ -36,6 +36,7 @@ var CONSTANTS = Object.freeze({
 init();
 var FIGHT_FOLDER = "MR/Fight";
 var COMMON_FOLDER = "MR/Common";
+var JOB_FOLDER = "MR/Jobs";
 
 var txt="blabla&id='123456789'&blabla='test'";
 var regExp = /id='(.*)'[&|$]/;
@@ -56,13 +57,9 @@ var globalSettings = {"maxLevel": 600, "iced": 0, "money": 0, "currentLevel": 0,
 		 var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
 		 var stamina = 0;
 		 do  {
-             stamina = getStamina();
-             if (stamina < 10){
-                 waitTillEnoughStamina();
-             }
-             startFightBoss();
-             stamina = getStamina();
-             if (stamina > 10) {
+             waitTillEnoughStamina();
+             var status = startFightBoss();
+             if (status != CONSTANTS.ATTACKSTATUS.NOSTAMINA){
                  fight();
              }
          }
@@ -89,19 +86,21 @@ var globalSettings = {"maxLevel": 600, "iced": 0, "money": 0, "currentLevel": 0,
 
 function startFightBoss(){
     logV2(INFO, "BOSS", "Start Boss Fight");
+    var status = CONSTANTS.ATTACKSTATUS.OK;
     if (configMRObj.boss.defeatedOn !== null){
         var bossStartTime = formatStringYYYYMMDDHHMISSToDate(configMRObj.boss.defeatedOn);
         var currDate = new Date();
         if (bossStartTime < currDate) {
-            fightBoss();
+            status = fightBoss();
         }
         else {
             logV2(INFO, "BOSS", "Start Time is at: " + bossStartTime);
 	    }
 	}
 	else {
-	    fightBoss();
+	    status = fightBoss();
 	}
+	return status;
 
 }
 
@@ -264,6 +263,7 @@ function fight(){
 	
 	var exitLoop = false;
 	var counter = 0;
+	var status = CONSTANTS.ATTACKSTATUS.OK;
 	do {
 		counter++;
 		var rival = 0;
@@ -274,23 +274,38 @@ function fight(){
 			if (rival > 0) {
 				var fighter = getFighterObject("RIVAL", "RIVAL " + rival, "0");
 				var list = [fighter];
-				processList(list, RIVAL_MOBSTER);
+				status = processList(list, RIVAL_MOBSTER);
+                logV2(INFO, "FIGHT", "Status: " + status);
+				if (status == CONSTANTS.ATTACKSTATUS.NOSTAMINA){
+					logV2(INFO, "FIGHT", "Exit Fight V1...");
+					exitLoop = true;
+					break;
+				}
 			}
 		}
 		while (rival > 0);
+		if (status != CONSTANTS.ATTACKSTATUS.NOSTAMINA) {
 
-		var fighters = getFightList();
-		var filteredFightersList = filterFightList(fighters);
-		processList(filteredFightersList, !RIVAL_MOBSTER);
+            var fighters = getFightList();
+            var filteredFightersList = filterFightList(fighters);
+            status = processList(filteredFightersList, !RIVAL_MOBSTER);
+            logV2(INFO, "FIGHT", "Status: " + status);
+            if (status == CONSTANTS.ATTACKSTATUS.NOSTAMINA) {
+                logV2(INFO, "FIGHT", "Exit Fight V2...");
+                exitLoop = true;
+                break;
+            }
+        }
 	}
 	while (!exitLoop && counter < 100000);
 }
 
 function processList(list, rivalMobster){
 	var refresh = false;
-	list.forEach( function (arrayItem)
-	{
-		if (!arrayItem.skip){
+	var status = CONSTANTS.ATTACKSTATUS.OK;
+	for (var i=0; i < list.length; i++){
+		var arrayItem = list[i];
+	    if (!arrayItem.skip){
 			logV2(INFO, "FIGHT", "Fighting Player " + arrayItem.id + " - " + arrayItem.name);
 			var statusObj = attack(arrayItem, rivalMobster);
 			switch (statusObj.status) {
@@ -302,8 +317,9 @@ function processList(list, rivalMobster){
 					refresh = true;
 					break;
 				case CONSTANTS.ATTACKSTATUS.NOSTAMINA :
-					logV2(INFO, "FIGHT", "Out Of Stamina. Waiting for 10 minutes");
-					waitTillEnoughStamina();
+					logV2(INFO, "FIGHT", "Out Of Stamina. Exiting processList");
+                    status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
+					//waitTillEnoughStamina();
 					refresh = true;
 					break;
 			}
@@ -311,25 +327,42 @@ function processList(list, rivalMobster){
 		else {
 			logV2(INFO, "FIGHT", "Skipping Stronger Opponent: " + arrayItem.id);
 		}
-		if (refresh) return;
-	});
+		if (refresh) break;
+	};
+    logV2(INFO, "FIGHT", "ProcessList Return Status: " + status);
+	return status;
 }
 
 function waitTillEnoughStamina(){
-	var maxStamina = 300;
-	do {
+	var maxStamina = 200;
+    var stamina = 0;
+    var energy = 0;
+    var total = 0;
+    var minStamina = 50;
+    do {
 	    // refreshing stats (health / exp / stamina / energy)
 		playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
-		waitV2("60");
 		stamina = getStamina();
+		energy = getEnergy();
+		total = stamina + energy;
 		var exp = getExperience();
 		if (exp > 0){
 			var staminaNeeded = exp / 4;
 			logV2(INFO, "WAIT", "Stamina Needed: " + staminaNeeded);
-			maxStamina = Math.min(maxStamina, staminaNeeded);
+            logV2(INFO, "WAIT", "Total (Energy + Stamina available): " + total);
+            logV2(INFO, "WAIT", "Stamina: " + stamina);
+            logV2(INFO, "WAIT", "maxStamina: " + maxStamina);
+			// maxStamina = Math.min(maxStamina, staminaNeeded);
+            if (stamina >= minStamina && (stamina >= maxStamina || total >= staminaNeeded)){
+                break;
+            }
+            waitV2("60");
 		}
 	}
-	while (stamina < maxStamina);
+	// wait till stamina > 100
+    // or stamina + energy > (experience needed to level up / 4)
+	while (true);
+    logV2(INFO, "WAIT", "Leaving wait");
 }
 
 function extractRivalMobster(){
@@ -651,6 +684,19 @@ function getStamina(){
 		return stamina;
 	}
 	return 0;
+}
+
+function getEnergy(){
+    var ret = playMacro(JOB_FOLDER, "10_GetEnergy.iim", MACRO_INFO_LOGGING);
+    var energyInfo = getLastExtract(1, "Energy Left", "500/900");
+    logV2(INFO, "ENERGY", "energy = " + energyInfo);
+    if (!isNullOrBlank(energyInfo)){
+        energyInfo = energyInfo.replace(/,/g, '');
+        var tmp = energyInfo.split("/");
+        var energy = parseInt(tmp[0]);
+        return energy;
+    }
+    return 0;
 }
 
 function getExperience(){

@@ -1,6 +1,6 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
 SET !TIMEOUT_STEP 1
 'FRAME NAME="iframe_canvas_fb_https"
-FRAME F={{FRAME}}
+'FRAME F={{FRAME}}
 TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=bank&action=deposit&all=1
 WAIT SECONDS=1
