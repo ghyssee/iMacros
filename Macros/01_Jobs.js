@@ -9,7 +9,7 @@ var localConfigObject = null;
 var NODE_ID = "";
 var SUCCESS = 1;
 var FRAME="0";
-LOG_FILE = new LogFile(LOG_DIR, "MRJobs");
+LOG_FILE = new LogFile(LOG_DIR, "MRJobs2");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 
 var CONSTANTS = Object.freeze({
@@ -31,9 +31,13 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0};
 	var listOfJobs = jobsObj.activeJobs;
     try {
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
-		do {
-            doJobs(listOfJobs);
-            waitV2("60");
+        do {
+            //doJobs(listOfJobs);
+            var energy = getEnergy();
+            logV2(INFO, "Energy", "Energy = " + energy);
+            waitV2("5");
+            //playMacro(COMMON_FOLDER, "20_Refresh.iim", MACRO_INFO_LOGGING);
+            //playMacro(JOB_FOLDER, "98_Test.iim", MACRO_INFO_LOGGING);
         }
         while (true);
 	 }
@@ -80,7 +84,7 @@ function processJob(jobItem){
            logV2(INFO, "JOB", "Problem Finding District " + jobItem.districtId);
            return;
         }
-        retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
+        retCode = playMacro(JOB_FOLDER, "06_Job_DistrictEvent.iim", MACRO_INFO_LOGGING);
         if (retCode === SUCCESS) {
             if (typeof jobItem.chapter !== "undefined" && jobItem.chapter != null){
                 retCode = playMacro(JOB_FOLDER, "04_Job_Chapter.iim", MACRO_INFO_LOGGING);
@@ -204,7 +208,7 @@ function executeJob(jobItem, completed){
 
 function executeMacroJob(jobItem) {
     addMacroSetting("ID", jobItem.jobId);
-    var retCode = playMacro(JOB_FOLDER, "04_Job_Start.iim", MACRO_INFO_LOGGING);
+    var retCode = playMacro(JOB_FOLDER, "07_Job_StartEvent.iim", MACRO_INFO_LOGGING);
     if (retCode === SUCCESS){
         checkSaldo();
         checkIfLevelUp();
@@ -252,8 +256,9 @@ function LogFile(path, fileId){
 }
 
 function getEnergy(){
-	var ret = playMacro(JOB_FOLDER, "10_GetEnergy.iim", MACRO_INFO_LOGGING);
+	var ret = playMacro(JOB_FOLDER, "99_GetEnergy.iim", MACRO_INFO_LOGGING);
 	var energyInfo = getLastExtract(1, "Energy Left", "500/900");
+    logV2(INFO, "ENERGY", "Retcode = " + ret);
 	logV2(INFO, "ENERGY", "energy = " + energyInfo);
 	if (!isNullOrBlank(energyInfo)){
         energyInfo = energyInfo.replace(/,/g, '');

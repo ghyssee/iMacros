@@ -39,8 +39,10 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0};
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
         initJobs(listOfJobs);
 		do {
-            doJobs(listOfJobs);
-            waitV2("60");
+            var wait = doJobs(listOfJobs);
+            if (wait) {
+                waitV2("60");
+            }
         }
         while (true);
 	 }
@@ -51,12 +53,18 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0};
 	}
 
 function doJobs(listOfJobs){
+    var wait = true;
     listOfJobs.forEach( function (jobItem)
     {
         // maybe not necessary, is checked when job is executed successfully
-        checkIfLevelUp();
+        if (checkIfLevelUp()){
+            logV2(INFO, "JOB", "DoJob Level Up");
+            wait = false;
+            return wait;
+        }
         processJob(jobItem);
     });
+    return wait;
 }
 
 function initJobs(listOfJobs){
@@ -135,17 +143,24 @@ function getEnergyOrStamina(jobItem){
 }
 
 function checkIfEnoughEnerygOrStamina(total, jobItem){
+    var status = CONSTANTS.STAMINA.OK;
     logV2(INFO, "JOB", "Entering checkIfEnoughEnerygOrStamina");
-    if (total < jobItem.extraInfo.energyOrStamina) {
-        logV2(INFO, "JOB", "Not Enough energy/stamina to do job. Needed: " + jobItem.extraInfo.energyOrStamina + " / Left: " + total);
-        return false;
+    if (checkIfLevelUp()){
+        logV2(INFO, "JOB", "checkIfEnoughEnerygOrStamina: Level Up");
+        status = CONSTANTS.STAMINA.LEVELUP;
     }
-    return true;
+    else if (total < jobItem.extraInfo.energyOrStamina) {
+        logV2(INFO, "JOB", "Not Enough energy/stamina to do job. Needed: " + jobItem.extraInfo.energyOrStamina + " / Left: " + total);
+        status = CONSTANTS.STAMINA.NOT_ENOUGH;
+    }
+    logV2(INFO, "STATUS", "status = " + status);
+    return status;
 
 }
 
 function processJob(jobItem){
 
+    var exit = false;
     var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
 	if (retCode == SUCCESS) {
         if (!jobItem.ok) {
@@ -156,7 +171,7 @@ function processJob(jobItem){
         var success = false;
         if (jobItem.ok && typeof jobItem.extraInfo != "undefined") {
             // we retrieved already the total amount of energy/stamina we need to do the job
-            if (!checkIfEnoughEnerygOrStamina(energy, jobItem)) {
+            if (checkIfEnoughEnerygOrStamina(energy, jobItem) != CONSTANTS.STAMINA.OK) {
                 return;
             }
         }
@@ -180,7 +195,7 @@ function processJob(jobItem){
             fillJobInfo(jobItem);
             logJob(jobItem);
             // extra info about job is now retrieved
-            if (!checkIfEnoughEnerygOrStamina(energy, jobItem)) {
+            if (checkIfEnoughEnerygOrStamina(energy, jobItem) != CONSTANTS.STAMINA.OK) {
                 return;
             }
             switch (jobItem.type) {
@@ -224,7 +239,7 @@ function repeatJob(jobItem){
                 }
                 // exit loop if not enough energy to continue
                 var energy = getEnergyOrStamina(jobItem);
-                repeat = checkIfEnoughEnerygOrStamina(energy, jobItem);
+                repeat = (checkIfEnoughEnerygOrStamina(energy, jobItem) == CONSTANTS.STAMINA.OK);
             }
         }
         else {
@@ -243,7 +258,7 @@ function completeJob(jobItem){
                 // exit loop if not enough energy to continue
                 if (repeat) {
                     var energy = getEnergyOrStamina(jobItem);
-                    repeat = checkIfEnoughEnerygOrStamina(energy, jobItem);
+                    repeat = (checkIfEnoughEnerygOrStamina(energy, jobItem) == CONSTANTS.STAMINA.OK);
                 }
             }
             else {
@@ -305,7 +320,6 @@ function executeMacroJob(jobItem) {
     }
     if (retCode === SUCCESS){
         checkSaldo();
-        checkIfLevelUp();
         globalSettings.jobsCompleted++;
     }
     return retCode;

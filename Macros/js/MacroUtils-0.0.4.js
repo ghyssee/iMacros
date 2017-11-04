@@ -190,7 +190,6 @@ function macroPlay(macroName, logError, onErrorRetry, logging){
 		var ok = false;
 		
 		ret = iimPlay(macroName);
-		window.console.log("Ret = " + ret);
 		if (logging){
 			logV2(INFO, "PLAY", "Return code = " + ret);
 		}
