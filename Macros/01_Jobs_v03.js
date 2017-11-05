@@ -17,20 +17,22 @@ var CONSTANTS = Object.freeze({
         "REPEAT": "REPEAT",
         "COMPLETE": "COMPLETE",
     },
-    "STAMINA" : {
+    "STATUS" : {
         "OK": 1,
         "NOT_ENOUGH": 2,
-        "LEVELUP": 3
+        "LEVELUP": 3,
+        "SKIP": 4
     }
 });
-
 init();
 var JOB_FOLDER = "MR/Jobs";
 var COMMON_FOLDER = "MR/Common";
 var FIGHT_FOLDER = "MR/Fight";
 
 var jobsObj = initObject(MR_JOBS_FILE);
-var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0};
+var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
+                      "lastDistrict": null, "lastChapter": null,
+                     };
 
 //enableMacroPlaySimulation();
 
@@ -40,6 +42,7 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0};
         initJobs(listOfJobs);
 		do {
             var wait = doJobs(listOfJobs);
+            clearDistrict();
             if (wait) {
                 waitV2("60");
             }
@@ -63,13 +66,16 @@ function doJobs(listOfJobs){
             break;
         }
         var status = processJob(jobItem);
-        if (status == CONSTANTS.STAMINA.LEVELUP){
+        if (status == CONSTANTS.STATUS.LEVELUP){
             wait = false;
             break;
         }
-        else if (status == CONSTANTS.STAMINA.OK){
+        else if (status == CONSTANTS.STATUS.OK){
             wait = false;
             i--;
+        }
+        else if (status == CONSTANTS.STATUS.SKIP){
+            wait = true;
         }
     }
     logV2(INFO, "JOB", "Wait: " + wait);
@@ -192,25 +198,73 @@ function getEnergyOrStamina(jobItem){
 }
 
 function checkIfEnoughEnerygOrStamina(total, jobItem){
-    var status = CONSTANTS.STAMINA.OK;
+    var status = CONSTANTS.STATUS.OK;
     logV2(INFO, "JOB", "Entering checkIfEnoughEnerygOrStamina");
     if (checkIfLevelUp()){
         logV2(INFO, "JOB", "checkIfEnoughEnerygOrStamina: Level Up");
-        status = CONSTANTS.STAMINA.LEVELUP;
+        status = CONSTANTS.STATUS.LEVELUP;
     }
     else if (total < jobItem.extraInfo.energyOrStamina) {
         logV2(INFO, "JOB", "Not Enough energy/stamina to do job. Needed: " + jobItem.extraInfo.energyOrStamina + " / Left: " + total);
-        status = CONSTANTS.STAMINA.NOT_ENOUGH;
+        status = CONSTANTS.STATUS.NOT_ENOUGH;
     }
     logV2(INFO, "STATUS", "status = " + status);
     return status;
 
 }
 
+function goToDistrict(jobItem){
+    var retCode = -1;
+    if (globalSettings.lastDistrict == null || globalSettings.lastDistrict != jobItem.districtId) {
+        logV2(INFO, "JOB", "Travelling to district " + jobItem.districtId);
+        if (jobItem.district.event) {
+            retCode = playMacro(JOB_FOLDER, "06_Job_DistrictEvent.iim", MACRO_INFO_LOGGING);
+        }
+        else {
+            addMacroSetting("DISTRICT", jobItem.districtId);
+            retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
+        }
+        if (retCode == SUCCESS){
+            globalSettings.lastDistrict = jobItem.districtId;
+        }
+    }
+    else {
+        logV2(INFO, "JOB", "Active District: " + jobItem.districtId);
+        retCode = SUCCESS;
+    }
+    return retCode;
+}
+
+function goToChapter(jobItem){
+    var retCode = -1;
+    if (jobItem.job.chapter !== null){
+        if (globalSettings.lastChapter == null || globalSettings.lastChapter != jobItem.job.chapter) {
+            logV2(INFO, "JOB", "Travelling to chapter " + jobItem.job.chapter);
+            addMacroSetting("DISTRICT", jobItem.districtId);
+            addMacroSetting("CHAPTER", jobItem.job.chapter);
+            retCode = playMacro(JOB_FOLDER, "05_Job_Chapter.iim", MACRO_INFO_LOGGING);
+            if (retCode != SUCCESS) {
+                logV2(INFO, "JOB", "Problem Selecting chapter");
+            }
+            else {
+                globalSettings.lastChapter = jobItem.job.chapter;
+            }
+        }
+        else {
+            logV2(INFO, "JOB", "Active Chapter: " + jobItem.job.chapter);
+            retCode = SUCCESS;
+        }
+    }
+    else {
+        retCode = SUCCESS;
+    }
+    return retCode;
+}
+
 function processJob(jobItem){
 
     var exit = false;
-    var status = CONSTANTS.STAMINA.OK;
+    var status = CONSTANTS.STATUS.OK;
     var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
 	if (retCode == SUCCESS) {
         if (!jobItem.ok) {
@@ -222,31 +276,23 @@ function processJob(jobItem){
         if (validJob) {
             var energy = getEnergyOrStamina(jobItem);
             var status = checkIfEnoughEnerygOrStamina(energy, jobItem);
-            if (status != CONSTANTS.STAMINA.OK) {
+            if (status != CONSTANTS.STATUS.OK) {
                 return status;
             }
 
         }
         else {
-                logV2(INFO, "JOB", "Job Not Valid: " + job.districtId + "/" + job.jobId);
+                logV2(INFO, "JOB", "Job Not Valid: " + jobItem.districtId + "/" + jobItem.jobId);
+                status = CONSTANTS.STATUS.SKIP;
+                return status;
             }
         var success = false;
-        if (jobItem.district.event) {
-            retCode = playMacro(JOB_FOLDER, "06_Job_DistrictEvent.iim", MACRO_INFO_LOGGING);
-        }
-        else {
-            addMacroSetting("DISTRICT", jobItem.districtId);
-            retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
-        }
+        retCode = goToDistrict(jobItem);
         if (retCode === SUCCESS) {
-            if (jobItem.job.chapter !== null){
-                addMacroSetting("DISTRICT", jobItem.districtId);
-                addMacroSetting("CHAPTER", jobItem.job.chapter);
-                retCode = playMacro(JOB_FOLDER, "05_Job_Chapter.iim", MACRO_INFO_LOGGING);
-                if (retCode != SUCCESS){
-                    logV2(INFO, "JOB", "Problem Selecting chapter");
-                    return status;
-                }
+            retCode = goToChapter(jobItem);
+            if (retCode != SUCCESS){
+                status = CONSTANTS.STATUS.SKIP;
+                return status;
             }
             logJob(jobItem);
             testJob(jobItem);
@@ -262,18 +308,19 @@ function processJob(jobItem){
     return status;
 }
 
+function clearDistrict(){
+    globalSettings.lastDistrict = null;
+    globalSettings.lastChapter = null;
+}
+
 function testJob(jobItem){
-    //var energy = getEnergyOrStamina(jobItem);
-    //var status = checkIfEnoughEnerygOrStamina(energy, jobItem);
-    //if (status == CONSTANTS.STAMINA.OK) {
         var complete = getPercentCompleted(jobItem);
         var valid = executeJob(jobItem, complete);
         if (valid) {
             jobItem.number++;
+            globalSettings.lastDistrict = jobItem.districtId;
+            globalSettings.lastChapter = jobItem.job.chapter;
         }
-    //}
-    //return status;
-
 }
 
 function isValidJob(jobItem){
@@ -470,10 +517,6 @@ function getSaldo(){
 		return saldo;
 	}
 	return 0;
-}
-
-function removeComma(text){
-    return text.replace(/,/g, '');
 }
 
 function getStatusObject(l){

@@ -372,3 +372,7 @@ function getTab()
 	//return(tab.linkedPanel);
 	return targetBrowserIndex+1;
 }
+
+function removeComma(text){
+    return text.replace(/,/g, '');
+}

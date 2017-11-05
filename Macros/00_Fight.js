@@ -747,6 +747,7 @@ function getSaldo(){
 	//var saldoInfo = prompt("Saldo", "500");
 	logV2(INFO, "BANK", "saldoInfo = " + saldoInfo);
 	if (!isNullOrBlank(saldoInfo)){
+        saldoInfo = removeComma(saldoInfo);
 		var saldo = parseInt(saldoInfo.replace("$", ""));
 		return saldo;
 	}
