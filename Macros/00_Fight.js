@@ -55,10 +55,13 @@ var globalSettings = {"maxLevel": 600, "iced": 0, "money": 0, "currentLevel": 0,
 
 	 try {
 		 var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
-		 var stamina = 0;
 		 do  {
              waitTillEnoughStamina();
-             var status = startFightBoss();
+             var status = CONSTANTS.ATTACKSTATUS.OK;
+             configMRObj = initObject(MR_CONFIG_FILE);
+             if (configMRObj.boss.active) {
+                 status = startFightBoss();
+             }
              if (status != CONSTANTS.ATTACKSTATUS.NOSTAMINA){
                  fight();
              }
@@ -66,9 +69,6 @@ var globalSettings = {"maxLevel": 600, "iced": 0, "money": 0, "currentLevel": 0,
          while (true);
 	 }
 	 catch (ex) {
-	 	if (ex.name != USER_CANCEL) {
-            logError(ex);
-        }
         if (ex instanceof UserCancelError){
 	 		// do nothing
 		}
