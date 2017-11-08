@@ -38,14 +38,6 @@ var FIGHT_FOLDER = "MR/Fight";
 var COMMON_FOLDER = "MR/Common";
 var JOB_FOLDER = "MR/Jobs";
 
-var txt="blabla&id='123456789'&blabla='test'";
-var regExp = /id='(.*)'[&|$]/;
-var matches = txt.match(regExp);
-for (var i = 0; i < matches.length; i++) {
-    var str = matches[i];
-    window.console.log(str);
-}
-window.console.log(MR_DIR);
 var fightersToExclude = initObject(MR_FIGHTERS_EXCLUDE_FILE);
 var friendObj = initObject(MR_FRIENDS_FILE);
 var fighterObj = initObject(MR_FIGHTERS_FILE);
