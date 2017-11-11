@@ -5,14 +5,19 @@ eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\\MyConstants-0.0.3.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 
+var FIGHT_FOLDER = "MR/Fight";
+var COMMON_FOLDER = "MR/Common";
+var JOB_FOLDER = "MR/Jobs";
+
 getMacrosPath();
 var msg = "<img src=\"https://d2swil18r7bmmr.cloudfront.net/img/items/200/bone_dagger.png\" style=\"width: 75px; height: 75px; outline: 1px solid blue;\" class=\"item\" data-id=\"120\">";
 var regExp = /src=\"(.*)\" style/;
 var matches = msg.match(regExp);
 if (matches != null && matches.length > 0){
     var level = matches[1];
-    alert(extractFilename(level));
 }
+var retCode = playMacro(FIGHT_FOLDER, "43_Check_Attack_Button.iim", true);
+alert(retCode);
 
 function extractFilename (str) {
     return str.split('\\').pop().split('/').pop();

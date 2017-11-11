@@ -8,7 +8,6 @@ eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 var localConfigObject = null;
 var NODE_ID = "";
 var SUCCESS = 1;
-var FRAME="0";
 LOG_FILE = new LogFile(LOG_DIR, "MRJobs");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 
@@ -269,6 +268,8 @@ function processJob(jobItem){
 	if (retCode == SUCCESS) {
         if (!jobItem.ok) {
             logV2(INFO, "JOB", "Problem with Job " + jobItem.jobId);
+            globalSettings.lastChapter = null;
+            globalSettings.lastDistrict = null;
            return status;
         }
         var energy = getEnergyOrStamina(jobItem);

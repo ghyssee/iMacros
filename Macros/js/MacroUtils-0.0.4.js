@@ -27,6 +27,7 @@ var MACRO_PLAY_LOGGING = false;
 var MACRO_SETTINGS = [];
 
 var USER_CANCEL = "UserCancelError";
+var FRAME="0";
 
 function UserCancelError(message) {
     this.name = USER_CANCEL;

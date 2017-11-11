@@ -9,7 +9,6 @@ eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 var localConfigObject = null;
 var NODE_ID = "";
 var SUCCESS = 1;
-var FRAME="0";
 LOG_FILE = new LogFile(LOG_DIR, "MRFight");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 
@@ -339,13 +338,18 @@ function waitTillEnoughStamina(){
 		total = stamina + energy;
 		var exp = getExperience();
 		if (exp > 0){
-			var staminaNeeded = exp / 4;
+			var staminaNeeded = exp / (4.3);
 			logV2(INFO, "WAIT", "Stamina Needed: " + staminaNeeded);
             logV2(INFO, "WAIT", "Total (Energy + Stamina available): " + total);
             logV2(INFO, "WAIT", "Stamina: " + stamina);
             logV2(INFO, "WAIT", "maxStamina: " + maxStamina);
 			// maxStamina = Math.min(maxStamina, staminaNeeded);
-            if (stamina >= minStamina && (stamina >= maxStamina || total >= staminaNeeded)){
+            if (total >= staminaNeeded && (stamina >= minStamina || exp < 300)) {
+                logV2(INFO, "WAIT", "Enough Stamina to level up");
+                break;
+            }
+            else if (stamina >= maxStamina){
+                logV2(INFO, "WAIT", "Enough Stamina to start fighting again");
                 break;
             }
             waitV2("60");
@@ -406,10 +410,12 @@ function attack(fighter, rivalMobster){
 					if (!rivalMobster) {
 						addFighter(fighter);
 					}
+					/*
 					if (getVictimHealth() ==0){
 						statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 						break;
 					}
+					*/
 					var attackStatusObj = attackTillDeath(fighter, rivalMobster);
 					checkIfLevelUp();
 					if (attackStatusObj.status == CONSTANTS.ATTACKSTATUS.NOSTAMINA){
@@ -460,7 +466,7 @@ function getVictimHealth(){
 			logV2(INFO, "ATTACK", "Victim Health: " + healthMsg);
             health = parseInt(healthMsg);
             if (health == 0){
-                waitV2("0.5");
+                waitV2("0.3");
                 checkIfIced();
             }
 		}
@@ -469,6 +475,18 @@ function getVictimHealth(){
         }
 	}
 	return health;
+
+}
+
+function checkForAttackButton(){
+    var btnAvailable = false;
+	var retCode = playMacro(FIGHT_FOLDER, "43_Check_Attack_Button.iim", MACRO_INFO_LOGGING);
+    var btn = getLastExtract(1, "ATTACK BUTTON", "Power Attack");
+    if (retCode == SUCCESS && !isNullOrBlank(btn)){
+        btnAvailable = true;
+    }
+    logV2(INFO, "ATTACK", "Check Attack Button: " + btnAvailable);
+    return btnAvailable;
 
 }
 
@@ -495,13 +513,23 @@ function attackTillDeath(fighter, rivalMobster){
 				originalHealth = health;
 				previousHealth = health;
 			}
+			var victimIsDeath = false;
 			if (health == 0){
-				logV2(INFO, "ATTACK", "Victim is dead: " + fighter.id);
-				alive = false;
-				statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
-				break;
+				// check if attack button available (if health is 0, he can still be alive)
+				if (checkForAttackButton()){
+                    logV2(INFO, "ATTACK", "Victim is not dead yet. Continue Attacking...");
+                    victimIsDeath = false;
+                    alive = true;
+				}
+				else {
+                    logV2(INFO, "ATTACK", "Victim is dead: " + fighter.id);
+                    alive = false;
+                    statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
+                    victimIsDeath = true;
+                    break;
+                }
 			}
-			else {
+			if (!victimIsDeath) {
 				var deltaHealth = 0;
 				if (!firstAttack){
 					deltaHealth = previousHealth-health;
@@ -513,7 +541,7 @@ function attackTillDeath(fighter, rivalMobster){
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
 				}
-				else if (nrOfHeals > 2){
+				else if (nrOfHeals > 2 && health > 2){
 					logV2(INFO, "ATTACK", "Victim Heals too fast. Skipping...");
 					globalSettings.maxHealed++;
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
@@ -550,10 +578,11 @@ function attackTillDeath(fighter, rivalMobster){
 					// Opponent was already dead and no stamina is spent
 					// maybe also check if is iced by you
 					health = getVictimHealth();
+					/*
 					if (health == 0){
-						CONSTANTS.ATTACKSTATUS.OK;
+                        statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 						break;
-					}
+					}*/
 					
 					if (retCode != SUCCESS){
 						statusObj.status = CONSTANTS.ATTACKSTATUS.PROBLEM;
@@ -814,6 +843,7 @@ function filterFightList(fightList){
 			}
 		});
 	}
+    logV2(INFO, "FIGHTLIST", "Filtered Fightlist count: " + filteredList.length);
 	return filteredList;
 }
 
@@ -830,7 +860,8 @@ function findFighter(list, id){
 }
 
 function extractLevelFromString(text){
-	var regExp = /Level (.*)$/;
+	text = removeComma(text);
+    var regExp = /Level (.*)$/;
 	var matches = text.match(regExp);
 	if (matches != null && matches.length > 0){
 		var level = matches[matches.length-1];
