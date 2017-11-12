@@ -43,37 +43,42 @@ var fighterObj = initObject(MR_FIGHTERS_FILE);
 var configMRObj = initObject(MR_CONFIG_FILE);
 var globalSettings = {"maxLevel": 600, "iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0, "skippedHealth": 0, "maxHealed": 0, "heals": 0,
                       "boss": {"attacks": 0}};
+startScript();
+//removeItemFromArray(MR_FIGHTERS_FILE, "10155726770108684")
 
-	 try {
-		 var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
-		 do  {
-             waitTillEnoughStamina();
-             var status = CONSTANTS.ATTACKSTATUS.OK;
-             configMRObj = initObject(MR_CONFIG_FILE);
-             if (configMRObj.boss.active) {
-                 status = startFightBoss();
-             }
-             if (status != CONSTANTS.ATTACKSTATUS.NOSTAMINA){
-                 fight();
-             }
-         }
-         while (true);
-	 }
-	 catch (ex) {
+function startScript(){
+    try {
+        var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
+        do  {
+            waitTillEnoughStamina();
+            var status = CONSTANTS.ATTACKSTATUS.OK;
+            configMRObj = initObject(MR_CONFIG_FILE);
+            if (configMRObj.boss.active) {
+                status = startFightBoss();
+                logV2(INFO, "BOSSFIGHT", "Status: " + status);
+            }
+            if (status != CONSTANTS.ATTACKSTATUS.NOSTAMINA){
+                fight();
+            }
+        }
+        while (true);
+    }
+    catch (ex) {
         if (ex instanceof UserCancelError){
-	 		// do nothing
-		}
-		else {
+            // do nothing
+        }
+        else {
             logError(ex);
         }
-		logV2(INFO, "SUMMARY", "Total Iced: " + globalSettings.iced);
-		logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
-		logV2(INFO, "SUMMARY", "Nr Of Attacks: " + globalSettings.nrOfAttacks);
-		logV2(INFO, "SUMMARY", "Stolen Ices: " + globalSettings.stolenIces);
-		logV2(INFO, "SUMMARY", "Skipped Health: " + globalSettings.skippedHealth);
-		logV2(INFO, "SUMMARY", "Max Healed: " + globalSettings.maxHealed);
-		logV2(INFO, "SUMMARY", "Heals: " + globalSettings.heals);
-	}
+        logV2(INFO, "SUMMARY", "Total Iced: " + globalSettings.iced);
+        logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
+        logV2(INFO, "SUMMARY", "Nr Of Attacks: " + globalSettings.nrOfAttacks);
+        logV2(INFO, "SUMMARY", "Stolen Ices: " + globalSettings.stolenIces);
+        logV2(INFO, "SUMMARY", "Skipped Health: " + globalSettings.skippedHealth);
+        logV2(INFO, "SUMMARY", "Max Healed: " + globalSettings.maxHealed);
+        logV2(INFO, "SUMMARY", "Heals: " + globalSettings.heals);
+    }
+}
 
 function startFightBoss(){
     logV2(INFO, "BOSS", "Start Boss Fight");
@@ -233,7 +238,7 @@ function evaluateBossMessage() {
 					logV2(INFO, "BOSS", "No Time Found");
                 }
             }
-            else if (msg.startsWith("ANTON")) {
+            else if (msg.startsWith(configMRObj.boss.name.toUpperCase())) {
                 bossObj.status = CONSTANTS.ATTACKSTATUS.OK;
             	logV2(INFO, "BOSS", "BOSS AVAILABLE ???");
             }
@@ -279,7 +284,12 @@ function fight(){
 
             var fighters = getFightList();
             var filteredFightersList = filterFightList(fighters);
-            status = processList(filteredFightersList, !RIVAL_MOBSTER);
+            if (filteredFightersList.length > 2) {
+                status = processList(filteredFightersList, !RIVAL_MOBSTER);
+            }
+            else {
+                status = startProfileAttack();
+            }
             logV2(INFO, "FIGHT", "Status: " + status);
             if (status == CONSTANTS.ATTACKSTATUS.NOSTAMINA) {
                 logV2(INFO, "FIGHT", "Exit Fight V2...");
@@ -298,7 +308,7 @@ function processList(list, rivalMobster){
 		var arrayItem = list[i];
 	    if (!arrayItem.skip){
 			logV2(INFO, "FIGHT", "Fighting Player " + arrayItem.id + " - " + arrayItem.name);
-			var statusObj = attack(arrayItem, rivalMobster);
+			var statusObj = attack(arrayItem, rivalMobster, false);
 			switch (statusObj.status) {
 				case CONSTANTS.ATTACKSTATUS.OK :
 					// do nothing, continue with next fighter
@@ -344,7 +354,7 @@ function waitTillEnoughStamina(){
             logV2(INFO, "WAIT", "Stamina: " + stamina);
             logV2(INFO, "WAIT", "maxStamina: " + maxStamina);
 			// maxStamina = Math.min(maxStamina, staminaNeeded);
-            if (total >= staminaNeeded && (stamina >= minStamina || exp < 300)) {
+            if (total >= staminaNeeded && stamina > 10 && (stamina >= minStamina || exp < 300)) {
                 logV2(INFO, "WAIT", "Enough Stamina to level up");
                 break;
             }
@@ -379,11 +389,17 @@ function extractRivalMobster(){
 	return mob;
 }
 
-function attack(fighter, rivalMobster){
+function attack(fighter, rivalMobster, profileFighter){
 	logV2(INFO, "FIGHT", "Attacking " + fighter.id);
-	var retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
+	var retCode = SUCCESS;
+	if (!profileFighter) {
+        retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
+    }
 	checkHealth();
-	if (rivalMobster){
+	if (profileFighter){
+        retCode = playMacro(FIGHT_FOLDER, "81_Profile_Attack_Start.iim", MACRO_INFO_LOGGING);
+	}
+	else if (rivalMobster){
 		retCode = playMacro(FIGHT_FOLDER, "32_AttackRivalMobster_start.iim", MACRO_INFO_LOGGING);
 	}
 	else {
@@ -404,10 +420,14 @@ function attack(fighter, rivalMobster){
 					logV2(INFO, "FIGHT", "Add Friend: " + fighter.id);
 					fighter.skip = true;
 					addFriend(fighter);
+					if (profileFighter){
+						removeItemFromArray(MR_FIGHTERS_FILE, fighter.id);
+                        logV2(INFO, "FIGHT", "Remove Fighter + Add Friend: " + fighter.id);
+					}
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
 				case CONSTANTS.OPPONENT.WON :
-					if (!rivalMobster) {
+					if (!rivalMobster && !profileFighter) {
 						addFighter(fighter);
 					}
 					/*
@@ -435,6 +455,10 @@ function attack(fighter, rivalMobster){
                     getVictimHealth();
 					logV2(INFO, "FIGHT", "Add Stronger Opponent: " + fighter.id);
 					addStrongerOpponent(fighter);
+                    if (profileFighter){
+                        removeItemFromArray(MR_FIGHTERS_FILE, fighter.id);
+                        logV2(INFO, "FIGHT", "Remove Fighter + Add Stronger Opponent: " + fighter.id);
+                    }
 					fighter.skip = true;
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
@@ -491,7 +515,7 @@ function checkForAttackButton(){
 }
 
 function attackTillDeath(fighter, rivalMobster){
-	logV2(INFO, "ATTACK", "Attack Figther " + fighter.id);
+	logV2(INFO, "ATTACK", "AttackTillIced Figther " + fighter.id);
 	var alive = true;
 	var retCode = 0;
 	var previousHealth = 1000;
@@ -567,7 +591,8 @@ function attackTillDeath(fighter, rivalMobster){
 						retCode = playMacro(FIGHT_FOLDER, "42_VictimRivalMobster_Attack.iim", MACRO_INFO_LOGGING);
 					}
 					else {
-						addMacroSetting("ID", fighter.id);
+					    addMacroSetting("ID", fighter.id);
+                        logV2(INFO, "ATTACK", "ID: " + fighter.id);
 						retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack", MACRO_INFO_LOGGING);
 					}
 					firstAttack = false;
@@ -594,9 +619,11 @@ function attackTillDeath(fighter, rivalMobster){
 		else {
 			// Problem with script
 			statusObj.status = CONSTANTS.ATTACKSTATUS.PROBLEM;
+            logV2(INFO, "ATTACK", "Problem Attack Till Death");
 			return statusObj;
 		}
 		//alive = false;
+        logV2(INFO, "ATTACK", "Alive = " + alive);
 	}
 	while (alive);
 	logV2(INFO, "ATTACK", "Attack Figther Finished.");
@@ -649,13 +676,17 @@ function checkIfLevelUp(){
 }
 
 function addFriend(fighter){
-	friendObj.fighters.push(fighter);
-	writeObject(friendObj, MR_FRIENDS_FILE);
+    if (!findFighter(friendObj.fighters, fighter.id)){
+    	friendObj.fighters.push(fighter);
+        writeObject(friendObj, MR_FRIENDS_FILE);
+    }
 }
 
 function addStrongerOpponent(fighter){
-	fightersToExclude.fighters.push(fighter);
-	writeObject(fightersToExclude, MR_FIGHTERS_EXCLUDE_FILE);
+    if (!findFighter(fightersToExclude.fighters, fighter.id)){
+    	fightersToExclude.fighters.push(fighter);
+        writeObject(fightersToExclude, MR_FIGHTERS_EXCLUDE_FILE);
+    }
 }
 
 function addFighter(fighter){
@@ -910,10 +941,10 @@ function closePopup(){
 
 function getHealth(){
 	playMacro(FIGHT_FOLDER, "11_GetHealth.iim", MACRO_INFO_LOGGING);
-	var healthInfo = getLastExtract(1, "Health", "50%");
-	//var healthInfo = prompt("Health", "80/350");
+	var healthInfo = getLastExtract(1, "Health", "50/200");
 	logV2(INFO, "BOSS", "healthInfo = " + healthInfo);
 	if (!isNullOrBlank(healthInfo)){
+        healthInfo = removeComma(healthInfo);
 		var tmp = healthInfo.split("/");
 		var health = parseInt(tmp[0]);
 		return health;
@@ -1018,4 +1049,61 @@ function getFirefoxSetting(branch, key){
 
     var value = prefs.getCharPref(key, Components.interfaces.nsISupportsString);
     return value;
+}
+
+function removeItemFromArray(file, id){
+	var obj= initObject(file);
+    var index = -1;
+	for (var i=0; i < obj.fighters.length; i++){
+		var item = obj.fighters[i];
+		if (item.id == id){
+			index = i;
+			break;
+		}
+	}
+	if (index >= 0){
+        obj.fighters.splice(index, 1);
+		writeObject(obj, file);
+	}
+	return index > -1;
+}
+
+function startProfileAttack(){
+    var refresh = false;
+    var status = CONSTANTS.ATTACKSTATUS.OK;
+    for (var i=0; i < fighterObj.fighters.length; i++) {
+        var arrayItem = fighterObj.fighters[i];
+        addMacroSetting("ID", arrayItem.id);
+        var retCode = playMacro(FIGHT_FOLDER, "80_Profile_Attack_Init.iim", MACRO_INFO_LOGGING);
+        if (retCode == SUCCESS) {
+            if (!arrayItem.skip) {
+                logV2(INFO, "FIGHT", "Profile Fighting Player " + arrayItem.id + " - " + arrayItem.name);
+                var statusObj = attack(arrayItem, false, true);
+                switch (statusObj.status) {
+                    case CONSTANTS.ATTACKSTATUS.OK :
+                        // do nothing, continue with next fighter
+                        break;
+                    case CONSTANTS.ATTACKSTATUS.PROBLEM :
+                    	logV2(INFO, "FIGHT", "Problem With Fighter. Skipping...");
+                        break;
+                    case CONSTANTS.ATTACKSTATUS.NOSTAMINA :
+                        logV2(INFO, "FIGHT", "Out Of Stamina. Exiting Profile Fighters List");
+                        status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
+                        refresh = true;
+                        break;
+                }
+            }
+            else {
+                logV2(INFO, "FIGHT", "Skipping Stronger Opponent: " + arrayItem.id);
+            }
+            if (refresh) break;
+        }
+        else {
+            logV2(INFO, "FIGHT", "startProfileAttack Return Status: " + status);
+		}
+    }
+    // reload fighters list
+    logV2(INFO, "FIGHT", "Reloading fighters list");
+    fighterObj = initObject(MR_FIGHTERS_FILE);
+    return status;
 }

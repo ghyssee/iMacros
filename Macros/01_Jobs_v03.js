@@ -292,6 +292,7 @@ function processJob(jobItem){
         if (retCode === SUCCESS) {
             retCode = goToChapter(jobItem);
             if (retCode != SUCCESS){
+                clearDistrict();
                 status = CONSTANTS.STATUS.SKIP;
                 return status;
             }
@@ -483,10 +484,12 @@ function getPercentCompleted(jobItem){
             return parseInt(percentInfo);
         }
         else {
+            clearDistrict();
             logV2(INFO, "JOB", "Problem Extracting Percent Completed");
         }
     }
     else {
+        clearDistrict();
         logV2(INFO, "JOB", "Problem getting Percent Completed");
     }
     return 100;

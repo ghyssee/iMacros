@@ -1,6 +1,5 @@
-﻿VERSION BUILD=8970419 RECORDER=FX
+﻿VERSION BUILD=10022823
 TAB T=1
+TAB CLOSEALLOTHERS
 URL GOTO=https://mafiareloaded.com/game/
-TAG POS=1 TYPE=A ATTR=HREF:#&&CLASS:ajax_request<SP>navbar-btn&&DATA-PARAMS:controller=home&action=view
-TAG POS=1 TYPE=A ATTR=HREF:#&&CLASS:ajax_request<SP>navbar-btn&&DATA-PARAMS:controller=fight&action=view&&DATA-CALLBACK:on_attack_done
-TAG POS=1 TYPE=A ATTR=HREF:#&&CLASS:ajax_request<SP>navbar-btn&&DATA-PARAMS:controller=home&action=view
+TAG POS=1 TYPE=A ATTR=TXT:X

@@ -16,8 +16,24 @@ var matches = msg.match(regExp);
 if (matches != null && matches.length > 0){
     var level = matches[1];
 }
-var retCode = playMacro(FIGHT_FOLDER, "43_Check_Attack_Button.iim", true);
-alert(retCode);
+MR_FIGHTERS_FILE.file = MR_FIGHTERS_FILE.file + ".json";
+var fighterObj = initObject(MR_FIGHTERS_FILE);
+var testObj = findFighter(fighterObj.fighters, "135578150533601");
+alert (testObj.name);
+writeObject(fighterObj, MR_FIGHTERS_FILE);
+
+
+    function findFighter(list, id){
+        var obj = null;
+        list.forEach( function (arrayItem)
+        {
+            if (arrayItem.id == id){
+                obj = arrayItem;
+                return;
+            }
+        });
+        return obj;
+    }
 
 function extractFilename (str) {
     return str.split('\\').pop().split('/').pop();
