@@ -1,6 +1,6 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
 SET !TIMEOUT_STEP 1
 URL GOTO=https://mafiareloaded.com/game/?controller=profile&id={{ID}}
-WAIT SECONDS=2
+WAIT SECONDS=0.5
 TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fight&action=attackview&id=*
 WAIT SECONDS=1

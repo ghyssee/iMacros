@@ -16,12 +16,27 @@ var matches = msg.match(regExp);
 if (matches != null && matches.length > 0){
     var level = matches[1];
 }
+/*
 MR_FIGHTERS_FILE.file = MR_FIGHTERS_FILE.file + ".json";
 var fighterObj = initObject(MR_FIGHTERS_FILE);
 var testObj = findFighter(fighterObj.fighters, "135578150533601");
 alert (testObj.name);
 writeObject(fighterObj, MR_FIGHTERS_FILE);
+*/
+var fighterObj = initObject(MR_FIGHTERS_FILE);
+logV2(INFO, "TEST", "Length:" + fighterObj.fighters.length);
+logV2(INFO, "TEST", "Min:" + (fighterObj.fighters.length - 100));
+for (var i=0; i < 1000; i++) {
+    var start = randomIntFromInterval(0, fighterObj.fighters.length - 100);
+	//var min = fighterObj.fighters.length;
+	logV2(INFO, "TEST", "Start:" + start + " / End: " + (start+100));
+}
 
+
+function randomIntFromInterval(min,max)
+{
+    return Math.floor(Math.random()*(max-min+1)+min);
+}
 
     function findFighter(list, id){
         var obj = null;

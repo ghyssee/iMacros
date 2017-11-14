@@ -41,7 +41,7 @@ var fightersToExclude = initObject(MR_FIGHTERS_EXCLUDE_FILE);
 var friendObj = initObject(MR_FRIENDS_FILE);
 var fighterObj = initObject(MR_FIGHTERS_FILE);
 var configMRObj = initObject(MR_CONFIG_FILE);
-var globalSettings = {"maxLevel": 600, "iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0, "skippedHealth": 0, "maxHealed": 0, "heals": 0,
+var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0, "skippedHealth": 0, "maxHealed": 0, "heals": 0,
                       "boss": {"attacks": 0}};
 startScript();
 //removeItemFromArray(MR_FIGHTERS_FILE, "10155726770108684")
@@ -261,7 +261,8 @@ function fight(){
 	var counter = 0;
 	var status = CONSTANTS.ATTACKSTATUS.OK;
 	do {
-		counter++;
+        configMRObj = initObject(MR_CONFIG_FILE);
+        counter++;
 		var rival = 0;
 
 		do {
@@ -284,7 +285,9 @@ function fight(){
 
             var fighters = getFightList();
             var filteredFightersList = filterFightList(fighters);
-            if (filteredFightersList.length > 2) {
+            var minFightList = isNullOrBlank(configMRObj.fight.minLengthOfFightList) ? 0: configMRObj.fight.minLengthOfFightList;
+            logV2(INFO, "FIGHT", "Min Fighters on Fight List: " + minFightList);
+            if (filteredFightersList.length > minFightList) {
                 status = processList(filteredFightersList, !RIVAL_MOBSTER);
             }
             else {
@@ -852,12 +855,12 @@ function filterFightList(fightList){
 	if (fightList != null && fightList.length > 0){
 		fightList.forEach( function (fighter)
 		{
-			window.console.log(fighter.id);
 			// lookup strong opponents list
 			if (!findFighter(fightersToExclude.fighters, fighter.id)){
 				// lookup friends list
 				if (!findFighter(friendObj.fighters, fighter.id)){
-					var maxLevel = globalSettings.currentLevel === 0 ? globalSettings.maxLevel : (globalSettings.currentLevel + 200);
+					var maxLevel = globalSettings.currentLevel === 0 ? globalSettings.maxLevel : (globalSettings.currentLevel + 500);
+                    logV2(INFO, "FIGHTLIST", "Max Level: " + maxLevel);
 					if (fighter.level <= maxLevel){
 						filteredList.push(fighter);
 					}
@@ -1071,7 +1074,14 @@ function removeItemFromArray(file, id){
 function startProfileAttack(){
     var refresh = false;
     var status = CONSTANTS.ATTACKSTATUS.OK;
-    for (var i=0; i < fighterObj.fighters.length; i++) {
+    var nr = fighterObj.fighters.length;
+    logV2(INFO, "FIGHT", "Range Max:" + (nr - 100));
+    logV2(INFO, "FIGHT", "Total:" + nr);
+    var start = randomIntFromInterval(0, nr - 100);
+    var max = Math.min(start+100, nr-1);
+    logV2(INFO, "FIGHT", "Random Start Position: " + start);
+    logV2(INFO, "FIGHT", "Random End Position: " + max);
+    for (var i=start; i <= max; i++) {
         var arrayItem = fighterObj.fighters[i];
         addMacroSetting("ID", arrayItem.id);
         var retCode = playMacro(FIGHT_FOLDER, "80_Profile_Attack_Init.iim", MACRO_INFO_LOGGING);
@@ -1107,3 +1117,4 @@ function startProfileAttack(){
     fighterObj = initObject(MR_FIGHTERS_FILE);
     return status;
 }
+

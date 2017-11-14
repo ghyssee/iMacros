@@ -35,7 +35,7 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
 
 //enableMacroPlaySimulation();
 
-	var listOfJobs = jobsObj.activeJobs;
+	var listOfJobs = getListOfEnabledJobs(jobsObj.activeJobs);
     try {
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
         initJobs(listOfJobs);
@@ -53,6 +53,17 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
         logV2(INFO, "SUMMARY", "Jobs Completed: " + globalSettings.jobsCompleted);
 		logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
 	}
+
+	function getListOfEnabledJobs(listOfJobs){
+        jobList = [];
+        listOfJobs.forEach( function (jobItem)
+        {
+            if (jobItem.enabled){
+                jobList.push(jobItem);
+            }
+        });
+        return jobList;
+    }
 
 function doJobs(listOfJobs){
     var wait = true;
@@ -473,6 +484,8 @@ function getEnergy(){
 }
 
 function getPercentCompleted(jobItem){
+    goToDistrict(jobItem);
+    goToChapter(jobItem);
     addMacroSetting("ID", jobItem.jobId);
     var retCode = playMacro(JOB_FOLDER, "11_PercentCompleted.iim", MACRO_INFO_LOGGING);
     if (retCode === SUCCESS) {
@@ -521,13 +534,6 @@ function getSaldo(){
 		return saldo;
 	}
 	return 0;
-}
-
-function getStatusObject(l){
-	return {"status":null, 
-	        "totalStamina":0,
-			"iced": 0
-		   };
 }
 
 function closePopup(){
