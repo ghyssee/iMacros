@@ -33,7 +33,6 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                       "lastDistrict": null, "lastChapter": null,
                      };
 
-//enableMacroPlaySimulation();
 //startList();
 //var job = getHighestPayloadJob(jobsObj.districts);
 //logJob(job, "Job With Highest Money Ratio");
@@ -48,9 +47,58 @@ logV2(INFO, "TST", txt);
 //var jobId = "<span id=\"job-mastery-81\" style=\"width: 100%; outline: 1px solid blue;\"><span>100% Complete</span></span>";
 alert(extractJobId(jobId));
 */
-convertFighterObj();
+//convertFighterObj();
 
-function logJob(jobItem, title){
+var CONSTANTS = Object.freeze({
+    "FILTER" : {
+        "YES": 0,
+        "NO": 1,
+        "WHATEVER" : 2
+    },
+    "SELECTTYPES" : {
+        "EVENT" : 1,
+        "MONEY": 2,
+        "MONEYCOST": 3,
+        "CONSUMABLECOST": 4,
+        "HIGHESTRATIO": 5,
+        "HIGHESTMONEY": 6
+    }
+});
+
+var selectObj = {
+    "EVENT" : 1,
+    "MONEY": 2,
+    "CONSUMABLECOST": 3,
+    "HIGHESTRATIO": 4,
+    "HIGHESTMONEY": 5
+}
+
+var selections = [  addFilter(CONSTANTS.SELECTTYPES.EVENT, CONSTANTS.FILTER.NO),
+                    //addFilter(CONSTANTS.SELECTTYPES.MONEY, CONSTANTS.FILTER.WHATEVER),
+                    addFilter(CONSTANTS.SELECTTYPES.MONEYCOST, CONSTANTS.FILTER.NO),
+                    addFilter(CONSTANTS.SELECTTYPES.CONSUMABLECOST, CONSTANTS.FILTER.NO)
+                 ];
+
+/*
+EVENT: YES / NO / WHATEVER
+MONEY: YES / NO / WHATEVER
+RATIO: YES / NO / WHATEVER
+switch selecttype
+    case EVENT:
+        if WHATEVER || (district.event && YES)
+            => job is selectable
+    case MONEY:
+        if WHATEVER || (job.money >0 && YES)
+            => job is selectable
+    case CONSUMABLE:
+        if WHATEVER || (job.consumableCost && YES)
+            => job is selectable
+
+after that, sort on highest money or ratio
+*/
+getJob(jobsObj.districts, selections);
+
+function logJob(job, title){
     logV2(INFO, "JOB", title);
     logV2(INFO, "JOB", "ID: " + job.id);
     logV2(INFO, "JOB", "Name: " + job.description);
@@ -62,6 +110,22 @@ function logJob(jobItem, title){
     logV2(INFO, "JOB", "Money: " + job.money);
     logV2(INFO, "JOB", "Money Ratio: " + job.moneyRatio);
     logV2(INFO, "JOB", "Ratio: " + job.ratio);
+}
+
+function logJob2(job, title, selectable){
+    logV2(INFO, "JOB", title);
+    logV2(INFO, "JOB", "ID: " + job.id);
+    logV2(INFO, "JOB", "Name: " + job.description);
+    logV2(INFO, "JOB", "District: " + job.districtId + " - " + job.districtName);
+    logV2(INFO, "JOB", "Chapter: " + job.chapter);
+    logV2(INFO, "JOB", "Type: " + job.type);
+    logV2(INFO, "JOB", "Energy: " + job.energy);
+    logV2(INFO, "JOB", "Experience: " + job.exp);
+    logV2(INFO, "JOB", "Money: " + job.money);
+    logV2(INFO, "JOB", "Selectable: " + selectable);
+    logV2(INFO, "JOB", "Money Ratio: " + job.moneyRatio);
+    logV2(INFO, "JOB", "Ratio: " + job.ratio);
+    logV2(INFO, "JOB", "============================================================================");
 }
 
 function getMoneyRatio(job){
@@ -80,6 +144,99 @@ function fillJobRatio(job, ratio, district){
     job.districtId = district.id;
     job.districtName = district.description;
     job.ratio = ratio;
+}
+
+function addFilter(type, value){
+    var selectType = {"type": type, "value": value};
+    return selectType;
+}
+
+function convertBooleanToFilterType(value){
+    if (value){
+        return CONSTANTS.FILTER.YES;
+    }
+    else {
+        return CONSTANTS.FILTER.NO;
+    }
+}
+
+function isJobSelectable(filters, district, job){
+    var valid = true;
+    for (var i=0; i < filters.length; i++){
+        var typeObj = filters[i];
+        switch (typeObj.type) {
+            case CONSTANTS.SELECTTYPES.EVENT:
+                if (typeObj.value == CONSTANTS.FILTER.WHATEVER || convertBooleanToFilterType(district.event) == typeObj.value){
+                    //alert("NO EVENT");
+                    valid = valid && true;
+                }
+                else {
+                    valid = false;
+                }
+                break;
+            case CONSTANTS.SELECTTYPES.MONEY:
+                if (typeObj.value == CONSTANTS.FILTER.WHATEVER || convertBooleanToFilterType(job.money > 0) == typeObj.value){
+                    //alert("MONEY");
+                    valid = valid && true;
+                }
+                else {
+                    valid = false;
+                }
+                break;
+            case CONSTANTS.SELECTTYPES.MONEYCOST:
+                if (typeObj.value == CONSTANTS.FILTER.WHATEVER || (convertBooleanToFilterType(job.money < 0) == typeObj.value)){
+                 //   alert("COSTS NO MONEY");
+                    valid = valid && true;
+                }
+                else {
+                    valid = false;
+                }
+                break;
+            case CONSTANTS.SELECTTYPES.CONSUMABLECOST:
+                if (typeObj.value == CONSTANTS.FILTER.WHATEVER || (convertBooleanToFilterType(job.consumableCost) == typeObj.value)){
+                   // alert("COSTS NO CONSUMABLE");
+                    valid = valid && true;
+                }
+                else {
+                    valid = false;
+                }
+                break;
+        }
+    }
+    return valid;
+}
+
+
+function getJob(districts, filters){
+    var foundJob = null;
+    var selectedJobs = [];
+
+    for (var i=0; i < districts.length; i++){
+        var district = districts[i];
+        for (var j=0; j < district.jobs.length; j++){
+            var job = district.jobs[j];
+            var test = isJobSelectable(filters, district, job);
+            job.ratio = getRatio(job);
+            job.moneyRatio = getMoneyRatio(job);
+            job.districtId = district.id;
+            job.districtName = district.description;
+            logJob2(job, "SELECTABLE", test);
+            if (test) {
+                selectedJobs.push(job);
+            }
+        }
+    }
+    selectedJobs.sort(function(a, b) {
+        return b.ratio - a.ratio;
+    });
+    logV2(INFO, "SORTED", "Sorted...");
+    logV2(INFO, "SORTED", "-----------------------------------------------------------------------------");
+    logV2(INFO, "TST", JSON.stringify(selectedJobs));
+    for (var i=0; i < selectedJobs.length; i++){
+        logJob2(selectedJobs[i], "SELECTABLE", test);
+    }
+    return foundJob;
+
 }
 
 function getHighestPayloadJob(districts){
@@ -178,13 +335,13 @@ function startList() {
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
             // district 1
-            /*
+
             for (var i=1; i <= 10; i++) {
                 startChapter("1", i.toString());
             }
-            */
+
             // district 2
-            for (var i=11; i <= 14; i++) {
+            for (var i=11; i <= 15; i++) {
                 startChapter("2", i.toString());
             }
         }
@@ -282,6 +439,22 @@ function startList() {
                 logV2(INFO, "JOBLIST", "Money: " + jobObj.money);
                 logV2(INFO, "JOBLIST", "Exp: " + jobObj.exp);
                 logV2(INFO, "JOBLIST", "Id: " + jobObj.id);
+
+
+                addMacroSetting("ID", counter.toString());
+                retCode = playMacro(JOB_FOLDER, "21_Joblist_Cost_Consumable.iim", MACRO_INFO_LOGGING);
+                if (retCode == SUCCESS){
+                    txt = getLastExtract(1, "CONSUMABLECOST", "<div style=\"width: 145px; outline: 1px solid blue;\"><span class=\"energy\">156</span>&nbsp;<img src=\"https://d2swil18r7bmmr.cloudfront.net/img/items/200/travel_bag.png\" style=\"width:40px;height:40px;vertical-align:middle;\" class=\"item\" data-id=\"80\"></div>");
+                    if (!isNullOrBlank(txt)){
+                        jobObj.consumableCost = containsConsumable(txt);
+                        txt = getLastExtract(2, "CONSUMABLE OR LOOT", "<div style=\"outline: 1px solid blue;\"><div style=\"display:table;\"><div style=\"display:table-cell;vertical-align:middle;text-align:center;\"><span class=\"experience\">283</span></div><div style=\"display:table-cell;vertical-align:middle;text-align:center;\">&nbsp;<span class=\"cash\">$100</span>&nbsp;<span class=\"loot item\" data-id=\"81\"></span></div></div></div>");
+                        jobObj.consumable = containsConsumable(txt);
+                        jobObj.loot = containsLoot(txt);
+                    }
+                }
+                logV2(INFO, "JOBLIST", "consumableCost: " + jobObj.consumableCost);
+                logV2(INFO, "JOBLIST", "consumable: " + jobObj.consumable);
+                logV2(INFO, "JOBLIST", "Loot: " + jobObj.loot);
                 jobs.push(jobObj);
             }
             else {
@@ -355,108 +528,17 @@ function findJob(jobs, jobId){
                     "type": "ENERGY",
                     "description": null,
                     "loot": false,
+                    "consumableCost": false,
                     "consumable": false,
                     "money": 0
         }
         return obj;
     }
 
-function fillJobInfo(jobItem){
-    addMacroSetting("ID", jobItem.jobId);
-    jobItem.chapter = null;
-    jobItem.ok = false;
-    retCode = playMacro(JOB_FOLDER, "03_Job_Energy.iim", MACRO_INFO_LOGGING);
-    // Get Energy + Experience
-    if (retCode === SUCCESS) {
-        var extraInfo = {"energyOrStamina": 0, "exp": 0};
-        extraInfo.energyOrStamina = parseInt(getLastExtract(1, "Energy Job", "100"));
-        extraInfo.exp = parseInt(getLastExtract(2, "Experience Job", "400"));
-        jobItem.extraInfo = extraInfo;
-        jobItem.ok = true;
-    }
-    else {
-        logV2(INFO, "JOB", "Problem Getting Energy Info");
-        jobItem.ok = false;
-    }
-}
-
-function goToDistrict(jobItem){
-    var retCode = -1;
-    if (globalSettings.lastDistrict == null || globalSettings.lastDistrict != jobItem.districtId) {
-        logV2(INFO, "JOB", "Travelling to district " + jobItem.districtId);
-        if (jobItem.district.event) {
-            retCode = playMacro(JOB_FOLDER, "06_Job_DistrictEvent.iim", MACRO_INFO_LOGGING);
-        }
-        else {
-            addMacroSetting("DISTRICT", jobItem.districtId);
-            retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
-        }
-        if (retCode == SUCCESS){
-            globalSettings.lastDistrict = jobItem.districtId;
-        }
-    }
-    else {
-        logV2(INFO, "JOB", "Active District: " + jobItem.districtId);
-        retCode = SUCCESS;
-    }
-    return retCode;
-}
-
-function goToChapter(jobItem){
-    var retCode = -1;
-    if (jobItem.job.chapter !== null){
-        if (globalSettings.lastChapter == null || globalSettings.lastChapter != jobItem.job.chapter) {
-            logV2(INFO, "JOB", "Travelling to chapter " + jobItem.job.chapter);
-            addMacroSetting("DISTRICT", jobItem.districtId);
-            addMacroSetting("CHAPTER", jobItem.job.chapter);
-            retCode = playMacro(JOB_FOLDER, "05_Job_Chapter.iim", MACRO_INFO_LOGGING);
-            if (retCode != SUCCESS) {
-                logV2(INFO, "JOB", "Problem Selecting chapter");
-            }
-            else {
-                globalSettings.lastChapter = jobItem.job.chapter;
-            }
-        }
-        else {
-            logV2(INFO, "JOB", "Active Chapter: " + jobItem.job.chapter);
-            retCode = SUCCESS;
-        }
-    }
-    else {
-        retCode = SUCCESS;
-    }
-    return retCode;
-}
-
 function LogFile(path, fileId){
 	this.path = path;
 	this.fileId = fileId;
 	this.fullPath = function() { return this.path + "log." + this.fileId + (NODE_ID == "" ? "" : "." + NODE_ID) + "." + getDateYYYYMMDD() + ".txt"};
-}
-
-function getPercentCompleted(jobItem){
-    goToDistrict(jobItem);
-    goToChapter(jobItem);
-    addMacroSetting("ID", jobItem.jobId);
-    var retCode = playMacro(JOB_FOLDER, "11_PercentCompleted.iim", MACRO_INFO_LOGGING);
-    if (retCode === SUCCESS) {
-        var percentInfo = getLastExtract(1, "Percent Completed", "50%");
-        logV2(INFO, "JOB", "%completed = " + percentInfo);
-        if (!isNullOrBlank(percentInfo)) {
-            percentInfo = percentInfo.replace("%", "").toUpperCase();
-            percentInfo = percentInfo.replace(" COMPLETE", "");
-            return parseInt(percentInfo);
-        }
-        else {
-            clearDistrict();
-            logV2(INFO, "JOB", "Problem Extracting Percent Completed");
-        }
-    }
-    else {
-        clearDistrict();
-        logV2(INFO, "JOB", "Problem getting Percent Completed");
-    }
-    return 100;
 }
 
 function closePopup(){
@@ -584,4 +666,12 @@ function getFighterObject(){
         "gangId": null, "gangName": null, "bigHealth": false, "lastAttacked": null, "lastIced": null,
         "iced": 0
     };
+}
+
+function containsConsumable(text){
+    return contains(text.toUpperCase(), " CLASS=\"ITEM");
+}
+
+function containsLoot(text){
+    return contains(text.toUpperCase(), "SPAN CLASS=\"LOOT ITEM\"");
 }

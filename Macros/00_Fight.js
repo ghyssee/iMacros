@@ -1201,7 +1201,7 @@ function getFighterObject(id, name, level){
 function extractGangFromString (text){
     var gangObj = {id:null, name:null};
     text = text.toUpperCase();
-    logV2(INFO, "GANG", "MSG= " + text);
+    //logV2(INFO, "GANG", "MSG= " + text);
     if (contains(text, "CONTROLLER=GANG")){
         gangObj.id = extractGangIdFromString(text);
         gangObj.name = extractGangNameFromString(text);
