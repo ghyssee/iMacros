@@ -35,12 +35,12 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
 
 //enableMacroPlaySimulation();
 
-	var listOfJobs = getListOfEnabledJobs(jobsObj.activeJobs);
-    try {
+var listOfJobs = getListOfEnabledJobs(jobsObj.activeJobs);
+try {
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
-        initJobs(listOfJobs);
+        var newJobs = initJobs(listOfJobs);
 		do {
-            var wait = doJobs(listOfJobs);
+            var wait = doJobs(newJobs);
             clearDistrict();
             if (wait) {
                 waitV2("60");
@@ -92,54 +92,93 @@ function doJobs(listOfJobs){
     return wait;
 }
 
-function initJobs(listOfJobs){
-    listOfJobs.forEach( function (jobItem)
-    {
-        fillDistrictInfo(jobItem);
-    });
-    listOfJobs.forEach( function (jobItem) {
+function getJobTaskObject(districtId, jobId, type){
+    var obj = {
+        districtId: districtId,
+        jobId: jobId,
+        type: type,
+        chapter: null,
+        total: 0,
+        enabled: true
+    }
+    return obj;
+}
 
-        if (jobItem.total == null){
-            jobItem.total = 0;
-        }
-        if (jobItem.number == null){
-            jobItem.number = 0;
-        }
-        jobItem.ok = false;
-        var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
-        if (retCode == SUCCESS) {
-            if (jobItem.district.event) {
-                retCode = playMacro(JOB_FOLDER, "06_Job_DistrictEvent.iim", MACRO_INFO_LOGGING);
-            }
-            else {
-                addMacroSetting("DISTRICT", jobItem.districtId);
-                retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
-            }
-            if (retCode === SUCCESS) {
-                if (jobItem.job.chapter !== null) {
-                    addMacroSetting("DISTRICT", jobItem.districtId);
-                    addMacroSetting("CHAPTER", jobItem.job.chapter);
-                    retCode = playMacro(JOB_FOLDER, "05_Job_Chapter.iim", MACRO_INFO_LOGGING);
-                    if (retCode != SUCCESS) {
-                        logV2(INFO, "JOB", "Problem Selecting chapter");
-                        return;
-                    }
+function initJobs(listOfJobs){
+    var newJobs = [];
+    listOfJobs.forEach( function (jobItem) {
+        if (jobItem.type == "CHAPTER") {
+            if (jobItem.chapter != null) {
+                var district = findDistrict(jobItem);
+                if (district == null) {
+                    logV2(INFO, "JOB", "Problem Finding District " + jobItem.districtId);
                 }
-                fillJobInfo(jobItem);
+                else {
+                    district.jobs.forEach(function (v) {
+                        if (v.chapter == jobItem.chapter) {
+                            var jobTask = getJobTaskObject(jobItem.districtId, v.id, "COMPLETE");
+                            newJobs.push(jobTask);
+                        }
+                    });
+                }
             }
             else {
-                logV2(INFO, "JOB", "Problem Selecting District");
+                logV2(INFO, "JOBS", "Chapter not filled in for type " + jobItem.type);
             }
         }
         else {
-            logV2(INFO, "JOB", "Problem Job Page");
+            newJobs.push(jobItem);
         }
     });
-    listOfJobs.forEach( function (jobItem)
+    newJobs.forEach( function (jobItem)
+    {
+        logV2(INFO, "JOB2", JSON.stringify(jobItem));
+    });
+
+    newJobs.forEach( function (jobItem) {
+            fillDistrictInfo(jobItem);
+            if (jobItem.total == null){
+                jobItem.total = 0;
+            }
+            if (jobItem.number == null){
+                jobItem.number = 0;
+            }
+            jobItem.ok = false;
+            var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
+            if (retCode == SUCCESS) {
+                if (jobItem.district.event) {
+                    retCode = playMacro(JOB_FOLDER, "06_Job_DistrictEvent.iim", MACRO_INFO_LOGGING);
+                }
+                else {
+                    addMacroSetting("DISTRICT", jobItem.districtId);
+                    retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
+                }
+                if (retCode === SUCCESS) {
+                    if (jobItem.job.chapter !== null) {
+                        addMacroSetting("DISTRICT", jobItem.districtId);
+                        addMacroSetting("CHAPTER", jobItem.job.chapter);
+                        retCode = playMacro(JOB_FOLDER, "05_Job_Chapter.iim", MACRO_INFO_LOGGING);
+                        if (retCode != SUCCESS) {
+                            logV2(INFO, "JOB", "Problem Selecting chapter");
+                            return;
+                        }
+                    }
+                    fillJobInfo(jobItem);
+                }
+                else {
+                    logV2(INFO, "JOB", "Problem Selecting District");
+                }
+            }
+            else {
+                logV2(INFO, "JOB", "Problem Job Page");
+            }
+    });
+    newJobs.forEach( function (jobItem)
     {
         logV2(INFO, "JOB", JSON.stringify(jobItem));
     });
     logV2(INFO, "JOB", "Job Initialization done");
+    return newJobs;
 }
 
 function fillJobInfo(jobItem){

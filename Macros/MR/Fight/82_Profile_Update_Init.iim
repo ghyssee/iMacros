@@ -1,0 +1,4 @@
+﻿VERSION BUILD=8970419 RECORDER=FX
+SET !TIMEOUT_STEP 1
+URL GOTO=https://mafiareloaded.com/game/?controller=profile&id={{ID}}
+WAIT SECONDS=0.5

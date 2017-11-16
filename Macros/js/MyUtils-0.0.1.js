@@ -376,3 +376,7 @@ function getTab()
 function removeComma(text){
     return text.replace(/,/g, '');
 }
+
+function contains(text, search){
+    return (text.indexOf(search) >= 0);
+}

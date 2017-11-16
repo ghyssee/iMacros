@@ -192,7 +192,7 @@ function initObject(obj, arrayOfObjects){
 		var lines = readFile(fileName);
 		if (lines != null){
 			if (lines.length == 1 && arrayOfObjects == null){
-			   return JSON.parse(lines[0]);
+				return JSON.parse(lines[0]);
 			}
 			else if (lines.length > 1 && arrayOfObjects == null){
 				var jsonStr = "";

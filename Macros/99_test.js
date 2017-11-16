@@ -23,15 +23,38 @@ var testObj = findFighter(fighterObj.fighters, "135578150533601");
 alert (testObj.name);
 writeObject(fighterObj, MR_FIGHTERS_FILE);
 */
-var fighterObj = initObject(MR_FIGHTERS_FILE);
-logV2(INFO, "TEST", "Length:" + fighterObj.fighters.length);
-logV2(INFO, "TEST", "Min:" + (fighterObj.fighters.length - 100));
-for (var i=0; i < 1000; i++) {
-    var start = randomIntFromInterval(0, fighterObj.fighters.length - 100);
-	//var min = fighterObj.fighters.length;
-	logV2(INFO, "TEST", "Start:" + start + " / End: " + (start+100));
+msg = "<div style=\"outline: 1px solid blue;\"><a href=\"#\" class=\"ajax_request tag\" data-params=\"controller=gang&amp;action=view&amp;id=3985490\">*TBC*</a> <a href=\"#\" class=\"ajax_request\" data-params=\"controller=profile&amp;action=view&amp;id=10154593768213783\" style=\"outline: 1px solid blue;\">Lunatic</a> Level 4,139</div>";
+//msg = "<div style=\"outline: 1px solid blue;\"><a href=\"#\" class=\"ajax_request tag\" data-params=\"controller=gang&amp;action=view&amp;id=3985490\">*TBC*</a> <a href=\"#\" class=\"ajax_request\" data-params=\"controller=profile&amp;action=view&amp;id=10154593768213783\" style=\"outline: 1px solid blue;\">Lunatic</a> Level 4,139</div>";
+alert(JSON.stringify(getGangInformation(msg)));
+//extractGangIdFromString(msg.toUpperCase());
+
+function getGangInformation (text){
+	var gangObj = {id:null, name:null};
+	text = text.toUpperCase();
+	if (contains(text, "CONTROLLER=GANG")){
+	    gangObj.id = extractGangIdFromString(text);
+	    gangObj.name = extractGangNameFromString(text);
+    }
+	return gangObj;
 }
 
+function extractGangIdFromString(text){
+    var regExp = /CONTROLLER=GANG&ACTION=VIEW&?ID=([0-9]{1,20})>/;
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return matches[matches.length-1];
+    }
+    return text;
+}
+
+function extractGangNameFromString(text){
+    var regExp = /CONTROLLER=GANG&(?:AMP;)?ACTION=VIEW&(?:AMP;)?ID=(?:[0-9]{1,20})\">([^<]*)<\/A>(?:.*)/;
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return matches[matches.length-1];
+    }
+    return text;
+}
 
 function randomIntFromInterval(min,max)
 {

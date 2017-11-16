@@ -27,7 +27,6 @@ var CONSTANTS = Object.freeze({
 init();
 var JOB_FOLDER = "MR/Jobs";
 var COMMON_FOLDER = "MR/Common";
-var FIGHT_FOLDER = "MR/Fight";
 
 var jobsObj = initObject(MR_JOBS_FILE);
 var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
@@ -35,7 +34,12 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                      };
 
 //enableMacroPlaySimulation();
-startList();
+//startList();
+//var job = getHighestPayloadJob(jobsObj.districts);
+//logJob(job, "Job With Highest Money Ratio");
+
+//job = getHighestRatio(jobsObj.districts);
+//logJob(job, "Job With Highest Ratio");
 /*
 var retCode = playMacro(JOB_FOLDER, "20_Joblist_Info.iim", MACRO_INFO_LOGGING);
 var txt = getLastExtract(1);
@@ -44,9 +48,99 @@ logV2(INFO, "TST", txt);
 //var jobId = "<span id=\"job-mastery-81\" style=\"width: 100%; outline: 1px solid blue;\"><span>100% Complete</span></span>";
 alert(extractJobId(jobId));
 */
-//alert(JSON.stringify(splitItemCash("246 $1,000")));
-//var jobName = extractJobName("Create a diversion at passport control100% Complete");
-//alert(jobName);
+convertFighterObj();
+
+function logJob(jobItem, title){
+    logV2(INFO, "JOB", title);
+    logV2(INFO, "JOB", "ID: " + job.id);
+    logV2(INFO, "JOB", "Name: " + job.description);
+    logV2(INFO, "JOB", "District: " + job.districtId + " - " + job.districtName);
+    logV2(INFO, "JOB", "Chapter: " + job.chapter);
+    logV2(INFO, "JOB", "Type: " + job.type);
+    logV2(INFO, "JOB", "Energy: " + job.energy);
+    logV2(INFO, "JOB", "Experience: " + job.exp);
+    logV2(INFO, "JOB", "Money: " + job.money);
+    logV2(INFO, "JOB", "Money Ratio: " + job.moneyRatio);
+    logV2(INFO, "JOB", "Ratio: " + job.ratio);
+}
+
+function getMoneyRatio(job){
+    var ratio = job.money / job.energy;
+    return ratio;
+}
+
+function fillJobMoney(job, moneyRatio, district){
+    job.districtId = district.id;
+    job.districtName = district.description;
+    job.moneyRatio = moneyRatio;
+    job.ratio = getRatio(job);
+}
+
+function fillJobRatio(job, ratio, district){
+    job.districtId = district.id;
+    job.districtName = district.description;
+    job.ratio = ratio;
+}
+
+function getHighestPayloadJob(districts){
+    var foundJob = null;
+    districts.forEach( function (district)
+    {
+        if (!district.event) {
+            district.jobs.forEach(function (job) {
+                if (foundJob == null) {
+                    if (job.money >= 0) {
+                        foundJob = job;
+                        fillJobMoney(foundJob, getMoneyRatio(job), district);
+                    }
+                }
+                else if (job.money > 0) {
+                    var ratio = getMoneyRatio(job);
+                    if (ratio >= foundJob.moneyRatio) {
+                        foundJob = job;
+                        fillJobMoney(foundJob, ratio, district);
+                    }
+                }
+            });
+        }
+    });
+    return foundJob;
+
+}
+
+function getRatio(job){
+    var ratio = job.exp / job.energy;
+    return ratio;
+}
+
+function getHighestRatio(districts){
+    var foundJob = null;
+    districts.forEach( function (district)
+    {
+        if (!district.event) {
+            district.jobs.forEach(function (job) {
+                if (!job.consumable && job.money >= 0) {
+                    if (foundJob == null) {
+                        foundJob = job;
+                        fillJobRatio(foundJob, getRatio(job), district);
+                    }
+                    else {
+                        var ratio = getRatio(job);
+                        if (ratio >= foundJob.ratio) {
+                            foundJob = job;
+                            fillJobRatio(foundJob, ratio, district);
+                        }
+                    }
+                }
+                else {
+                    // skip jobs that cost money && requires consumables
+                }
+            });
+        }
+    });
+    return foundJob;
+
+}
 
 function extractJobName(text){
     text = text.replace(/[0-9]{1,3}% Complete$/, '');
@@ -78,40 +172,59 @@ function splitItemCash(text){
     return obj;
 }
 
-    function startList(){
 
-        var districtId = 2;
-        var chapter = 11
+function startList() {
+    try {
+        var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
+        if (retCode == SUCCESS) {
+            // district 1
+            /*
+            for (var i=1; i <= 10; i++) {
+                startChapter("1", i.toString());
+            }
+            */
+            // district 2
+            for (var i=11; i <= 14; i++) {
+                startChapter("2", i.toString());
+            }
+        }
+        else
+            {
+                logV2(INFO, "JOBLIST", "Problem Starting Mafia Wars");
+            }
+    }
+    catch (ex) {
+            logError(ex);
+            logV2(INFO, "SUMMARY", "Jobs Completed: " + globalSettings.jobsCompleted);
+            logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
+        }
 
-        try {
-            //var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
-            var retCode = SUCCESS;
-            if (retCode == SUCCESS){
-                var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
+}
+
+    function startChapter(districtId, chapter){
+
+      try {
+            var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
+            if (retCode == SUCCESS) {
+                addMacroSetting("DISTRICT", districtId);
+                retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
                 if (retCode == SUCCESS) {
                     addMacroSetting("DISTRICT", districtId);
-                    retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
-                    if (retCode == SUCCESS) {
-                        addMacroSetting("DISTRICT", districtId);
-                        addMacroSetting("CHAPTER", chapter);
-                        retCode = playMacro(JOB_FOLDER, "05_Job_Chapter.iim", MACRO_INFO_LOGGING);
-                        if (retCode == SUCCESS){
-                            extractJobs(districtId, chapter);
-                        }
-                        else {
-                            logV2(INFO, "JOBLIST", "Problem selecting chapter: " + chapter);
-                        }
+                    addMacroSetting("CHAPTER", chapter);
+                    retCode = playMacro(JOB_FOLDER, "05_Job_Chapter.iim", MACRO_INFO_LOGGING);
+                    if (retCode == SUCCESS){
+                        extractJobs(districtId, chapter);
                     }
                     else {
-                        logV2(INFO, "JOBLIST", "Problem Selecting district: " + districtId);
+                        logV2(INFO, "JOBLIST", "Problem selecting chapter: " + chapter);
                     }
                 }
                 else {
-                    logV2(INFO, "JOBLIST", "Problem With Init Job");
+                    logV2(INFO, "JOBLIST", "Problem Selecting district: " + districtId);
                 }
             }
             else {
-                logV2(INFO, "JOBLIST", "Problem Starting Mafia Wars");
+                logV2(INFO, "JOBLIST", "Problem With Init Job");
             }
         }
         catch (ex) {
@@ -119,10 +232,6 @@ function splitItemCash(text){
             logV2(INFO, "SUMMARY", "Jobs Completed: " + globalSettings.jobsCompleted);
             logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
         }
-    }
-
-    function contains(text, search){
-        return (text.indexOf(search) >= 0);
     }
 
     function extractJobType(text){
@@ -452,4 +561,27 @@ function getFirefoxSetting(branch, key){
 
     var value = prefs.getCharPref(key, Components.interfaces.nsISupportsString);
     return value;
+}
+
+function convertFighterObj(){
+    var fightObj = initObject(MR_FIGHTERS_FILE);
+    newFighters = [];
+    fightObj.fighters.forEach( function (fighter) {
+        var newObj = getFighterObject();
+        for (var key in fighter) {
+            var value = fighter[key];
+            newObj[key] = value;
+        }
+        newFighters.push(newObj);
+    });
+    fightObj.fighters = newFighters;
+    MR_FIGHTERS_FILE.file += ".NEW";
+    writeObject(fightObj, MR_FIGHTERS_FILE);
+}
+
+function getFighterObject(){
+    return {"id":null, "name":null, "level": null, "skip": false,
+        "gangId": null, "gangName": null, "bigHealth": false, "lastAttacked": null, "lastIced": null,
+        "iced": 0
+    };
 }
