@@ -239,8 +239,8 @@ function writeLineToCSV(filename, data, seperator){
    for (i=0; i < data.length; i++){
 	   line+= ((i > 0) ? sep: "") + data[i];
    }
-   line+= "\r\n";
-   writeFile(filename, line);
+   //line+= "\r\n";
+   save(filename, line);
 }
 
 function writeObjectToCSV(object, file){
@@ -251,12 +251,12 @@ function writeObjectToCSV(object, file){
 		firstLine = true;
 	}
 	for(var key in object) {
-		if (Object.prototype.hasOwnProperty.call(object, key)) {
+		//if (Object.prototype.hasOwnProperty.call(object, key)) {
 			if (firstLine){
 				headers.push(key);
 			}
 			vals.push(object[key]);
-		}
+		//}
 	}
 	if (firstLine) {
 		writeLineToCSV(file, headers);

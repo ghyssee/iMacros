@@ -232,7 +232,7 @@ function writeLineToCSV(filename, data, seperator){
 	   line+= ((i > 0) ? sep: "") + data[i];
    }
    line+= "\r\n";
-   writeFile(filename, line);
+    writeFile2(filename, line);
 }
 
 function writeObjectToCSV(object, file){

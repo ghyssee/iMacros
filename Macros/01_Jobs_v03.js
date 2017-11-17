@@ -20,7 +20,8 @@ var CONSTANTS = Object.freeze({
         "OK": 1,
         "NOT_ENOUGH": 2,
         "LEVELUP": 3,
-        "SKIP": 4
+        "SKIP": 4,
+        "PROBLEM": 5
     }
 });
 init();
@@ -86,6 +87,11 @@ function doJobs(listOfJobs){
         }
         else if (status == CONSTANTS.STATUS.SKIP){
             wait = true;
+        }
+        else if (status == CONSTANTS.STATUS.PROBLEM){
+            logV2(INFO, "JOB", "Problem executing job : skip rest of jobs and try again");
+            wait = false;
+            break;
         }
     }
     logV2(INFO, "JOB", "Wait: " + wait);
@@ -324,7 +330,11 @@ function processJob(jobItem){
         }
         var energy = getEnergyOrStamina(jobItem);
         validJob = isValidJob(jobItem);
-        if (validJob) {
+        if (validJob.error){
+            status = CONSTANTS.STATUS.PROBLEM;
+            return status;
+        }
+        if (validJob.valid) {
             var energy = getEnergyOrStamina(jobItem);
             var status = checkIfEnoughEnerygOrStamina(energy, jobItem);
             if (status != CONSTANTS.STATUS.OK) {
@@ -367,31 +377,40 @@ function clearDistrict(){
 
 function testJob(jobItem){
         var complete = getPercentCompleted(jobItem);
-        var valid = executeJob(jobItem, complete);
-        if (valid) {
-            jobItem.number++;
-            globalSettings.lastDistrict = jobItem.districtId;
-            globalSettings.lastChapter = jobItem.job.chapter;
+        if (complete == -1){
+            logV2(INFO, "JOB", "Skip This Job for now. There was a problem going to the right chapter");
+        }
+        else {
+            var valid = executeJob(jobItem, complete);
+            if (valid) {
+                jobItem.number++;
+                globalSettings.lastDistrict = jobItem.districtId;
+                globalSettings.lastChapter = jobItem.job.chapter;
+            }
         }
 }
 
 function isValidJob(jobItem){
     logV2(INFO, "JOB", "Entering isValidJob");
-    validJob = false;
+    validJob = {"valid": false, "error": false};
     switch (jobItem.type) {
         case CONSTANTS.EXECUTE.REPEAT:
             if (jobItem.total > 0 && jobItem.number >= jobItem.total){
                 logV2(INFO, "JOB", "Nr Of Times Exceeded: " + jobItem.number + "/" + jobItem.total);
             }
             else {
-                validJob = true;
+                validJob.valid = true;
             }
             break;
         case CONSTANTS.EXECUTE.COMPLETE:
             if (jobItem.completed == null || !jobItem.completed) {
                 var complete = getPercentCompleted(jobItem);
-                if (complete < 100) {
-                    validJob = true;
+                if (complete == -1){
+                    validJob.error = true;
+                    validJob.valid = false;
+                }
+                else if (complete < 100) {
+                    validJob.valid = true;
                 }
                 else {
                     jobItem.completed = true;
@@ -538,11 +557,13 @@ function getPercentCompleted(jobItem){
         else {
             clearDistrict();
             logV2(INFO, "JOB", "Problem Extracting Percent Completed");
+            return -1;
         }
     }
     else {
         clearDistrict();
         logV2(INFO, "JOB", "Problem getting Percent Completed");
+        return -1;
     }
     return 100;
 }

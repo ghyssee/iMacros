@@ -33,7 +33,7 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                       "lastDistrict": null, "lastChapter": null,
                      };
 
-//startList();
+startList();
 //var job = getHighestPayloadJob(jobsObj.districts);
 //logJob(job, "Job With Highest Money Ratio");
 
@@ -53,15 +53,20 @@ var CONSTANTS = Object.freeze({
     "FILTER" : {
         "YES": 0,
         "NO": 1,
-        "WHATEVER" : 2
+        "WHATEVER" : 2,
+        "ENERGY" : "ENERGY",
+        "STAMINA": "STAMINA"
     },
     "SELECTTYPES" : {
         "EVENT" : 1,
         "MONEY": 2,
         "MONEYCOST": 3,
         "CONSUMABLECOST": 4,
-        "HIGHESTRATIO": 5,
-        "HIGHESTMONEY": 6
+        "JOBTYPE": 5
+    },
+    "SORTING" : {
+        "MONEY" : "moneyRatio",
+        "RATIO": "ratio"
     }
 });
 
@@ -74,11 +79,23 @@ var selectObj = {
 }
 
 var selections = [  addFilter(CONSTANTS.SELECTTYPES.EVENT, CONSTANTS.FILTER.NO),
-                    //addFilter(CONSTANTS.SELECTTYPES.MONEY, CONSTANTS.FILTER.WHATEVER),
-                    addFilter(CONSTANTS.SELECTTYPES.MONEYCOST, CONSTANTS.FILTER.NO),
-                    addFilter(CONSTANTS.SELECTTYPES.CONSUMABLECOST, CONSTANTS.FILTER.NO)
-                 ];
+    addFilter(CONSTANTS.SELECTTYPES.MONEYCOST, CONSTANTS.FILTER.NO),
+    addFilter(CONSTANTS.SELECTTYPES.JOBTYPE, CONSTANTS.FILTER.ENERGY),
+    addFilter(CONSTANTS.SELECTTYPES.CONSUMABLECOST, CONSTANTS.FILTER.NO)
+];
+//getJob(jobsObj.districts, selections, "HighestEnergyJobRatio.csv",CONSTANTS.SORTING.RATIO);
 
+selections = [  addFilter(CONSTANTS.SELECTTYPES.EVENT, CONSTANTS.FILTER.NO),
+    addFilter(CONSTANTS.SELECTTYPES.MONEYCOST, CONSTANTS.FILTER.NO),
+    addFilter(CONSTANTS.SELECTTYPES.JOBTYPE, CONSTANTS.FILTER.STAMINA),
+    addFilter(CONSTANTS.SELECTTYPES.CONSUMABLECOST, CONSTANTS.FILTER.NO)
+];
+//getJob(jobsObj.districts, selections, "HighestStaminaJobRatio.csv", CONSTANTS.SORTING.RATIO);
+selections = [  addFilter(CONSTANTS.SELECTTYPES.EVENT, CONSTANTS.FILTER.NO),
+    addFilter(CONSTANTS.SELECTTYPES.MONEY, CONSTANTS.FILTER.YES),
+    addFilter(CONSTANTS.SELECTTYPES.CONSUMABLECOST, CONSTANTS.FILTER.NO)
+];
+//getJob(jobsObj.districts, selections, "HighestMoneyRatio.csv", CONSTANTS.SORTING.MONEY);
 /*
 EVENT: YES / NO / WHATEVER
 MONEY: YES / NO / WHATEVER
@@ -96,9 +113,9 @@ switch selecttype
 
 after that, sort on highest money or ratio
 */
-getJob(jobsObj.districts, selections);
 
-function logJob(job, title){
+
+function logJob(job, title, sorting){
     logV2(INFO, "JOB", title);
     logV2(INFO, "JOB", "ID: " + job.id);
     logV2(INFO, "JOB", "Name: " + job.description);
@@ -131,19 +148,6 @@ function logJob2(job, title, selectable){
 function getMoneyRatio(job){
     var ratio = job.money / job.energy;
     return ratio;
-}
-
-function fillJobMoney(job, moneyRatio, district){
-    job.districtId = district.id;
-    job.districtName = district.description;
-    job.moneyRatio = moneyRatio;
-    job.ratio = getRatio(job);
-}
-
-function fillJobRatio(job, ratio, district){
-    job.districtId = district.id;
-    job.districtName = district.description;
-    job.ratio = ratio;
 }
 
 function addFilter(type, value){
@@ -201,13 +205,21 @@ function isJobSelectable(filters, district, job){
                     valid = false;
                 }
                 break;
+            case CONSTANTS.SELECTTYPES.JOBTYPE:
+                if (typeObj.value == CONSTANTS.FILTER.WHATEVER || job.type == typeObj.value){
+                    valid = valid && true;
+                }
+                else {
+                    valid = false;
+                }
+                break;
         }
     }
     return valid;
 }
 
 
-function getJob(districts, filters){
+function getJob(districts, filters, file, sorting){
     var foundJob = null;
     var selectedJobs = [];
 
@@ -227,40 +239,17 @@ function getJob(districts, filters){
         }
     }
     selectedJobs.sort(function(a, b) {
-        return b.ratio - a.ratio;
+        return b[sorting] - a[sorting];
     });
     logV2(INFO, "SORTED", "Sorted...");
     logV2(INFO, "SORTED", "-----------------------------------------------------------------------------");
     logV2(INFO, "TST", JSON.stringify(selectedJobs));
+    file = DATASOURCE_DIR + file;
+    deleteFile(file);
     for (var i=0; i < selectedJobs.length; i++){
-        logJob2(selectedJobs[i], "SELECTABLE", test);
+        writeObjectToCSV(selectedJobs[i], file);
     }
-    return foundJob;
-
-}
-
-function getHighestPayloadJob(districts){
-    var foundJob = null;
-    districts.forEach( function (district)
-    {
-        if (!district.event) {
-            district.jobs.forEach(function (job) {
-                if (foundJob == null) {
-                    if (job.money >= 0) {
-                        foundJob = job;
-                        fillJobMoney(foundJob, getMoneyRatio(job), district);
-                    }
-                }
-                else if (job.money > 0) {
-                    var ratio = getMoneyRatio(job);
-                    if (ratio >= foundJob.moneyRatio) {
-                        foundJob = job;
-                        fillJobMoney(foundJob, ratio, district);
-                    }
-                }
-            });
-        }
-    });
+    logV2(INFO, "TST", "Result written to: " + file);
     return foundJob;
 
 }
@@ -268,35 +257,6 @@ function getHighestPayloadJob(districts){
 function getRatio(job){
     var ratio = job.exp / job.energy;
     return ratio;
-}
-
-function getHighestRatio(districts){
-    var foundJob = null;
-    districts.forEach( function (district)
-    {
-        if (!district.event) {
-            district.jobs.forEach(function (job) {
-                if (!job.consumable && job.money >= 0) {
-                    if (foundJob == null) {
-                        foundJob = job;
-                        fillJobRatio(foundJob, getRatio(job), district);
-                    }
-                    else {
-                        var ratio = getRatio(job);
-                        if (ratio >= foundJob.ratio) {
-                            foundJob = job;
-                            fillJobRatio(foundJob, ratio, district);
-                        }
-                    }
-                }
-                else {
-                    // skip jobs that cost money && requires consumables
-                }
-            });
-        }
-    });
-    return foundJob;
-
 }
 
 function extractJobName(text){
@@ -335,13 +295,13 @@ function startList() {
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
             // district 1
-
+/*
             for (var i=1; i <= 10; i++) {
                 startChapter("1", i.toString());
             }
-
+*/
             // district 2
-            for (var i=11; i <= 15; i++) {
+            for (var i=11; i <= 17; i++) {
                 startChapter("2", i.toString());
             }
         }
