@@ -34,6 +34,7 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                      };
 
 startList();
+
 //var job = getHighestPayloadJob(jobsObj.districts);
 //logJob(job, "Job With Highest Money Ratio");
 
@@ -295,15 +296,16 @@ function startList() {
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
             // district 1
-/*
+
             for (var i=1; i <= 10; i++) {
                 startChapter("1", i.toString());
             }
-*/
+
             // district 2
-            for (var i=11; i <= 17; i++) {
+            for (var i=11; i <= 19; i++) {
                 startChapter("2", i.toString());
             }
+            writeObject(jobsObj, MR_JOBS_FILE);
         }
         else
             {
@@ -312,15 +314,63 @@ function startList() {
     }
     catch (ex) {
             logError(ex);
-            logV2(INFO, "SUMMARY", "Jobs Completed: " + globalSettings.jobsCompleted);
-            logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
         }
 
 }
+    function extractStar(starInfo){
+        // <div class="job_star bronze_star" style="outline: 1px solid blue;"></div>
+        var regExp = /job_star (.*)\" style/;
+        var matches = starInfo.match(regExp);
+        if (matches != null && matches.length > 0){
+            var star = matches[matches.length-1];
+            return star.trim().toLowerCase();
+        }
+        logV2(ERROR, "JOBLIST", "problem Extracting Star: " + starInfo);
+        return starInfo;
+}
+
+    function getChapterInfo(districtId, chapter){
+        var chapterObj = {"id": chapter, "name": null, "star": null};
+        var retCode = playMacro(JOB_FOLDER, "13_ChapterInfo.iim", MACRO_INFO_LOGGING);
+        if (retCode == SUCCESS){
+            var starInfo = getLastExtract(1, "Star Ranking", "silver_star").toLowerCase();
+            chapterObj.star = extractStar(starInfo);
+            chapterObj.name = getLastExtract(2, "Chapter Name", "BlaBla");
+            if (isNullOrBlank(chapterObj.star)){
+                logV2(INFO, "JOBLIST", "Problem extracting Star Ranking");
+            }
+        }
+        else {
+            logV2(INFO, "JOBLIST", "Problem Getting Star Ranking");
+        }
+        return chapterObj;
+    }
+
+    function addOrUpdateChapter(districtId, chapterObj){
+        var district = findDistrict(jobsObj.districts, districtId);
+        if (district == null){
+            throw new Error ("District Not Found: " + districtId);
+        }
+        var found = -1;
+        for (var i=0; i < district.chapters.length; i++){
+            var foundChapterObj = district.chapters[i];
+            if (foundChapterObj.id == chapterObj.id){
+                found = i;
+            }
+        }
+        if (found == -1){
+            logV2(INFO, "JOBLIST", "Add Chapter: " + districtId + "/" + chapterObj.id);
+            district.chapters.push(chapterObj);
+        }
+        else {
+            logV2(INFO, "JOBLIST", "Update Chapter: " + districtId + "/" + chapterObj.id);
+            district.chapters[found] = chapterObj;
+        }
+    }
 
     function startChapter(districtId, chapter){
 
-      try {
+        try {
             var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
             if (retCode == SUCCESS) {
                 addMacroSetting("DISTRICT", districtId);
@@ -330,6 +380,9 @@ function startList() {
                     addMacroSetting("CHAPTER", chapter);
                     retCode = playMacro(JOB_FOLDER, "05_Job_Chapter.iim", MACRO_INFO_LOGGING);
                     if (retCode == SUCCESS){
+                        var chapterObj = getChapterInfo(districtId, chapter);
+                        logV2(INFO, "CHAPTER", JSON.stringify(chapterObj));
+                        addOrUpdateChapter(districtId, chapterObj);
                         extractJobs(districtId, chapter);
                     }
                     else {
@@ -458,8 +511,8 @@ function findJob(jobs, jobId){
 
     function updateJobs(districtId, chapter, jobs){
     logV2(INFO, "JOBLIST", "Entering updateJobs");
-    var jobObj = initObject(MR_JOBS_FILE);
-        var district = findDistrict(jobObj.districts, districtId);
+    //var jobObj = initObject(MR_JOBS_FILE);
+        var district = findDistrict(jobsObj.districts, districtId);
         if (district == null){
             throw new Error ("District Not Found: " + districtId);
         }
@@ -478,8 +531,6 @@ function findJob(jobs, jobId){
                 logV2(INFO, "JOBLIST", "Update Job: " + jobItem.id + " - " + jobItem.description);
             }
         }
-        //MR_JOBS_FILE.file += ".NEW";
-        writeObject(jobObj, MR_JOBS_FILE);
     }
 
     function getJobObject(){

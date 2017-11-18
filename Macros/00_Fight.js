@@ -392,8 +392,8 @@ function waitTillEnoughStamina(){
             logV2(INFO, "WAIT", "Stamina: " + stamina);
             logV2(INFO, "WAIT", "maxStamina: " + maxStamina);
 			// maxStamina = Math.min(maxStamina, staminaNeeded);
-            if (total >= staminaNeeded && stamina > 10 && (stamina >= minStamina || exp < 300)) {
-                logV2(INFO, "WAIT", "Enough Stamina fto level up");
+            if (total >= staminaNeeded && stamina > 19 && (stamina >= minStamina || exp < 300)) {
+                logV2(INFO, "WAIT", "Enough Stamina to level up");
                 break;
             }
             else if (stamina >= maxStamina){
@@ -488,7 +488,7 @@ function attack(fighter, rivalMobster, profileFighter){
 						statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					}
                     // ADD 15/11
-                    updateStatistics(fighter);
+                    updateStatistics(fighter, rivalMobster);
 					break;
 				case CONSTANTS.OPPONENT.DEAD :
 					logV2(INFO, "FIGHT", "Opponent is dead. Move on to the next one");
@@ -496,7 +496,7 @@ function attack(fighter, rivalMobster, profileFighter){
 					globalSettings.stolenIces++;
                     fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
                     // ADD 15/11
-                    updateStatistics(fighter);
+                    updateStatistics(fighter, rivalMobster);
 					break;
 				case CONSTANTS.OPPONENT.LOST :
                     // MOD 15/11
@@ -622,7 +622,7 @@ function attackTillDeath(fighter, rivalMobster){
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
 				}
-				else if (!firstAttack && deltaHealth > 0 && deltaHealth < 2 && health > 25 && nrOfAttacks > 20){
+				else if (!firstAttack && deltaHealth > 0 && deltaHealth < 2 && health > 30 && nrOfAttacks > 20){
 					logV2(INFO, "ATTACK", "Victim has too much health. Skipping...");
 					logV2(INFO, "ATTACK", "Orignal Health: " + originalHealth);
 					logV2(INFO, "ATTACK", "Current Health: " + health);
@@ -964,7 +964,11 @@ function filterFightList(fightList){
 }
 
 // ADD 15/11
-function updateStatistics(fighter){
+function updateStatistics(fighter, rivalMobster){
+    if (rivalMobster){
+        // no stats for rival mobsters
+        return;
+    }
     var found = false;
     for (var i=0; i < fighterObj.fighters.length; i++){
         var fighterItem = fighterObj.fighters[i];
