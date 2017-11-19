@@ -916,10 +916,11 @@ function getStatusObject(){
 function filterGang(gangId){
     var found = false;
     if (gangId != null) {
-        var array = ["3715594", "1997206"];
-        for (var i = 0; i < array.length; i++) {
-            if (array[i] == gangId) {
+        for (var i = 0; i < friendObj.gangs.length; i++) {
+            var gangObj = friendObj.gangs[i];
+            if (gangObj.id == gangId) {
                 found = true;
+                break;
             }
         }
     }
@@ -1197,6 +1198,9 @@ function startProfileAttack(){
     logV2(INFO, "FIGHT", "Random End Position: " + max);
     for (var i=start; i <= max; i++) {
         var arrayItem = fighterObj.fighters[i];
+        if (filterGang(arrayItem.gangId)){
+            logV2(INFO, "FIGHT", "Profile Fighting: Friendly Gang Found for fighter " + arrayItem.id + " - " + arrayItem.name);
+        }
         addMacroSetting("ID", arrayItem.id);
         var retCode = playMacro(FIGHT_FOLDER, "80_Profile_Attack_Init.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
