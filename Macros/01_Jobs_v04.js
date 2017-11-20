@@ -51,6 +51,9 @@ function start() {
                 if (configMRObj.crimeEvent.enabled){
                     startCrimeEvent();
                 }
+                if (configMRObj.crimeEvent.joinedCrimes){
+                    helpCrimeEvent();
+                }
                 var wait = doJobs(newJobs);
                 //clearDistrict();
                 if (wait) {
@@ -689,7 +692,7 @@ function selectCrimeEvent(){
     return started;
 }
 
-function evaluateCrimeEvent(){
+function evaluateCrimeEvent(joinedCrime){
     var started = false;
     var retCode = playMacro(JOB_FOLDER, "36_CrimeEvent_Status.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS){
@@ -706,7 +709,9 @@ function evaluateCrimeEvent(){
             else if (msg.startsWith("THE CRIME IS COMPLETE")){
                 logV2(INFO, "CRIME EVENT", "Status: Collect");
                 collectCrimeEvent();
-                started = selectCrimeEvent();
+                if (!joinedCrime) {
+                    started = selectCrimeEvent();
+                }
             }
             else if (msg.startsWith("CHOOSE A TASK")){
                 logV2(INFO, "CRIME EVENT", "Status: Choose Task");
@@ -744,6 +749,59 @@ function findActiveCrimeJob(position){
     return null;
 }
 
+function extractCrimeEventJob(text) {
+
+    var regExp = /&(?:amp;)?task=([0-9])\"/;
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        var job = matches[matches.length-1];
+        job = parseInt(job);
+        logV2(INFO, "JOBLIST", "CrimeEvent Help Job: " + job);
+        return job;
+    }
+    return -1;
+}
+
+function helpCrimeEvent(){
+    logV2(INFO, "JOB", "Help Crime Event");
+    var retCode = playMacro(JOB_FOLDER, "37_CrimeEvent_Help_Init.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS) {
+        retCode = playMacro(JOB_FOLDER, "38_CrimeEvent_Help_Find.iim", MACRO_INFO_LOGGING);
+        if (retCode == SUCCESS) {
+            var msg = getLastExtract(1, "CrimeEvent Help Find", "&task=1");
+            var position = extractCrimeEventJob(msg);
+            if (position == -1){
+                logV2(WARNING, "JOB", "No CrimeEvent Help Job Found: " + msg);
+                evaluateCrimeEvent(true);
+            }
+            else {
+                position++;
+                configMRObj.activeJob = findActiveCrimeJob(position);
+                if (configMRObj.activeJob == null) {
+                    logV2(WARNING, "JOB", "Problem Finding Crime Job " + position);
+                    return;
+                }
+                logV2(INFO, "JOB", "Crime Event Job: " + position);
+                var job = {"job": {"type": configMRObj.activeJob.type}};
+                var energy = getEnergyOrStamina(job);
+                var energyNeeded = configMRObj.activeJob.energyOrStamina;
+                if (energyNeeded <= energy) {
+                    if (evaluateCrimeEvent(true)) {
+                        doCrimeJob(job, energy, energyNeeded);
+                    }
+                }
+                else {
+                    logV2(INFO, "JOB", "Not Enough Energy/Stamina For Crime Job. EnergyOrStamina Needed: " + energyNeeded + "/" + energy);
+                }
+            }
+        }
+    }
+    else {
+        logV2(WARNING, "JOB", "Problem Initializing Crime Event");
+    }
+    logV2(INFO, "JOB", "---------------------------------------------------------------");
+}
+
 function startCrimeEvent(){
     logV2(INFO, "JOB", "Start Crime Event");
     var position = configMRObj.crimeEvent.position;
@@ -759,7 +817,7 @@ function startCrimeEvent(){
     if (energyNeeded <= energy) {
         var retCode = playMacro(JOB_FOLDER, "30_CrimeEvent_Init.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
-            if (evaluateCrimeEvent()) {
+            if (evaluateCrimeEvent(false)) {
                 doCrimeJob(job, energy, energyNeeded);
             }
         }
