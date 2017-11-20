@@ -941,7 +941,7 @@ function filterFightList(fightList){
 					if (fighter.level <= maxLevel){
 						// MOD 15/11
 					    if (filterGang(fighter.gangId)){
-                            logV2(INFO, "FIGHTLIST", "Filter Gang: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
+                            logV2(INFO, "FIGHTLIST", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
                         }
                         else {
                             filteredList.push(fighter);
