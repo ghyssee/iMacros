@@ -1200,6 +1200,7 @@ function startProfileAttack(){
         var arrayItem = fighterObj.fighters[i];
         if (filterGang(arrayItem.gangId)){
             logV2(INFO, "FIGHT", "Profile Fighting: Friendly Gang Found for fighter " + arrayItem.id + " - " + arrayItem.name);
+            continue;
         }
         addMacroSetting("ID", arrayItem.id);
         var retCode = playMacro(FIGHT_FOLDER, "80_Profile_Attack_Init.iim", MACRO_INFO_LOGGING);
