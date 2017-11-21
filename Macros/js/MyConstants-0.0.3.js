@@ -38,6 +38,7 @@ var MR_FRIENDS_FILE = new ConfigFile(MR_DIR, "Friends.json");
 var MR_FIGHTERS_FILE = new ConfigFile(MR_DIR, "Fighters.json");
 var MR_JOBS_FILE = new ConfigFile(MR_DIR, "Jobs.json");
 var MR_CONFIG_FILE = new ConfigFile(MR_DIR, "MafiaReloaded.json");
+var MR_HOMEFEED_FILE = new ConfigFile(MR_DIR, "Homefeed.json");
 
 var ERROR_LOG = new LogFile(LOG_DIR, "ERROR", NODE_ID);
 var LOG_FILE = new LogFile(LOG_DIR, "INIT", NODE_ID);

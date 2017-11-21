@@ -45,8 +45,9 @@ var configMRObj = initObject(MR_CONFIG_FILE);
 var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0, "skippedHealth": 0, "maxHealed": 0, "heals": 0,
                       "boss": {"attacks": 0}};
 //var fighters = getFightList();
-startScript();
-//removeItemFromArray(MR_FIGHTERS_FILE, "10155726770108684")
+//startScript();
+getHomeFeed();
+
 
 function startScript(){
     try {
@@ -245,6 +246,7 @@ function evaluateBossMessage() {
                     var hours = matches[1];
                     bossObj.status = 0;
                     date = new Date();
+
                     date = dateAdd(date, parseInt(minutes), 'minutes');
                     date = dateAdd(date, parseInt(hours), 'hours');
                     var formattedDate = formatDateToYYYYMMDDHHMISS(date);
@@ -886,7 +888,8 @@ function getFightList(){
 				var level = extractLevelFromString(getLastExtract(3, "Fighter Level", "200"));
 				var object = getFighterObject(id, name, level);
 				// MOD 15/11
-				var gangObj = extractGangFromString(getLastExtract(4, "Gang", "data-params=\"controller=gang&amp;action=view&amp;id=3985490\">*TBC*</a>"));
+				var gangObj = extractIdNameFromString(getLastExtract(4, "Gang", "data-params=\"controller=gang&amp;action=view&amp;id=3985490\">*TBC*</a>"),
+				                                      "GANG");
 				logV2(INFO, "GANG", "ID=" + gangObj.id);
                 logV2(INFO, "GANG", "NAME=" + gangObj.name);
                 object.gangId = gangObj.id;
@@ -1255,19 +1258,18 @@ function getFighterObject(id, name, level){
 }
 
 
-function extractGangFromString (text){
+function extractIdNameFromString (text, type){
     var gangObj = {id:null, name:null};
     text = text.toUpperCase();
-    //logV2(INFO, "GANG", "MSG= " + text);
-    if (contains(text, "CONTROLLER=GANG")){
-        gangObj.id = extractGangIdFromString(text);
-        gangObj.name = extractGangNameFromString(text);
+    if (contains(text, "CONTROLLER=" + type)){
+        gangObj.id = extractGangIdFromString(text, type);
+        gangObj.name = extractGangNameFromString(text, type);
     }
     return gangObj;
 }
 
-function extractGangIdFromString(text){
-    var regExp = /CONTROLLER=GANG&(?:AMP;)?ACTION=VIEW&(?:AMP;)?ID=([0-9]{1,20})\">/;
+function extractGangIdFromString(text, type){
+    var regExp = "CONTROLLER=" + type + "&(?:AMP;)?ACTION=VIEW&(?:AMP;)?ID=([0-9]{1,20})\">";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         return matches[matches.length-1];
@@ -1275,11 +1277,69 @@ function extractGangIdFromString(text){
     return text;
 }
 
-function extractGangNameFromString(text){
-    var regExp = /CONTROLLER=GANG&(?:AMP;)?ACTION=VIEW&(?:AMP;)?ID=(?:[0-9]{1,20})\">([^<]*)<\/A>(?:.*)/;
+function extractGangNameFromString(text, type){
+    var regExp = "CONTROLLER=" + type + "&(?:AMP;)?ACTION=VIEW&(?:AMP;)?ID=(?:[0-9]{1,20})\">([^<]*)<\/A>(?:.*)";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         return matches[matches.length-1];
     }
     return text;
+}
+
+function extractTimeFromHomefeed(msg, time){
+    var example = "3 hours, 32 minutes ago:";
+    msg = msg.toLowerCase();
+    var regExp = "([0-9]{1,2}) " + time;
+    var matches = msg.match(regExp);
+    if (matches != null && matches.length > 0){
+        return parseInt(matches[matches.length-1]);
+    }
+    return 0;
+}
+
+function getHomeFeedObj(time){
+    var obj = {"timeMsg": time, "timeStamp": null, "currentTime": null, "name": null, "fighterId": null, "gangId": null, "gangName": null};
+    return obj;
+}
+
+function getHomeFeed(){
+    var retCode = playMacro(COMMON_FOLDER, "30_Home.iim", MACRO_INFO_LOGGING);
+    var homefeedObj = initObject(MR_HOMEFEED_FILE);
+    if (retCode == SUCCESS){
+        for (var i=1; i <= 10; i++) {
+            addMacroSetting("POS", i.toString());
+            retCode = playMacro(COMMON_FOLDER, "30_HomeFeedLine.iim", MACRO_INFO_LOGGING);
+            if (retCode == SUCCESS){
+                var timeMsg = getLastExtract(1, "Home Feed Time", "1 hour, 34 minutes ago:");
+                var msg = getLastExtract(2, "Home Feed Line", "BlaBla");
+                var line = getHomeFeedObj(timeMsg);
+                var gangObj = extractIdNameFromString(msg, "GANG");
+                line.gangId = gangObj.id;
+                line.gangName = gangObj.name;
+                var fighterObj = extractIdNameFromString(msg, "PROFILE");
+                line.fighterId = fighterObj.id;
+                line.name = fighterObj.name;
+                var currDate = new Date();
+                line.currentTime = formatDateToYYYYMMDDHHMISS(currDate);
+                var timeStamp = currDate;
+                var seconds = extractTimeFromHomefeed(timeMsg, "second");
+                timeStamp = dateAdd(timeStamp, -seconds, "seconds");
+                var minutes = extractTimeFromHomefeed(timeMsg, "minute");
+                timeStamp = dateAdd(timeStamp, -minutes, "minutes");
+                var hours = extractTimeFromHomefeed(timeMsg, "hour");
+                timeStamp = dateAdd(timeStamp, -hours, "hours");
+                var days = extractTimeFromHomefeed(timeMsg, "day");
+                timeStamp = dateAdd(timeStamp, -days, "days");
+                line.timeStamp = formatDateToYYYYMMDDHHMISS(timeStamp);
+                homefeedObj.lines.push(line);
+            }
+            else {
+                logV2(INFO, "FIGHT", "Problem Home Feed: Get Line " + i);
+            }
+        }
+        writeObject(homefeedObj, MR_HOMEFEED_FILE);
+    }
+    else {
+        logV2(INFO, "FIGHT", "Problem Going To Home");
+    }
 }
