@@ -34,7 +34,7 @@ var FIGHT_FOLDER = "MR/Fight";
 var jobsObj = initObject(MR_JOBS_FILE);
 var configMRObj = initObject(MR_CONFIG_FILE);
 var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
-                      "lastDistrict": null, "lastChapter": null,
+                      "lastDistrict": null, "lastChapter": null, "lowestEnergy": null, "lowestStamina": null
                      };
 
 //enableMacroPlaySimulation();
@@ -165,19 +165,28 @@ function initJobs(listOfJobs){
     });
 
     newJobs.forEach( function (jobItem) {
-            fillDistrictInfo(jobItem);
-            if (jobItem.total == null){
-                jobItem.total = 0;
-            }
-            if (jobItem.number == null){
-                jobItem.number = 0;
-            }
-            jobItem.ok = true;
-    });
-    newJobs.forEach( function (jobItem)
-    {
+        fillDistrictInfo(jobItem);
+        if (jobItem.total == null){
+            jobItem.total = 0;
+        }
+        if (jobItem.number == null){
+            jobItem.number = 0;
+        }
+        jobItem.ok = true;
         logV2(INFO, "JOB", JSON.stringify(jobItem));
+        if (jobItem.job.type == "ENERGY") {
+            if (globalSettings.lowestEnergy == null || globalSettings.lowestEnergy >= jobItem.job.energy) {
+                globalSettings.lowestEnergy = jobItem.job.energy;
+            }
+        }
+        if (jobItem.job.type == "STAMINA") {
+            if (globalSettings.lowestStamina == null || globalSettings.lowestStamina >= jobItem.job.energy) {
+                globalSettings.lowestStamina = jobItem.job.energy;
+            }
+        }
     });
+    logV2(INFO, "JOB", "Lowest Energy Job: " + globalSettings.lowestEnergy);
+    logV2(INFO, "JOB", "Lowest Stamina Job: " + globalSettings.lowestStamina);
     logV2(INFO, "JOB", "Job Initialization done");
     return newJobs;
 }
