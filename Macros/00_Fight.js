@@ -853,7 +853,7 @@ function checkHealth(autoHeal, stamina){
             underAttack();
         }
         if (autoHeal) {
-            if (stamina >= configMRObj.fight.minStaminaToFight) {
+            if (stamina >= configMRObj.fight.minStaminaToHeal) {
                 while (health < configMRObj.fight.heal) {
                     heal();
                     health = getHealth();
