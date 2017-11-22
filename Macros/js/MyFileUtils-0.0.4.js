@@ -47,29 +47,60 @@ function writeFile(fileName, data, overwrite) {
 	// FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_TRUNCATE;
 	var flag = FileUtils.MODE_APPEND;
 	var file = new FileUtils.File(fileName);
-	var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].
-				   createInstance(Components.interfaces.nsIFileOutputStream);
+    var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].
+    createInstance(Components.interfaces.nsIFileOutputStream);
 
-	if (overwrite){
-		foStream.init(file, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_TRUNCATE, 0666, 0); 
-	}
-	else {
-		foStream.init(file, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_APPEND, 0666, 0); 
-	}
-	var converter = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
-					createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
-	converter.charset = "UTF-8";
-	var istream = converter.convertToInputStream(data);
+    if (overwrite){
+        foStream.init(file, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_TRUNCATE, 0666, 0);
+    }
+    else {
+        foStream.init(file, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_APPEND, 0666, 0);
+    }
+    var charset = "UTF-16";
+    var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"]
+        .createInstance(Components.interfaces.nsIConverterOutputStream);
 
-	// The last argument (the callback) is optional.
-	NetUtil.asyncCopy(istream, foStream, function(status) {
-	  if (!Components.isSuccessCode(status)) {
-		// Handle error!
-		throw new Error ("Problem writing to file " + fileName);
-	  }
+    os.init(foStream, null, 0, 0x0000);
 
-	  // Data has been written to the file.
-	});
+    os.writeString(data);
+    os.close();
+}
+
+function writeFilepp(fileName, data, overwrite) {
+    // file is nsIFile, data is a string
+    // file is nsIFile, data is a string
+
+    // You can also optionally pass a flags parameter here. It defaults to
+    // FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_TRUNCATE;
+    var flag = FileUtils.MODE_APPEND;
+    var file = new FileUtils.File(fileName);
+    var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].
+    createInstance(Components.interfaces.nsIFileOutputStream);
+
+    if (overwrite){
+        foStream.init(file, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_TRUNCATE, 0666, 0);
+    }
+    else {
+        foStream.init(file, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_APPEND, 0666, 0);
+    }
+    var converter = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
+    createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+    converter.charset = "UTF-8";
+    var istream = converter.convertToInputStream(data);
+
+    // The last argument (the callback) is optional.
+    NetUtil.asyncCopy(istream, foStream, function(status) {
+        if (!Components.isSuccessCode(status)) {
+            // Handle error!
+            throw new Error ("Problem writing to file " + fileName);
+        }
+        istream.close();
+        fostream.flush();
+        foStream.close();
+
+
+        // Data has been written to the file.
+    });
 }
 
 function ConfigFile(path, file){

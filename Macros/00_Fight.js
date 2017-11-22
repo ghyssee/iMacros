@@ -45,10 +45,7 @@ var configMRObj = initObject(MR_CONFIG_FILE);
 var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0, "skippedHealth": 0, "maxHealed": 0, "heals": 0,
                       "boss": {"attacks": 0}};
 //var fighters = getFightList();
-//startScript();
-
-alert(checkForAttackers());
-
+startScript();
 
 function startScript(){
     try {
@@ -640,7 +637,7 @@ function attackTillDeath(fighter, rivalMobster){
 					break;
 				}
 				else if (!firstAttack && !victimHealed && deltaHealth < 2 && health > configMRObj.fight.attackTillDiedBigHealth &&
-                    (originalHealth - currentHealth) <= configMRObj.fight.deltaBigHealth &&
+                    (originalHealth - health) <= configMRObj.fight.deltaBigHealth &&
                     bigHealthAttacks > configMRObj.fight.maxNumberOfAttacksBigHealth){
 					logV2(INFO, "ATTACK", "Victim has too much health. Skipping...");
                     logV2(INFO, "ATTACK", "Delta Health: " + deltaHealth);
@@ -1335,8 +1332,9 @@ function extractTimeFromHomefeed(msg, time){
     return 0;
 }
 
-function getHomeFeedObj(time){
-    var obj = {"timeMsg": time, "timeStamp": null, "currentTime": null, "name": null, "fighterId": null, "gangId": null, "gangName": null};
+function getHomeFeedObj(time, feed){
+    var obj = {"timeMsg": time, "feedMsg": feed, "timeStamp": null, "currentTime": null, "name": null, "fighterId": null,
+               "gangId": null, "gangName": null};
     return obj;
 }
 
@@ -1361,9 +1359,9 @@ function checkForAttackers(){
         }
         else {
             // list is sorted on most recent
-            return;
+            break;
         }
-    };
+    }
     Object.getOwnPropertyNames(attackers).forEach(
         function (val, idx, array) {
             if (attackers[val]["count"] > configMRObj.fight.underAttackLimit){
@@ -1398,8 +1396,12 @@ function isAttacker(fighterId){
     return false;
 }
 
+function isUndefined(property){
+    return (typeof property == 'undefined');
+}
 
 function getHomeFeed(){
+    logV2(INFO, "HOMEFEED", "Get Home Feed");
     var retCode = playMacro(COMMON_FOLDER, "30_Home.iim", MACRO_INFO_LOGGING);
     var homefeedObj = initObject(MR_HOMEFEED_FILE);
     var listOfKills = [];
@@ -1411,8 +1413,10 @@ function getHomeFeed(){
             if (retCode == SUCCESS){
                 var timeMsg = getLastExtract(1, "Home Feed Time", "1 hour, 34 minutes ago:");
                 var originalMsg = getLastExtract(2, "Home Feed Line", "BlaBla");
+                var txtMsg = getLastExtract(3, "Home Feed Line", "BlaBla");
+                var line = getHomeFeedObj(timeMsg, txtMsg);
+                txtMsg = txtMsg.toLowerCase();
                 var msg = originalMsg.toLowerCase();
-                var line = getHomeFeedObj(timeMsg);
                 var gangObj = extractIdNameFromString(msg, "GANG");
                 line.gangId = gangObj.id;
                 line.gangName = gangObj.name;
@@ -1432,11 +1436,11 @@ function getHomeFeed(){
                 timeStamp = dateAdd(timeStamp, -days, "days");
                 line.timeStamp = formatDateToYYYYMMDDHHMISS(timeStamp);
                 logV2(INFO, "HOMEFEED", "Time: " + timeStamp);
-                logV2(INFO, "HOMEFEED", "Player: " + line.fighterId + " - " + fighter.name);
-                if (msg.startsWith("you were killed")) {
+                logV2(INFO, "HOMEFEED", "Player: " + line.fighterId + " - " + line.name);
+                if (txtMsg.startsWith("you were killed")) {
                     listOfKills.push(line);
                 }
-                else if (contains(msg, "accepted your")) {
+                else if (contains(txtMsg, "accepted your")) {
                     listOfLines.push(line);
                 }
                 else {
@@ -1448,6 +1452,12 @@ function getHomeFeed(){
                 break;
             }
         }
+        if (isUndefined(homefeedObj.kills)){
+            homefeedObj.kills = [];
+        }
+        if (isUndefined(homefeedObj.lines)){
+            homefeedObj.lines = [];
+        }
         for (var i=(listOfKills.length-1);i >= 0; i--){
             homefeedObj.kills.push(listOfKills[i]);
         }
@@ -1455,6 +1465,10 @@ function getHomeFeed(){
             homefeedObj.lines.push(listOfLines[i]);
         }
         writeObject(homefeedObj, MR_HOMEFEED_FILE);
+        retCode = playMacro(COMMON_FOLDER, "32_HomeFeedClear.iim", MACRO_INFO_LOGGING);
+        if (retCode != SUCCESS){
+            logV2(INFO, "FIGHT", "Problem clearing home feed");
+        }
     }
     else {
         logV2(INFO, "FIGHT", "Problem Going To MR Home Page");
