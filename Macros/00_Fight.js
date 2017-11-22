@@ -46,7 +46,8 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
                       "boss": {"attacks": 0}};
 //var fighters = getFightList();
 //startScript();
-getHomeFeed();
+
+alert(checkForAttackers());
 
 
 function startScript(){
@@ -61,13 +62,13 @@ function startScript(){
                 logV2(INFO, "BOSSFIGHT", "Status: " + status);
             }
             if (continueFighting(status)){
-                if (checkHealth()) {
+                if (checkHealth(configMRObj.fight.autoHeal)) {
                     fight();
                     logV2(INFO, "FIGHT", "Updating statistics");
                     writeObject(fighterObj, MR_FIGHTERS_FILE);
                 }
                 else {
-                    logV2(INFO, "FIGHT", "AutoHeal Disabled. Waiting till enough health again");
+                    logV2(INFO, "FIGHT", "AutoHeal Disabled. Waiting till enough health again if autoheal disabled or stamina if minimum stamina has reached");
                     waitV2("60");
                 }
             }
@@ -164,26 +165,31 @@ function attackBoss(){
         do {
             var stamina = getStamina();
             if (stamina >= 5) {
-                checkHealth(AUTOHEAL);
-                retCode = playMacro(FIGHT_FOLDER, "74_Boss_Attack.iim", MACRO_INFO_LOGGING);
-                if (retCode == SUCCESS) {
-                    bossHealth = getBossHealth();
-                    if (bossHealth == 0) {
-                        logV2(INFO, "BOSS", "Boss is dead!!!");
-                        break;
-                    }
-                    else if (bossHealth < 0) {
-                        break;
+                if (checkHealth(AUTOHEAL, stamina)) {
+                    retCode = playMacro(FIGHT_FOLDER, "74_Boss_Attack.iim", MACRO_INFO_LOGGING);
+                    if (retCode == SUCCESS) {
+                        bossHealth = getBossHealth();
+                        if (bossHealth == 0) {
+                            logV2(INFO, "BOSS", "Boss is dead!!!");
+                            break;
+                        }
+                        else if (bossHealth < 0) {
+                            break;
+                        }
+                        else {
+                            evaluateBossResult();
+                        }
+                        globalSettings.boss.attacks++;
                     }
                     else {
-                        evaluateBossResult();
+                        logV2(INFO, "BOSS", "Problem With Attacking boss");
+                        status = CONSTANTS.ATTACKSTATUS.PROBLEM;
+                        break;
                     }
-                    globalSettings.boss.attacks++;
                 }
-                else
-                {
-                    logV2(INFO, "BOSS", "Problem With Attacking boss");
-                    status = CONSTANTS.ATTACKSTATUS.PROBLEM;
+                else {
+                    logV2(INFO, "BOSS", "Not Enough Stamina For Healing");
+                    status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
                     break;
                 }
             }
@@ -379,7 +385,7 @@ function waitTillEnoughStamina(){
     var stamina = 0;
     var energy = 0;
     var total = 0;
-    var minStamina = 50;
+    var minStamina = configMRObj.fight.minStaminaToHeal;
     do {
 	    // refreshing stats (health / exp / stamina / energy)
 		playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
@@ -396,6 +402,10 @@ function waitTillEnoughStamina(){
 			// maxStamina = Math.min(maxStamina, staminaNeeded);
             if (total >= staminaNeeded && stamina > 19 && (stamina >= minStamina || exp < 300)) {
                 logV2(INFO, "WAIT", "Enough Stamina to level up");
+                // force healing
+                if (heal()) {
+                    globalSettings.heals++;
+                }
                 break;
             }
             else if (stamina >= maxStamina){
@@ -438,7 +448,7 @@ function attack(fighter, rivalMobster, profileFighter){
 	if (!profileFighter) {
         retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
     }
-	if (!checkHealth()){
+	if (!checkHealth(configMRObj.fight.autoHeal)){
         statusObj.status = CONSTANTS.ATTACKSTATUS.HEALINGDISABLED;
         return statusObj;
     }
@@ -577,8 +587,11 @@ function attackTillDeath(fighter, rivalMobster){
 	var nrOfHeals = 0;
 	var originalHealth = 0;
 	var health = 0;
+	var victimHealed;
+	var bigHealthAttacks = 0;
 	do {
-		if (health > -1){
+        victimHealed = false;
+	    if (health > -1){
 			if (firstAttack) {
 				originalHealth = health;
 				// MOD 15/11
@@ -589,6 +602,8 @@ function attackTillDeath(fighter, rivalMobster){
 				nrOfHeals++;
 				originalHealth = health;
 				previousHealth = health;
+                victimHealed = true;
+                bigHealthAttacks = 0;
 			}
 			var victimIsDeath = false;
 			if (health == 0){
@@ -613,22 +628,25 @@ function attackTillDeath(fighter, rivalMobster){
 					logV2(INFO, "ATTACK", "Victim Health changed: " + deltaHealth);
 				}
 				previousHealth = health;
-				if (nrOfAttacks > 50 && health > 20){
+				if (nrOfAttacks > configMRObj.fight.maxNumberOfAttacks && health > configMRObj.fight.attackTillDiedHealth){
 					logV2(INFO, "ATTACK", "Max. Nr Of Attacks Reached. Skipping...");
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
 				}
-				else if (nrOfHeals > 2 && health > 2){
+				else if (nrOfHeals > configMRObj.fight.numberOfHealsLimit && health > configMRObj.fight.attackTillDiedHealth){
 					logV2(INFO, "ATTACK", "Victim Heals too fast. Skipping...");
 					globalSettings.maxHealed++;
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
 				}
-				else if (!firstAttack && deltaHealth > 0 && deltaHealth < 2 && health > 30 && nrOfAttacks > 20){
+				else if (!firstAttack && !victimHealed && deltaHealth < 2 && health > configMRObj.fight.attackTillDiedBigHealth &&
+                    (originalHealth - currentHealth) <= configMRObj.fight.deltaBigHealth &&
+                    bigHealthAttacks > configMRObj.fight.maxNumberOfAttacksBigHealth){
 					logV2(INFO, "ATTACK", "Victim has too much health. Skipping...");
+                    logV2(INFO, "ATTACK", "Delta Health: " + deltaHealth);
 					logV2(INFO, "ATTACK", "Orignal Health: " + originalHealth);
 					logV2(INFO, "ATTACK", "Current Health: " + health);
-					logV2(INFO, "ATTACK", "Nr of Attacks: " + nrOfAttacks);
+                    logV2(INFO, "ATTACK", "Big Health Attacks: " + bigHealthAttacks);
 					globalSettings.skippedHealth++;
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					fighter.bigHealth = true;
@@ -636,12 +654,12 @@ function attackTillDeath(fighter, rivalMobster){
 				}
 				else {
 					// MOD 15/11
-				    if (!checkHealth()){
+                    var stamina = getStamina();
+				    if (!checkHealth(configMRObj.fight.autoHeal, stamina)){
                         statusObj.status = CONSTANTS.ATTACKSTATUS.HEALINGDISABLED;
                         alive = false;
                         break;
                     }
-					var stamina = getStamina();
 					if (stamina < 5){
 						statusObj.status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
 						break;
@@ -657,6 +675,7 @@ function attackTillDeath(fighter, rivalMobster){
 					firstAttack = false;
 					statusObj.totalStamina += 5;
 					nrOfAttacks++;
+                    bigHealthAttacks++;
 					checkSaldo();
                     // MOD 15/11
 					health = getVictimHealth(fighter);
@@ -820,19 +839,32 @@ function getExperience(){
 
 }
 
-
-function checkHealth(autoHeal){
+// MOD 22/11
+function checkHealth(autoHeal, stamina){
     autoHeal = typeof autoHeal !== 'undefined' ? autoHeal : configMRObj.fight.autoHeal;
+    if (typeof stamina == 'undefined'){
+        stamina = getStamina();
+    }
         logV2(INFO, "FIGHT", "Checking Health");
         var health = 0;
         health = getHealth();
+        // MOD 22/11
+        if (autoHeal && health == 0){
+            underAttack();
+        }
         if (autoHeal) {
-            while (health < 500) {
-                heal();
-                health = getHealth();
-                if (health > 500) {
-                    globalSettings.heals++;
+            if (stamina >= configMRObj.fight.minStaminaToFight) {
+                while (health < configMRObj.fight.heal) {
+                    heal();
+                    health = getHealth();
+                    if (health > configMRObj.fight.heal) {
+                        globalSettings.heals++;
+                    }
                 }
+            }
+            else {
+                logV2(INFO, "FIGHT", "Not Enough Stamina To Heal: " + stamina);
+                autoHeal = false;
             }
         }
         else if (health > 0) {
@@ -878,7 +910,7 @@ function getFightList(){
 	var retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
 	logV2(INFO, "FIGHTLIST", "Extract_Start Return Code: " + retCode);
 	if (retCode == SUCCESS){
-		for (var i=1; i<= 15; i++){
+		for (var i=1; i<= configMRObj.fight.listLength; i++){
 			addMacroSetting("pos", i.toString(), ENABLE_LOGGING);
 			var retCode = playMacro(FIGHT_FOLDER, "21_Extract.iim", MACRO_INFO_LOGGING);
 			if (retCode == SUCCESS){
@@ -939,7 +971,7 @@ function filterFightList(fightList){
 			if (!findFighter(fightersToExclude.fighters, fighter.id)){
 				// lookup friends list
 				if (!findFighter(friendObj.fighters, fighter.id)){
-					var maxLevel = globalSettings.currentLevel === 0 ? globalSettings.maxLevel : (globalSettings.currentLevel + 500);
+					var maxLevel = globalSettings.currentLevel === 0 ? globalSettings.maxLevel : (globalSettings.currentLevel + configMRObj.fight.maxAttackLevels);
                     logV2(INFO, "FIGHTLIST", "Max Level: " + maxLevel);
 					if (fighter.level <= maxLevel){
 						// MOD 15/11
@@ -978,7 +1010,9 @@ function updateStatistics(fighter, rivalMobster){
         var fighterItem = fighterObj.fighters[i];
         if (fighterItem.id == fighter.id){
             logV2(INFO, "FIGHT", "Updating statistics for " + fighter.id);
-            fighterItem.lastAttacked = fighter.lastAttacked;
+            if (fighter.lastAttacked != null) {
+                fighterItem.lastAttacked = fighter.lastAttacked;
+            }
             fighterItem.iced += fighter.iced;
             fighterItem.bigHealth = fighter.bigHealth;
             if (fighter.lastIced != null) {
@@ -1042,12 +1076,16 @@ function extractExperience(text){
 
 }
 
+// MOD 22/11
 function heal(){
-	logV2(INFO, "TEST", "Healing...");
+	logV2(INFO, "HEAL", "Healing...");
+	var healed = false;
 	var retCode = playMacro(FIGHT_FOLDER, "10_Heal.iim", MACRO_INFO_LOGGING);
 	if (retCode == SUCCESS) {
-        closePopup();
+        healed = true;
+	    closePopup();
     }
+    return healed;
 }
 
 function closePopup(){
@@ -1287,7 +1325,7 @@ function extractGangNameFromString(text, type){
 }
 
 function extractTimeFromHomefeed(msg, time){
-    var example = "3 hours, 32 minutes ago:";
+    //var example = "3 hours, 32 minutes ago:";
     msg = msg.toLowerCase();
     var regExp = "([0-9]{1,2}) " + time;
     var matches = msg.match(regExp);
@@ -1302,16 +1340,78 @@ function getHomeFeedObj(time){
     return obj;
 }
 
+function checkForAttackers(){
+    var homefeedObj = initObject(MR_HOMEFEED_FILE);
+    var count=0;
+    var length = homefeedObj.lines.length -1;
+    var attackers = {};
+    for (var i=length; i >= 0; i--){
+        var homefeedLine = homefeedObj.lines[i];
+        var currDate = new Date();
+        currDate = dateAdd(currDate, -configMRObj.fight.underAttackTime, configMRObj.fight.underAttackTimeUnit);
+        var date = formatStringYYYYMMDDHHMISSToDate(homefeedLine.timeStamp);
+        if (currDate <= date){
+            if (attackers.hasOwnProperty(homefeedLine.fighterId)){
+                attackers[homefeedLine.fighterId]["count"]++;
+            }
+            else {
+                attackers[homefeedLine.fighterId] = {"name": homefeedLine.name, "count": 1};
+            }
+
+        }
+        else {
+            // list is sorted on most recent
+            return;
+        }
+    };
+    Object.getOwnPropertyNames(attackers).forEach(
+        function (val, idx, array) {
+            if (attackers[val]["count"] > configMRObj.fight.underAttackLimit){
+                count = attackers[val]["count"];
+                logV2(INFO, "HOMEFEED", "We are being bullied by player " + val + " - " + attackers[val]["name"] + ": Nr Of Kills: " + count);
+            }
+            else if (attackers[val]["count"] > configMRObj.fight.underAttackLimitForList && isAttacker(val)){
+                count = attackers[val]["count"];
+                logV2(INFO, "HOMEFEED", "We are being bullied by listed attacker " + val + " - " + attackers[val]["name"] + ": Nr Of Kills: " + attackers[val]["count"]);
+            }
+        }
+    );
+    return count;
+}
+
+function underAttack(){
+    waitV2("2");
+    getHomeFeed();
+    if (checkForAttackers() > 1){
+        var waitTime = configMRObj.fight.underAttackWaitSeconds.toString();
+        waitV2(waitTime);
+    }
+}
+
+function isAttacker(fighterId){
+    var list = configMRObj.fight.underAttackList;
+    for (var i=0; i < list.length; i++){
+        if (list[i].id == fighterId){
+            return true;
+        }
+    }
+    return false;
+}
+
+
 function getHomeFeed(){
     var retCode = playMacro(COMMON_FOLDER, "30_Home.iim", MACRO_INFO_LOGGING);
     var homefeedObj = initObject(MR_HOMEFEED_FILE);
+    var listOfKills = [];
+    var listOfLines = [];
     if (retCode == SUCCESS){
-        for (var i=1; i <= 10; i++) {
+        for (var i=1; i <= configMRObj.homefeedLines; i++) {
             addMacroSetting("POS", i.toString());
-            retCode = playMacro(COMMON_FOLDER, "30_HomeFeedLine.iim", MACRO_INFO_LOGGING);
+            retCode = playMacro(COMMON_FOLDER, "31_HomeFeedLine.iim", MACRO_INFO_LOGGING);
             if (retCode == SUCCESS){
                 var timeMsg = getLastExtract(1, "Home Feed Time", "1 hour, 34 minutes ago:");
-                var msg = getLastExtract(2, "Home Feed Line", "BlaBla");
+                var originalMsg = getLastExtract(2, "Home Feed Line", "BlaBla");
+                var msg = originalMsg.toLowerCase();
                 var line = getHomeFeedObj(timeMsg);
                 var gangObj = extractIdNameFromString(msg, "GANG");
                 line.gangId = gangObj.id;
@@ -1331,15 +1431,32 @@ function getHomeFeed(){
                 var days = extractTimeFromHomefeed(timeMsg, "day");
                 timeStamp = dateAdd(timeStamp, -days, "days");
                 line.timeStamp = formatDateToYYYYMMDDHHMISS(timeStamp);
-                homefeedObj.lines.push(line);
+                logV2(INFO, "HOMEFEED", "Time: " + timeStamp);
+                logV2(INFO, "HOMEFEED", "Player: " + line.fighterId + " - " + fighter.name);
+                if (msg.startsWith("you were killed")) {
+                    listOfKills.push(line);
+                }
+                else if (contains(msg, "accepted your")) {
+                    listOfLines.push(line);
+                }
+                else {
+                    listOfLines.push(line);
+                }
             }
             else {
                 logV2(INFO, "FIGHT", "Problem Home Feed: Get Line " + i);
+                break;
             }
+        }
+        for (var i=(listOfKills.length-1);i >= 0; i--){
+            homefeedObj.kills.push(listOfKills[i]);
+        }
+        for (var i=(listOfLines.length-1);i >= 0; i--){
+            homefeedObj.lines.push(listOfLines[i]);
         }
         writeObject(homefeedObj, MR_HOMEFEED_FILE);
     }
     else {
-        logV2(INFO, "FIGHT", "Problem Going To Home");
+        logV2(INFO, "FIGHT", "Problem Going To MR Home Page");
     }
 }
