@@ -380,3 +380,7 @@ function removeComma(text){
 function contains(text, search){
     return (text.indexOf(search) >= 0);
 }
+
+function isUndefined(property){
+    return (typeof property == 'undefined');
+}

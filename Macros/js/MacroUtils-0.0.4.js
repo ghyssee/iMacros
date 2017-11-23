@@ -250,40 +250,6 @@ function prepareScreenshot(profile, file){
 	   addMacroSetting("file", profile + "." + file, DISABLE_LOGGING);
 }
 
-function startMafiaWars(loginObject){
-	var retcode = 1;
-	var mwLoadedOk = false;
-	if (loginObject.mafiaWarsStarted == false){
-	  loginObject.mafiaWarsStarted = true;
-	  var retries = 1;
-	  do {
-		  retcode = macroPlay("MWStart.iim",LOG_ERROR_ENABLED,ON_ERROR_RETRY_ENABLED);
-		  var ret = macroPlay ("MWCheckIfMafiaWarsIsLoaded.iim");
-		  if (ret == -921) {
-			  if (retries > configObject.mafiaWars.loadMafiaWars){
-				mwLoadedOk = true;
-				logV2(WARNING, "PLAY", "Mafiawars not started, but max retries exceeded.");
-			  }
-			  else {
-				logV2(WARNING, "PLAY", "Mafiawars not started... Retries : " + retries);
-				closeTab();
-			  }
-		  }
-		  else {
-			mwLoadedOk = true;
-		  }
-	  }
-	  while (!mwLoadedOk);
-	}
-}
-
-function closeMafiaWars(loginObject){
-	if (loginObject.mafiaWarsStarted){
-		closeTab();
-	}
-	loginObject.mafiaWarsStarted = false;
-}
-
 function macroPlayFolder(mwObjectCategory, macroName, logError, onErrorRetry, forcePlay){
 	var macroFolder = "";
 	if (!isNullOrBlank(mwObjectCategory.macroFolder)){

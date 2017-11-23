@@ -26,7 +26,7 @@ function save(saveFile, outputText) {
         var filename = saveFile;
 	    var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
         file.initWithPath(filename);
-        if (file.exists() === false) {
+        if (file.exists() == false) {
             file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 420);
         }
         var outputStream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);

@@ -185,7 +185,7 @@ function attackBoss(){
                     }
                 }
                 else {
-                    logV2(INFO, "BOSS", "Not Enough Stamina For Healing");
+                    logV2(INFO, "BOSS", "Not Enough Stamina For Healing or We're under attack");
                     status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
                     break;
                 }
@@ -847,7 +847,8 @@ function checkHealth(autoHeal, stamina){
         health = getHealth();
         // MOD 22/11
         if (autoHeal && health == 0){
-            underAttack();
+            underAttack(); // don't heal yet, reinitialize fight page first, next call will heal
+            autoHeal = false;
         }
         if (autoHeal) {
             if (stamina >= configMRObj.fight.minStaminaToHeal) {
@@ -856,6 +857,12 @@ function checkHealth(autoHeal, stamina){
                     health = getHealth();
                     if (health > configMRObj.fight.heal) {
                         globalSettings.heals++;
+                    }
+                    else if (health == 0){
+                        logV2(INFO, "FIGHT", "Under Attack While health between 1-" + configMRObj.fight.heal);
+                        underAttack();
+                        autoHeal = false;
+                        break;
                     }
                 }
             }
@@ -1378,12 +1385,15 @@ function checkForAttackers(){
 }
 
 function underAttack(){
+    var bullied = false;
     waitV2("2");
     getHomeFeed();
     if (checkForAttackers() > 1){
         var waitTime = configMRObj.fight.underAttackWaitSeconds.toString();
+        bullied = true;
         waitV2(waitTime);
     }
+    return bullied;
 }
 
 function isAttacker(fighterId){
@@ -1394,10 +1404,6 @@ function isAttacker(fighterId){
         }
     }
     return false;
-}
-
-function isUndefined(property){
-    return (typeof property == 'undefined');
 }
 
 function getHomeFeed(){

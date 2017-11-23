@@ -50,12 +50,13 @@ function start() {
             do {
                 if (configMRObj.crimeEvent.enabled){
                     startCrimeEvent();
+                    clearDistrict();
                 }
                 if (configMRObj.crimeEvent.joinedCrimes){
                     helpCrimeEvent();
+                    clearDistrict();
                 }
                 var wait = doJobs(newJobs);
-                //clearDistrict();
                 if (wait) {
                     waitV2("60");
                 }
@@ -394,11 +395,12 @@ function processJob(jobItem){
                 return status;
             }
             logJob(jobItem);
-            testJob(jobItem);
+            status = testJob(jobItem);
             logV2(INFO, "JOB", "Job Status: " + status);
         }
         else {
             logV2(INFO, "JOB", "Problem Selecting District");
+            status = CONSTANTS.STATUS.PROBLEM;
         }
     //}
     //else {
@@ -413,18 +415,25 @@ function clearDistrict(){
 }
 
 function testJob(jobItem){
-        var complete = getPercentCompleted(jobItem);
-        if (complete == -1){
-            logV2(INFO, "JOB", "Skip This Job for now. There was a problem going to the right chapter");
+    var status = CONSTANTS.STATUS.OK;
+    var complete = getPercentCompleted(jobItem);
+    if (complete == -1){
+        logV2(INFO, "JOB", "Skip This Job for now. There was a problem going to the right chapter");
+        status = CONSTANTS.STATUS.PROBLEM;
+    }
+    else {
+        var valid = executeJob(jobItem, complete);
+        if (valid) {
+            jobItem.number++;
+            globalSettings.lastDistrict = jobItem.districtId;
+            globalSettings.lastChapter = jobItem.job.chapter;
         }
         else {
-            var valid = executeJob(jobItem, complete);
-            if (valid) {
-                jobItem.number++;
-                globalSettings.lastDistrict = jobItem.districtId;
-                globalSettings.lastChapter = jobItem.job.chapter;
-            }
+            status = CONSTANTS.STATUS.PROBLEM;
         }
+    }
+    return status;
+
 }
 
 function isValidJob(jobItem){
