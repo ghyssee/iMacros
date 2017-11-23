@@ -388,6 +388,7 @@ function waitTillEnoughStamina(){
 		playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
 		stamina = getStamina();
 		energy = getEnergy();
+		var health = getHealth();
 		total = stamina + energy;
 		var exp = getExperience();
 		if (exp > 0){
@@ -409,8 +410,15 @@ function waitTillEnoughStamina(){
                 logV2(INFO, "WAIT", "Enough Stamina to start fighting again");
                 break;
             }
+            else if (health > 0 && stamina > 20){
+                logV2(INFO, "WAIT", "Enough Health to fight");
+                break;
+            }
             waitV2("60");
 		}
+		else {
+            logV2(WARNING, "WAIT", "Problem getting experience");
+        }
 	}
 	// wait till stamina > 100
     // or stamina + energy > (experience needed to level up / 4)
@@ -636,9 +644,10 @@ function attackTillDeath(fighter, rivalMobster){
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
 				}
-				else if (!firstAttack && !victimHealed && deltaHealth < 2 && health > configMRObj.fight.attackTillDiedBigHealth &&
-                    (originalHealth - health) <= configMRObj.fight.deltaBigHealth &&
-                    bigHealthAttacks > configMRObj.fight.maxNumberOfAttacksBigHealth){
+				else if (health < configMRObj.fight.attackTillDiedHealth && !firstAttack && !victimHealed &&
+                         deltaHealth < 2 && health > configMRObj.fight.attackTillDiedBigHealth &&
+                         (originalHealth - health) <= configMRObj.fight.deltaBigHealth &&
+                         bigHealthAttacks > configMRObj.fight.maxNumberOfAttacksBigHealth){
 					logV2(INFO, "ATTACK", "Victim has too much health. Skipping...");
                     logV2(INFO, "ATTACK", "Delta Health: " + deltaHealth);
 					logV2(INFO, "ATTACK", "Orignal Health: " + originalHealth);
@@ -847,8 +856,9 @@ function checkHealth(autoHeal, stamina){
         health = getHealth();
         // MOD 22/11
         if (autoHeal && health == 0){
-            underAttack(); // don't heal yet, reinitialize fight page first, next call will heal
-            autoHeal = false;
+            if (underAttack()){ // don't heal yet, reinitialize fight page first, next call will heal
+                autoHeal = false;
+            }
         }
         if (autoHeal) {
             if (stamina >= configMRObj.fight.minStaminaToHeal) {
@@ -860,13 +870,14 @@ function checkHealth(autoHeal, stamina){
                     }
                     else if (health == 0){
                         logV2(INFO, "FIGHT", "Under Attack While health between 1-" + configMRObj.fight.heal);
+                        waitV2("60");
                         underAttack();
                         autoHeal = false;
                         break;
                     }
                 }
             }
-            else {
+            else if (health == 0){
                 logV2(INFO, "FIGHT", "Not Enough Stamina To Heal: " + stamina);
                 autoHeal = false;
             }
@@ -1348,10 +1359,10 @@ function getHomeFeedObj(time, feed){
 function checkForAttackers(){
     var homefeedObj = initObject(MR_HOMEFEED_FILE);
     var count=0;
-    var length = homefeedObj.lines.length -1;
+    var length = homefeedObj.kills.length -1;
     var attackers = {};
     for (var i=length; i >= 0; i--){
-        var homefeedLine = homefeedObj.lines[i];
+        var homefeedLine = homefeedObj.kills[i];
         var currDate = new Date();
         currDate = dateAdd(currDate, -configMRObj.fight.underAttackTime, configMRObj.fight.underAttackTimeUnit);
         var date = formatStringYYYYMMDDHHMISSToDate(homefeedLine.timeStamp);
@@ -1454,7 +1465,7 @@ function getHomeFeed(){
                 }
             }
             else {
-                logV2(INFO, "FIGHT", "Problem Home Feed: Get Line " + i);
+                //logV2(INFO, "FIGHT", "Problem Home Feed: Get Line " + i);
                 break;
             }
         }

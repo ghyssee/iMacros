@@ -297,12 +297,13 @@ function startList() {
         if (retCode == SUCCESS) {
             // district 1
 
+            /*
             for (var i=1; i <= 10; i++) {
                 startChapter("1", i.toString());
-            }
+            }*/
 
             // district 2
-            for (var i=11; i <= 19; i++) {
+            for (var i=11; i <= 20; i++) {
                 startChapter("2", i.toString());
             }
             writeObject(jobsObj, MR_JOBS_FILE);

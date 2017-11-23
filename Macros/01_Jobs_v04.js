@@ -718,6 +718,9 @@ function evaluateCrimeEvent(joinedCrime){
         if (isNullOrBlank(msg)){
             msg = getLastExtract(2, "Crime Event Status", "The crime is complete! Collect your reward.");
         }
+        if (isNullOrBlank(msg)){
+            msg = getLastExtract(3, "Crime Event Status", "You have already started 25 crimes. It would be unwise to attract too much attention.");
+        }
         logV2(INFO, "CRIME EVENT", "Crime Event Status: " + msg);
         if (!isNullOrBlank(msg)){
             msg = msg.toUpperCase();
@@ -741,6 +744,11 @@ function evaluateCrimeEvent(joinedCrime){
             }
             else if (msg.startsWith("FINISH")){
                 started = true;
+            }
+            else if (msg.startsWith("YOU HAVE ALREADY STARTED")){
+                started = false;
+                configMRObj.crimeEvent.enabled=false;
+                writeObject(configMRObj, MR_CONFIG_FILE);
             }
             else {
                 logV2(WARNING, "CRIME EVENT", "Unknown status");
