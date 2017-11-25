@@ -35,6 +35,7 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
 
 startList();
 
+
 //var job = getHighestPayloadJob(jobsObj.districts);
 //logJob(job, "Job With Highest Money Ratio");
 
@@ -686,4 +687,19 @@ function containsConsumable(text){
 
 function containsLoot(text){
     return contains(text.toUpperCase(), "SPAN CLASS=\"LOOT ITEM\"");
+}
+
+function UUID() {
+    var nbr, randStr = "";
+    do {
+        randStr += (nbr = Math.random()).toString(16).substr(2);
+    } while (randStr.length < 30);
+    return [
+        randStr.substr(0, 8), "-",
+        randStr.substr(8, 4), "-4",
+        randStr.substr(12, 3), "-",
+        ((nbr*4|0)+8).toString(16), // [89ab]
+        randStr.substr(15, 3), "-",
+        randStr.substr(18, 12)
+    ].join("");
 }
