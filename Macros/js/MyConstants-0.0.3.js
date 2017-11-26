@@ -53,7 +53,7 @@ var PROFILE_MT = "05_MT";
 var LOG_ERROR_ENABLED = true;
 var LOG_ERROR_DISABLED = false;
 
-var LOG_DEBUG = true;
+var LOG_DEBUG = false;
 
 var NEWLINE = "\r\n";
 
