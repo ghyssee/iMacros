@@ -431,10 +431,11 @@ function waitTillEnoughStamina(){
             logV2(INFO, "WAIT", "Stamina: " + stamina);
             logV2(INFO, "WAIT", "maxStamina: " + maxStamina);
 			// maxStamina = Math.min(maxStamina, staminaNeeded);
-            if (total >= staminaNeeded && stamina > 19 && (stamina >= minStamina || exp < 300)) {
+            if (total >= staminaNeeded && stamina > 39 && (stamina >= minStamina || exp < 300)) {
                 logV2(INFO, "WAIT", "Enough Stamina to level up");
                 // force healing
                 if (heal()) {
+                    logV2(INFO, "WAIT", "Force Healing");
                     globalSettings.heals++;
                 }
                 break;
@@ -453,8 +454,6 @@ function waitTillEnoughStamina(){
             logV2(WARNING, "WAIT", "Problem getting experience");
         }
 	}
-	// wait till stamina > 100
-    // or stamina + energy > (experience needed to level up / 4)
 	while (true);
     logV2(INFO, "WAIT", "Leaving wait");
 }
@@ -470,7 +469,7 @@ function extractRivalMobster(){
 		var msg = getLastExtract(1, "Rival", "20 / 20");
 		logV2(INFO, "FIGHT", "MSG: " + msg);
 		msg = msg.toUpperCase().replace("RIVAL MOBSTERS ALIVE: ","");
-		msg = msg.replace("/ 20", "").trim();;
+		msg = msg.replace("/ 20", "").trim();
 		logV2(INFO, "FIGHT", "MSG PROCESSED: " + msg);
 		mob = parseInt(msg);
 	}

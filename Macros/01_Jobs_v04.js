@@ -133,7 +133,8 @@ function getJobTaskObject(districtId, jobId, type){
         type: type,
         chapter: null,
         total: 0,
-        enabled: true
+        enabled: true,
+        percentCompleted: null,
     }
     return obj;
 }
@@ -491,10 +492,14 @@ function executeJob(jobItem, completed){
         var completeAfter = getPercentCompleted(jobItem);
         //logV2(INFO, "JOB", "Completed: " + completed + " / " + completeAfter);
         logV2(INFO, "JOB", "CompleteAfter: " + (completeAfter === 100));
+        jobItem.percentCompleted = completeAfter;
         //logV2(INFO, "JOB", "completed: " + (completed < 100));
         if ((completeAfter === 100) && (completed < 100)){
             logV2(INFO, "JOB", "Close Popup For Skill Point");
             closePopup();
+        }
+        if (completeAfter === 100){
+            jobItem.completed = true;
         }
         checkSaldo();
         success = true;
@@ -579,7 +584,7 @@ function getEnergy(){
 	var energyInfo = getLastExtract(1, "Energy Left", "500/900");
 	logV2(INFO, "ENERGY", "energy = " + energyInfo);
 	if (!isNullOrBlank(energyInfo)){
-        energyInfo = energyInfo.replace(/,/g, '');
+        energyInfo = removeComma(energyInfo);
 	    var tmp = energyInfo.split("/");
 		var energy = parseInt(tmp[0]);
 		return energy;
@@ -598,7 +603,8 @@ function getPercentCompleted(jobItem){
         if (!isNullOrBlank(percentInfo)) {
             percentInfo = percentInfo.replace("%", "").toUpperCase();
             percentInfo = percentInfo.replace(" COMPLETE", "");
-            return parseInt(percentInfo);
+            jobItem.percentCompleted = parseInt(percentInfo);
+            return parseInt(jobItem.percentCompleted);
         }
         else {
             clearDistrict();
