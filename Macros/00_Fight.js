@@ -901,6 +901,7 @@ function getExperience(){
 // MOD 22/11
 function checkHealth(autoHeal, stamina){
     autoHeal = typeof autoHeal !== 'undefined' ? autoHeal : configMRObj.fight.autoHeal;
+    var tries = 0;
     if (typeof stamina == 'undefined'){
         stamina = getStamina();
     }
@@ -910,16 +911,27 @@ function checkHealth(autoHeal, stamina){
         if (autoHeal) {
             if (stamina >= configMRObj.fight.minStaminaToHeal) {
                 while (health < configMRObj.fight.heal) {
-                    if (health == 0 && !globalSettings.forceHealing){
-                        logV2(INFO, "FIGHT", "Killed by another player");
-                        autoHeal = false;
-                        if (underAttack()) {
-                            // Went To Home page;
-                            // interrupt Attack / Boss Fight => disable autoHeal switch
+                    logV2(INFO, "FIGHT", "Health = " + health);
+                    tries++;
+                    if (!globalSettings.forceHealing) {
+                        if (tries > 1 || health < 300) {
+                            logV2(INFO, "FIGHT", tries + " attempt(s) to heal. Possible under attack");
+                            waitV2("2");
+                            dummyBank();
+                            health = getHealth();
+                            logV2(INFO, "FIGHT", "Health = " + health);
                         }
-                        // when it's your first heal => don't wait
-                        waitV2("60");
-                        break;
+                        if (health == 0) {
+                            logV2(INFO, "FIGHT", "Killed by another player");
+                            autoHeal = false;
+                            if (underAttack()) {
+                                // Went To Home page;
+                                // interrupt Attack / Boss Fight => disable autoHeal switch
+                            }
+                            // when it's your first heal => don't wait
+                            waitV2("60");
+                            break;
+                        }
                     }
                     heal();
                     health = getHealth();
@@ -954,6 +966,10 @@ function checkSaldo(){
 	if (saldo > 10){
 		bank(saldo);
 	}
+}
+
+function dummyBank(){
+    playMacro(COMMON_FOLDER, "10_Bank.iim", MACRO_INFO_LOGGING);
 }
 
 function bank(saldo){
