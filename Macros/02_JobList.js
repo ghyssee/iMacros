@@ -36,20 +36,8 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
 startList();
 
 
-//var job = getHighestPayloadJob(jobsObj.districts);
-//logJob(job, "Job With Highest Money Ratio");
-
-//job = getHighestRatio(jobsObj.districts);
-//logJob(job, "Job With Highest Ratio");
-/*
-var retCode = playMacro(JOB_FOLDER, "20_Joblist_Info.iim", MACRO_INFO_LOGGING);
-var txt = getLastExtract(1);
-logV2(INFO, "TST", txt);
-
-//var jobId = "<span id=\"job-mastery-81\" style=\"width: 100%; outline: 1px solid blue;\"><span>100% Complete</span></span>";
-alert(extractJobId(jobId));
-*/
 //convertFighterObj();
+//correctionJobObj();
 
 var CONSTANTS = Object.freeze({
     "FILTER" : {
@@ -672,6 +660,37 @@ function convertFighterObj(){
     fightObj.fighters = newFighters;
     MR_FIGHTERS_FILE.file += ".NEW";
     writeObject(fightObj, MR_FIGHTERS_FILE);
+}
+
+function getFighterObject(){
+    return {"id":null, "name":null, "level": null, "skip": false,
+        "gangId": null, "gangName": null, "bigHealth": false, "lastAttacked": null, "lastIced": null,
+        "iced": 0
+    };
+}
+
+function findChapter(jobObj, jobId){
+    for (var i=0; i < jobObj.districts.length; i++){
+        var district = jobObj.districts[i];
+        for (var j=0; j < district.jobs.length; j++){
+            var job = district.jobs[j];
+            if (job.id == jobId){
+                return job.chapter;
+            }
+        }
+    }
+    return null;
+}
+
+function correctionJobObj(){
+    var jobObj = initObject(MR_JOBS_FILE);
+    jobObj.activeJobs.forEach( function (activeJob) {
+        if (activeJob.type != 'CHAPTER') {
+            activeJob.chapter = findChapter(jobObj, activeJob.jobId);
+        }
+    });
+    MR_JOBS_FILE.file += ".NEW";
+    writeObject(jobObj, MR_JOBS_FILE);
 }
 
 function getFighterObject(){
