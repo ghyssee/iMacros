@@ -1141,7 +1141,7 @@ function extractLevelFromString(text){
 
 
 function extractIdFromString(text){
-    var regExp = /id=(.*)"[ |$]/;
+    var regExp = /id=(.*)\"/;
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         return matches[matches.length-1];
