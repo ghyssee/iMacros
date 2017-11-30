@@ -785,6 +785,7 @@ function getLevel(){
     if (retCode == SUCCESS) {
         var msg = getLastExtract(1, "Level 300").toUpperCase();
         msg = msg.replace("LEVEL ", "");
+        msg = removeComma(msg);
         level = parseInt(msg);
     }
     return level;
@@ -1337,7 +1338,6 @@ function profileAttack(array, fighterType){
     var refresh = false;
     var status = CONSTANTS.ATTACKSTATUS.OK;
     logV2(INFO, "FIGHT", "Profile Fighting: Nr Of Fighters: " + array.length);
-    logV2(INFO, "FIGHT", JSON.stringify(array));
     for (var i=0; i < array.length; i++) {
         var arrayItem = array[i];
         logV2(INFO, JSON.stringify(arrayItem));
