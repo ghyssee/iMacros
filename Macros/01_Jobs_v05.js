@@ -127,8 +127,36 @@ function doJobs(listOfJobs){
         logV2(WARNING, "JOB", "Problem with job page");
         makeScreenShot("MRJobInit");
     }
+    checkForUdpates(listOfJobs);
     logV2(INFO, "JOB", "Wait: " + wait);
     return wait;
+}
+
+function checkForUdpates(listOfJobs){
+    // check if anything to update
+    logV2(INFO, "JOB", "Check If Anything to update...");
+    listOfJobs.forEach( function (jobItem) {
+        if (jobItem.update){
+            updateJobItem(jobItem);
+            jobItem.update = false;
+        }
+
+    });
+}
+
+function updateJobItem(jobItem){
+    var obj = initObject(MR_JOBS_FILE);
+    var save = false;
+    obj.activeJobs.forEach( function (item) {
+        if (item.id == jobItem.id){
+            logV2(INFO, "JOB", "Update Job " + item.id + ": " + "numberOfTimesExecuted: " + item.numberOfTimesExecuted);
+            item.numberOfTimesExecuted = jobItem.numberOfTimesExecuted;
+            save = true;
+        }
+    });
+    if (save){
+        writeObject(obj, MR_JOBS_FILE);
+    }
 }
 
 function getJobTaskObject(districtId, jobId, type){
@@ -138,6 +166,7 @@ function getJobTaskObject(districtId, jobId, type){
         type: type,
         chapter: null,
         total: 0,
+        numberOfTimesExecuted : 0,
         enabled: true,
         percentCompleted: null,
     }
@@ -176,10 +205,12 @@ function initJobs(listOfJobs){
         if (jobItem.total == null){
             jobItem.total = 0;
         }
-        if (jobItem.number == null){
-            jobItem.number = 0;
+        if (jobItem.numberOfTimesExecuted == null){
+            jobItem.numberOfTimesExecuted = 0;
         }
+        jobItem.update = false;
         jobItem.percentCompleted = null;
+        jobItem.completed = false;
         jobItem.ok = true;
         logV2(INFO, "JOB", JSON.stringify(jobItem));
         if (jobItem.job.type == "ENERGY") {
@@ -444,7 +475,8 @@ function testJob(jobItem){
     else {
         var valid = executeJob(jobItem);
         if (valid) {
-            jobItem.number++;
+            jobItem.update = true;
+            jobItem.numberOfTimesExecuted++;
             globalSettings.lastDistrict = jobItem.districtId;
             globalSettings.lastChapter = jobItem.job.chapter;
         }
@@ -464,8 +496,8 @@ function isValidJob(jobItem){
     }
     switch (jobItem.type) {
         case CONSTANTS.EXECUTE.REPEAT:
-            if (jobItem.total > 0 && jobItem.number >= jobItem.total){
-                logV2(INFO, "JOB", "Nr Of Times Exceeded: " + jobItem.number + "/" + jobItem.total);
+            if (jobItem.total > 0 && jobItem.numberOfTimesExecuted >= jobItem.total){
+                logV2(INFO, "JOB", "Nr Of Times Exceeded: " + jobItem.numberOfTimesExecuted + "/" + jobItem.total);
             }
             else {
                 validJob.valid = true;
@@ -507,8 +539,8 @@ function executeJob(jobItem){
     }
     else {
         var completeAfter = getPercentCompleted(jobItem);
-        logV2(INFO, "JOB", "CompleteAfter: " + (completeAfter === 100));
-        //logV2(INFO, "JOB", "completed: " + (completed < 100));
+        logV2(INFO, "JOB", "Complete After: " + completeAfter);
+        logV2(INFO, "JOB", "jobItem.percentCompleted: " + jobItem.percentCompleted);
         if ((completeAfter === 100) && (jobItem.percentCompleted < 100)){
             logV2(INFO, "JOB", "Close Popup For Skill Point");
             closePopup();
@@ -647,8 +679,8 @@ function getPercentCompleted(jobItem){
         if (!isNullOrBlank(percentInfo)) {
             percentInfo = percentInfo.replace("%", "").toUpperCase();
             percentInfo = percentInfo.replace(" COMPLETE", "");
-            jobItem.percentCompleted = parseInt(percentInfo);
-            return parseInt(jobItem.percentCompleted);
+            var percentCompleted = parseInt(percentInfo);
+            return parseInt(percentCompleted);
         }
         else {
             clearDistrict();

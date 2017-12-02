@@ -32,217 +32,10 @@ var jobsObj = initObject(MR_JOBS_FILE);
 var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                       "lastDistrict": null, "lastChapter": null,
                      };
-
 startList();
-
 
 //convertFighterObj();
 //correctionJobObj();
-
-var CONSTANTS = Object.freeze({
-    "FILTER" : {
-        "YES": 0,
-        "NO": 1,
-        "WHATEVER" : 2,
-        "ENERGY" : "ENERGY",
-        "STAMINA": "STAMINA"
-    },
-    "SELECTTYPES" : {
-        "EVENT" : 1,
-        "MONEY": 2,
-        "MONEYCOST": 3,
-        "CONSUMABLECOST": 4,
-        "JOBTYPE": 5
-    },
-    "SORTING" : {
-        "MONEY" : "moneyRatio",
-        "RATIO": "ratio"
-    }
-});
-
-var selectObj = {
-    "EVENT" : 1,
-    "MONEY": 2,
-    "CONSUMABLECOST": 3,
-    "HIGHESTRATIO": 4,
-    "HIGHESTMONEY": 5
-}
-
-var selections = [  addFilter(CONSTANTS.SELECTTYPES.EVENT, CONSTANTS.FILTER.NO),
-    addFilter(CONSTANTS.SELECTTYPES.MONEYCOST, CONSTANTS.FILTER.NO),
-    addFilter(CONSTANTS.SELECTTYPES.JOBTYPE, CONSTANTS.FILTER.ENERGY),
-    addFilter(CONSTANTS.SELECTTYPES.CONSUMABLECOST, CONSTANTS.FILTER.NO)
-];
-//getJob(jobsObj.districts, selections, "HighestEnergyJobRatio.csv",CONSTANTS.SORTING.RATIO);
-
-selections = [  addFilter(CONSTANTS.SELECTTYPES.EVENT, CONSTANTS.FILTER.NO),
-    addFilter(CONSTANTS.SELECTTYPES.MONEYCOST, CONSTANTS.FILTER.NO),
-    addFilter(CONSTANTS.SELECTTYPES.JOBTYPE, CONSTANTS.FILTER.STAMINA),
-    addFilter(CONSTANTS.SELECTTYPES.CONSUMABLECOST, CONSTANTS.FILTER.NO)
-];
-//getJob(jobsObj.districts, selections, "HighestStaminaJobRatio.csv", CONSTANTS.SORTING.RATIO);
-selections = [  addFilter(CONSTANTS.SELECTTYPES.EVENT, CONSTANTS.FILTER.NO),
-    addFilter(CONSTANTS.SELECTTYPES.MONEY, CONSTANTS.FILTER.YES),
-    addFilter(CONSTANTS.SELECTTYPES.CONSUMABLECOST, CONSTANTS.FILTER.NO)
-];
-//getJob(jobsObj.districts, selections, "HighestMoneyRatio.csv", CONSTANTS.SORTING.MONEY);
-/*
-EVENT: YES / NO / WHATEVER
-MONEY: YES / NO / WHATEVER
-RATIO: YES / NO / WHATEVER
-switch selecttype
-    case EVENT:
-        if WHATEVER || (district.event && YES)
-            => job is selectable
-    case MONEY:
-        if WHATEVER || (job.money >0 && YES)
-            => job is selectable
-    case CONSUMABLE:
-        if WHATEVER || (job.consumableCost && YES)
-            => job is selectable
-
-after that, sort on highest money or ratio
-*/
-
-
-function logJob(job, title, sorting){
-    logV2(INFO, "JOB", title);
-    logV2(INFO, "JOB", "ID: " + job.id);
-    logV2(INFO, "JOB", "Name: " + job.description);
-    logV2(INFO, "JOB", "District: " + job.districtId + " - " + job.districtName);
-    logV2(INFO, "JOB", "Chapter: " + job.chapter);
-    logV2(INFO, "JOB", "Type: " + job.type);
-    logV2(INFO, "JOB", "Energy: " + job.energy);
-    logV2(INFO, "JOB", "Experience: " + job.exp);
-    logV2(INFO, "JOB", "Money: " + job.money);
-    logV2(INFO, "JOB", "Money Ratio: " + job.moneyRatio);
-    logV2(INFO, "JOB", "Ratio: " + job.ratio);
-}
-
-function logJob2(job, title, selectable){
-    logV2(INFO, "JOB", title);
-    logV2(INFO, "JOB", "ID: " + job.id);
-    logV2(INFO, "JOB", "Name: " + job.description);
-    logV2(INFO, "JOB", "District: " + job.districtId + " - " + job.districtName);
-    logV2(INFO, "JOB", "Chapter: " + job.chapter);
-    logV2(INFO, "JOB", "Type: " + job.type);
-    logV2(INFO, "JOB", "Energy: " + job.energy);
-    logV2(INFO, "JOB", "Experience: " + job.exp);
-    logV2(INFO, "JOB", "Money: " + job.money);
-    logV2(INFO, "JOB", "Selectable: " + selectable);
-    logV2(INFO, "JOB", "Money Ratio: " + job.moneyRatio);
-    logV2(INFO, "JOB", "Ratio: " + job.ratio);
-    logV2(INFO, "JOB", "============================================================================");
-}
-
-function getMoneyRatio(job){
-    var ratio = job.money / job.energy;
-    return ratio;
-}
-
-function addFilter(type, value){
-    var selectType = {"type": type, "value": value};
-    return selectType;
-}
-
-function convertBooleanToFilterType(value){
-    if (value){
-        return CONSTANTS.FILTER.YES;
-    }
-    else {
-        return CONSTANTS.FILTER.NO;
-    }
-}
-
-function isJobSelectable(filters, district, job){
-    var valid = true;
-    for (var i=0; i < filters.length; i++){
-        var typeObj = filters[i];
-        switch (typeObj.type) {
-            case CONSTANTS.SELECTTYPES.EVENT:
-                if (typeObj.value == CONSTANTS.FILTER.WHATEVER || convertBooleanToFilterType(district.event) == typeObj.value){
-                    //alert("NO EVENT");
-                    valid = valid && true;
-                }
-                else {
-                    valid = false;
-                }
-                break;
-            case CONSTANTS.SELECTTYPES.MONEY:
-                if (typeObj.value == CONSTANTS.FILTER.WHATEVER || convertBooleanToFilterType(job.money > 0) == typeObj.value){
-                    //alert("MONEY");
-                    valid = valid && true;
-                }
-                else {
-                    valid = false;
-                }
-                break;
-            case CONSTANTS.SELECTTYPES.MONEYCOST:
-                if (typeObj.value == CONSTANTS.FILTER.WHATEVER || (convertBooleanToFilterType(job.money < 0) == typeObj.value)){
-                 //   alert("COSTS NO MONEY");
-                    valid = valid && true;
-                }
-                else {
-                    valid = false;
-                }
-                break;
-            case CONSTANTS.SELECTTYPES.CONSUMABLECOST:
-                if (typeObj.value == CONSTANTS.FILTER.WHATEVER || (convertBooleanToFilterType(job.consumableCost) == typeObj.value)){
-                   // alert("COSTS NO CONSUMABLE");
-                    valid = valid && true;
-                }
-                else {
-                    valid = false;
-                }
-                break;
-            case CONSTANTS.SELECTTYPES.JOBTYPE:
-                if (typeObj.value == CONSTANTS.FILTER.WHATEVER || job.type == typeObj.value){
-                    valid = valid && true;
-                }
-                else {
-                    valid = false;
-                }
-                break;
-        }
-    }
-    return valid;
-}
-
-
-function getJob(districts, filters, file, sorting){
-    var foundJob = null;
-    var selectedJobs = [];
-
-    for (var i=0; i < districts.length; i++){
-        var district = districts[i];
-        for (var j=0; j < district.jobs.length; j++){
-            var job = district.jobs[j];
-            var test = isJobSelectable(filters, district, job);
-            job.ratio = getRatio(job);
-            job.moneyRatio = getMoneyRatio(job);
-            job.districtId = district.id;
-            job.districtName = district.description;
-            logJob2(job, "SELECTABLE", test);
-            if (test) {
-                selectedJobs.push(job);
-            }
-        }
-    }
-    selectedJobs.sort(function(a, b) {
-        return b[sorting] - a[sorting];
-    });
-    logV2(INFO, "SORTED", "Sorted...");
-    logV2(INFO, "SORTED", "-----------------------------------------------------------------------------");
-    logV2(INFO, "TST", JSON.stringify(selectedJobs));
-    file = DATASOURCE_DIR + file;
-    deleteFile(file);
-    for (var i=0; i < selectedJobs.length; i++){
-        writeObjectToCSV(selectedJobs[i], file);
-    }
-    logV2(INFO, "TST", "Result written to: " + file);
-    return foundJob;
-
-}
 
 function getRatio(job){
     var ratio = job.exp / job.energy;
@@ -285,14 +78,12 @@ function startList() {
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
             // district 1
-
-            /*
-            for (var i=1; i <= 10; i++) {
+            for (var i=3; i <= 10; i++) {
                 startChapter("1", i.toString());
-            }*/
+            }
 
             // district 2
-            for (var i=11; i <= 20; i++) {
+            for (var i=13; i <= 20; i++) {
                 startChapter("2", i.toString());
             }
             writeObject(jobsObj, MR_JOBS_FILE);
@@ -309,7 +100,8 @@ function startList() {
 }
     function extractStar(starInfo){
         // <div class="job_star bronze_star" style="outline: 1px solid blue;"></div>
-        var regExp = /job_star (.*)\" style/;
+        // <div style=\"outline: 1px solid blue;\" class=\"job_star ruby_star\"></div>
+        var regExp = /job_star (.*)\"/;
         var matches = starInfo.match(regExp);
         if (matches != null && matches.length > 0){
             var star = matches[matches.length-1];
