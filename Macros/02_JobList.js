@@ -3,13 +3,14 @@ var ONEDRIVEPATH = getOneDrivePath();
 var MACROS_PATH = getMacrosPath();
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.3.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded.js"));
 
 var localConfigObject = null;
 var NODE_ID = "";
 var SUCCESS = 1;
-LOG_FILE = new LogFile(LOG_DIR, "MRJobList");
+setMRPath("MRJobList");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 
 var CONSTANTS = Object.freeze({
@@ -28,7 +29,7 @@ init();
 var JOB_FOLDER = "MR/Jobs";
 var COMMON_FOLDER = "MR/Common";
 
-var jobsObj = initObject(MR_JOBS_FILE);
+var jobsObj = initMRObject(MR.MR_JOBS_FILE);
 var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                       "lastDistrict": null, "lastChapter": null,
                      };
@@ -86,7 +87,7 @@ function startList() {
             for (var i=13; i <= 20; i++) {
                 startChapter("2", i.toString());
             }
-            writeObject(jobsObj, MR_JOBS_FILE);
+            writeMRObject(jobsObj, MR.MR_JOBS_FILE);
         }
         else
             {
@@ -292,8 +293,7 @@ function findJob(jobs, jobId){
 }
 
     function updateJobs(districtId, chapter, jobs){
-    logV2(INFO, "JOBLIST", "Entering updateJobs");
-    //var jobObj = initObject(MR_JOBS_FILE);
+        logV2(INFO, "JOBLIST", "Entering updateJobs");
         var district = findDistrict(jobsObj.districts, districtId);
         if (district == null){
             throw new Error ("District Not Found: " + districtId);
@@ -328,12 +328,6 @@ function findJob(jobs, jobId){
         return obj;
     }
 
-function LogFile(path, fileId){
-	this.path = path;
-	this.fileId = fileId;
-	this.fullPath = function() { return this.path + "log." + this.fileId + (NODE_ID == "" ? "" : "." + NODE_ID) + "." + getDateYYYYMMDD() + ".txt"};
-}
-
 function closePopup(){
 	playMacro(COMMON_FOLDER, "02_ClosePopup.iim", MACRO_INFO_LOGGING);
 }
@@ -357,7 +351,7 @@ function init(){
 			logV2(INFO, "INIT", "OneDrive Datasource Path = " + SCRIPT_ONEDRIVE_DIR.fullPath());
 		}
 	}
-		validateDirectory(LOG_DIR);
+    validateDirectory(LOG_DIR);
 }
 
 function validateDirectory(directoryName){
@@ -439,7 +433,7 @@ function getFirefoxSetting(branch, key){
 }
 
 function convertFighterObj(){
-    var fightObj = initObject(MR_FIGHTERS_FILE);
+    var fightObj = initMRObject(MR.MR_FIGHTERS_FILE);
     newFighters = [];
     fightObj.fighters.forEach( function (fighter) {
         var newObj = getFighterObject();
@@ -451,7 +445,7 @@ function convertFighterObj(){
     });
     fightObj.fighters = newFighters;
     MR_FIGHTERS_FILE.file += ".NEW";
-    writeObject(fightObj, MR_FIGHTERS_FILE);
+    writeMRObject(fightObj, MR.MR_FIGHTERS_FILE);
 }
 
 function getFighterObject(){
@@ -475,14 +469,14 @@ function findChapter(jobObj, jobId){
 }
 
 function correctionJobObj(){
-    var jobObj = initObject(MR_JOBS_FILE);
+    var jobObj = initMRObject(MR.MR_JOBS_FILE);
     jobObj.activeJobs.forEach( function (activeJob) {
         if (activeJob.type != 'CHAPTER') {
             activeJob.chapter = findChapter(jobObj, activeJob.jobId);
         }
     });
     MR_JOBS_FILE.file += ".NEW";
-    writeObject(jobObj, MR_JOBS_FILE);
+    writeMRObject(jobObj, MR.MR_JOBS_FILE);
 }
 
 function getFighterObject(){

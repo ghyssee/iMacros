@@ -8,13 +8,12 @@ eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MRJobSelect.js"));
 
 var localConfigObject = null;
-var NODE_ID = "";
-LOG_FILE = new LogFile(LOG_DIR, "MRJobList");
+setMRPath("MRJobList");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 
 init();
 
-var jobsObj = initObject(MR_JOBS_FILE);
+var jobsObj = initMRObject(MR.MR_JOBS_FILE);
 
 var selections = [  addFilter(JOBSELECT.SELECTTYPES.EVENT, JOBSELECT.FILTER.NO),
     addFilter(JOBSELECT.SELECTTYPES.MONEYCOST, JOBSELECT.FILTER.NO),
@@ -106,12 +105,6 @@ getJobs(jobsObj.districts, selections, !JOBSELECT_LOG, "BestJobForLevelingUp.csv
 
 alert ("done");
 
-function LogFile(path, fileId){
-	this.path = path;
-	this.fileId = fileId;
-	this.fullPath = function() { return this.path + "log." + this.fileId + (NODE_ID == "" ? "" : "." + NODE_ID) + "." + getDateYYYYMMDD() + ".txt"};
-}
-
 function init(){
 		
 	localConfigObject = initObject(LOCAL_CONFIG_JSON_FILE);
@@ -131,7 +124,7 @@ function init(){
 			logV2(INFO, "INIT", "OneDrive Datasource Path = " + SCRIPT_ONEDRIVE_DIR.fullPath());
 		}
 	}
-		validateDirectory(LOG_DIR);
+	validateDirectory(LOG_DIR);
 }
 
 function validateDirectory(directoryName){
