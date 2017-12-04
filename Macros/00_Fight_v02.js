@@ -19,7 +19,8 @@ var CONSTANTS = Object.freeze({
 		"FRIEND": 1,
 		"WON" : 2,
 		"LOST": 3,
-		"DEAD": 4
+		"DEAD": 4,
+        "NOHEALTH": 5
 	},
 	"ATTACKSTATUS" : {
         "OK" : 0,
@@ -449,7 +450,7 @@ function waitTillEnoughStamina(){
             logV2(INFO, "WAIT", "Stamina: " + stamina);
             logV2(INFO, "WAIT", "maxStamina: " + maxStamina);
 			// maxStamina = Math.min(maxStamina, staminaNeeded);
-            if (total >= staminaNeeded && stamina > 39 && (stamina >= minStamina || exp < 300)) {
+            if (total >= staminaNeeded && stamina > configMRObj.fight.minStaminaToFight && (stamina >= minStamina || exp < 300)) {
                 logV2(INFO, "WAIT", "Enough Stamina to level up");
                 // force healing
                 if (heal()) {
@@ -534,7 +535,10 @@ function attack(fighter, fighterType){
 			//var msg = prompt("FIRST ATTACK","You WON");
 			var status = evaluateAttackMessage(msg);
 			switch (status){
-				case CONSTANTS.OPPONENT.FRIEND :
+                case CONSTANTS.OPPONENT.NOHEALTH:
+                    checkHealth(configMRObj.fight.autoHeal);
+                    break;
+			    case CONSTANTS.OPPONENT.FRIEND :
 					logV2(INFO, "FIGHT", "Add Friend: " + fighter.id);
 					fighter.skip = true;
 					addFriend(fighter);
@@ -879,6 +883,9 @@ function evaluateAttackMessage(msg){
 	else if (msg.startsWith("IT LOOKS LIKE")){
 		return CONSTANTS.OPPONENT.DEAD;
 	}
+    else if (msg.startsWith("YOU DO NOT FEEL HEALTHY")){
+        return CONSTANTS.OPPONENT.NOHEALTH;
+    }
 	else {
 		return CONSTANTS.OPPONENT.UNKNOWN;
 	}

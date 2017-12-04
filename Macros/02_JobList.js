@@ -34,7 +34,6 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                       "lastDistrict": null, "lastChapter": null,
                      };
 startList();
-
 //convertFighterObj();
 //correctionJobObj();
 
@@ -79,14 +78,15 @@ function startList() {
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
             // district 1
-            for (var i=3; i <= 10; i++) {
+            for (var i=1; i <= 3; i++) {
                 startChapter("1", i.toString());
             }
 
             // district 2
+            /*
             for (var i=13; i <= 20; i++) {
                 startChapter("2", i.toString());
-            }
+            }*/
             writeMRObject(jobsObj, MR.MR_JOBS_FILE);
         }
         else
@@ -102,7 +102,8 @@ function startList() {
     function extractStar(starInfo){
         // <div class="job_star bronze_star" style="outline: 1px solid blue;"></div>
         // <div style=\"outline: 1px solid blue;\" class=\"job_star ruby_star\"></div>
-        var regExp = /job_star (.*)\"/;
+        //<div class="job_star bronze_star" style="outline: 1px solid blue;"></div>
+        var regExp = /job_star (.*)_star/;
         var matches = starInfo.match(regExp);
         if (matches != null && matches.length > 0){
             var star = matches[matches.length-1];
