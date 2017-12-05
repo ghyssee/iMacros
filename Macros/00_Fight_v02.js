@@ -56,6 +56,7 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
 //var fighters = getFightList();
 startScript();
 
+
 function startScript(){
     try {
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
@@ -450,16 +451,18 @@ function waitTillEnoughStamina(){
             logV2(INFO, "WAIT", "Stamina: " + stamina);
             logV2(INFO, "WAIT", "maxStamina: " + maxStamina);
 			// maxStamina = Math.min(maxStamina, staminaNeeded);
-            if (total >= staminaNeeded && stamina > configMRObj.fight.minStaminaToFight && (stamina >= minStamina || exp < 300)) {
+            if (total >= staminaNeeded && stamina > configMRObj.fight.minStaminaToFightForLevelUp && (stamina >= minStamina || exp < 300)) {
                 logV2(INFO, "WAIT", "Enough Stamina to level up");
                 // force healing
-                if (heal()) {
-                    logV2(INFO, "WAIT", "Force Healing");
-                    globalSettings.heals++;
+                if (health == 0) {
+                    if (heal()) {
+                        logV2(INFO, "WAIT", "Force Healing");
+                        globalSettings.heals++;
+                    }
                 }
                 break;
             }
-            else if (stamina >= maxStamina){
+            else if (stamina >= configMRObj.fight.minStaminaToFight){
                 logV2(INFO, "WAIT", "Enough Stamina to start fighting again");
                 break;
             }
@@ -1185,7 +1188,7 @@ function extractLevelFromString(text){
 
 
 function extractIdFromString(text){
-    var regExp = /id=(.*)\"/;
+    var regExp = /id=([0-9]{1,30})"/;
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         return matches[matches.length-1];
