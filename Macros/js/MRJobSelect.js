@@ -215,8 +215,9 @@ function getJobs(districts, filters, logging, file, sorting, order){
     logV2(INFO, "SORTED", "Sorted...");
     logV2(INFO, "SORTED", "-----------------------------------------------------------------------------");
     logV2(INFO, "TST", JSON.stringify(selectedJobs));
+    var profile = getProfile();
     if (file != null) {
-        file = DATASOURCE_DIR + file;
+        file = DATASOURCE_DIR + (isNullOrBlank(profile) ? "": profile + "_") + file;
         deleteFile(file);
         for (var i = 0; i < selectedJobs.length; i++) {
             writeObjectToCSV(selectedJobs[i], file);

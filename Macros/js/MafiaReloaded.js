@@ -33,9 +33,13 @@ function LogFile(path, fileId){
     this.fullPath = function() { return this.path + "log." + this.fileId +  "." + getDateYYYYMMDD() + ".txt"};
 }
 
+function getProfile(){
+    var profile = getFirefoxSetting(MR_BRANCH,  MR_PROFILE_KEY);
+    return profile;
+}
 
 function setMRPath(logFile){
-    var profile = getFirefoxSetting(MR_BRANCH,  MR_PROFILE_KEY);
+    var profile = getProfile();
     if (!isNullOrBlank(profile)){
         MR_DIR = MR_DIR + profile + "\\";
         LOG_DIR += profile + "\\";
