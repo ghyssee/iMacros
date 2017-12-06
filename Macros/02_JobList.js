@@ -78,7 +78,7 @@ function startList() {
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
             // district 1
-            for (var i=1; i <= 3; i++) {
+            for (var i=3; i <= 10; i++) {
                 startChapter("1", i.toString());
             }
 
