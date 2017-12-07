@@ -77,6 +77,30 @@ function startList() {
     try {
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
+            jobsObj.districts.forEach(function (district) {
+                if (district.scan){
+                    for (var i=district.scanChapterStart; i<= district.scanChapterEnd; i++){
+                        startChapter(district.id, i.toString());
+                    }
+                }
+            });
+            writeMRObject(jobsObj, MR.MR_JOBS_FILE);
+        }
+        else
+        {
+            logV2(INFO, "JOBLIST", "Problem Starting Mafia Wars");
+        }
+    }
+    catch (ex) {
+        logError(ex);
+    }
+
+}
+
+function startListOld() {
+    try {
+        var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
+        if (retCode == SUCCESS) {
             // district 1
             for (var i=3; i <= 10; i++) {
                 startChapter("1", i.toString());
@@ -99,6 +123,7 @@ function startList() {
         }
 
 }
+
     function extractStar(starInfo){
         // <div class="job_star bronze_star" style="outline: 1px solid blue;"></div>
         // <div style=\"outline: 1px solid blue;\" class=\"job_star ruby_star\"></div>
