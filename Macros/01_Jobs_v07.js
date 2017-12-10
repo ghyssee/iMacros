@@ -1105,12 +1105,12 @@ function getStoryEnergy(storyId, nodeId){
             energy = parseInt(msg);
         }
         else {
-            logV2(WARNING, category, "Problem Extracting Story Energy");
+            logV2(WARNING, "STORY", "Problem Extracting Story Energy");
             makeScreenShot("MRExtractStoryEnergyProblem");
         }
     }
     else {
-        logV2(WARNING, category, "Problem Story Energy");
+        logV2(WARNING, "STORY", "Problem Story Energy");
         makeScreenShot("MRStoryEnergyProblem");
     }
     return energy;
