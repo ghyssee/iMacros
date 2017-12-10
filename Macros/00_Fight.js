@@ -75,11 +75,11 @@ function startScript(){
                     logV2(INFO, "BOSSFIGHT", "Status: " + status);
                 }
                 if (continueFighting(status)) {
-                    if (checkHealth(configMRObj.fight.autoHeal)) {
+                    //if (checkHealth(configMRObj.fight.autoHeal)) {
                         fight();
                         logV2(INFO, "FIGHT", "Updating statistics");
                         writeObject(fighterObj, MR_FIGHTERS_FILE);
-                    }
+                    //}
                     else {
                         logV2(INFO, "FIGHT", "AutoHeal Disabled. Waiting till enough health again if autoheal disabled or stamina if minimum stamina has reached");
                     }
@@ -434,10 +434,10 @@ function waitTillEnoughStamina(){
             if (total >= staminaNeeded && stamina > 39 && (stamina >= minStamina || exp < 300)) {
                 logV2(INFO, "WAIT", "Enough Stamina to level up");
                 // force healing
-                if (heal()) {
-                    logV2(INFO, "WAIT", "Force Healing");
-                    globalSettings.heals++;
-                }
+                //if (heal()) {
+                //    logV2(INFO, "WAIT", "Force Healing");
+                //    globalSettings.heals++;
+                //}
                 break;
             }
             else if (stamina >= maxStamina){

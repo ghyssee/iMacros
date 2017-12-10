@@ -2,13 +2,15 @@
 var MACROS_PATH = getMacrosPath();
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.3.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded.js"));
+
+//xxx : 180-9 = 171
 
 var localConfigObject = null;
-var NODE_ID = "";
 var SUCCESS = 1;
-LOG_FILE = new LogFile(LOG_DIR, "MRJobs");
+setMRPath("MRJobs");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 
 var STAMINA = "STAMINA";
@@ -24,6 +26,12 @@ var CONSTANTS = Object.freeze({
         "LEVELUP": 3,
         "SKIP": 4,
         "PROBLEM": 5
+    },
+    "STORY" : {
+        "DONE": 1,
+        "NOENERGY": 2,
+        "SKIP": 3,
+        "PROBLEM": 4
     }
 });
 init();
@@ -31,8 +39,8 @@ var JOB_FOLDER = "MR/Jobs";
 var COMMON_FOLDER = "MR/Common";
 var FIGHT_FOLDER = "MR/Fight";
 
-var jobsObj = initObject(MR_JOBS_FILE);
-var configMRObj = initObject(MR_CONFIG_FILE);
+var jobsObj = initMRObject(MR.MR_JOBS_FILE);
+var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                       "lastDistrict": null, "lastChapter": null, "lowestEnergy": null, "lowestStamina": null
                      };
@@ -56,7 +64,12 @@ function start() {
                     helpCrimeEvent();
                     clearDistrict();
                 }
+                if (configMRObj.storyEvent.enabled){
+                    clearDistrict();
+                    startStoryEvent();
+                }
                 var wait = doJobs(newJobs);
+                wait = true;
                 if (wait) {
                     waitV2("60");
                 }
@@ -91,7 +104,7 @@ function doJobs(listOfJobs){
         var obj = extractEnergyStamina();
         for (var i = 0; i < listOfJobs.length; i++) {
             if (checkIfLevelUp()) {
-                obj = extractEnergyStamina();
+                //obj = extractEnergyStamina();
                 logV2(INFO, "JOB", "DoJob Level Up");
                 wait = false;
                 break;
@@ -102,13 +115,13 @@ function doJobs(listOfJobs){
                 logV2(INFO, "JOB", "Skipping stamina job " + jobItem.job.id);
                 continue;
             }
+            obj = extractEnergyStamina();
             var status = processJob(jobItem, obj);
             if (status == CONSTANTS.STATUS.LEVELUP) {
                 wait = false;
                 break;
             }
             else if (status == CONSTANTS.STATUS.OK) {
-                obj = extractEnergyStamina();
                 wait = false;
                 i--;
             }
@@ -145,7 +158,7 @@ function checkForUdpates(listOfJobs){
 }
 
 function updateJobItem(jobItem){
-    var obj = initObject(MR_JOBS_FILE);
+    var obj = initMRObject(MR.MR_JOBS_FILE);
     var save = false;
     obj.activeJobs.forEach( function (item) {
         if (item.id == jobItem.id){
@@ -155,7 +168,7 @@ function updateJobItem(jobItem){
         }
     });
     if (save){
-        writeObject(obj, MR_JOBS_FILE);
+        writeMRObject(obj, MR.MR_JOBS_FILE);
     }
 }
 
@@ -273,9 +286,9 @@ function extractEnergyStamina(){
 }
 
 
-function getEnergyOrStamina(jobItem, energyStaminaObj){
+function getEnergyOrStamina(jobType, energyStaminaObj){
     var total = 0;
-    if (jobItem.job.type == STAMINA){
+    if (jobType == STAMINA){
         total = energyStaminaObj.stamina;
     }
     else {
@@ -284,8 +297,9 @@ function getEnergyOrStamina(jobItem, energyStaminaObj){
     return total;
 }
 
-function checkIfEnoughEnerygOrStamina(total, jobItem){
+function checkIfEnoughEnerygOrStamina(jobItem, energyStaminaObj){
     var status = CONSTANTS.STATUS.OK;
+    var total = getEnergyOrStamina(jobItem.job.type, energyStaminaObj)
     logV2(INFO, "JOB", "Entering checkIfEnoughEnerygOrStamina - Total = " + total);
     if (checkIfLevelUp()){
         logV2(INFO, "JOB", "checkIfEnoughEnerygOrStamina: Level Up");
@@ -416,16 +430,16 @@ function processJob(jobItem, energyObj){
             logV2(WARNING, "JOB", "Problem with Job " + jobItem.jobId);
             globalSettings.lastChapter = null;
             globalSettings.lastDistrict = null;
-           return status;
+           return CONSTANTS.STATUS.SKIP;
         }
         validJob = isValidJob(jobItem);
         if (validJob.error){
             status = CONSTANTS.STATUS.PROBLEM;
+            jobItem.ok = false; // skip job in next run
             return status;
         }
         if (validJob.valid) {
-            var energy = getEnergyOrStamina(jobItem, energyObj);
-            var status = checkIfEnoughEnerygOrStamina(energy, jobItem);
+            var status = checkIfEnoughEnerygOrStamina(jobItem, energyObj);
             if (status != CONSTANTS.STATUS.OK) {
                 return status;
             }
@@ -615,12 +629,6 @@ function checkIfLevelUp(){
 	return leveledUp;
 }
 
-function LogFile(path, fileId){
-	this.path = path;
-	this.fileId = fileId;
-	this.fullPath = function() { return this.path + "log." + this.fileId + (NODE_ID == "" ? "" : "." + NODE_ID) + "." + getDateYYYYMMDD() + ".txt"};
-}
-
 function getStamina(){
     var retCode = playMacro(FIGHT_FOLDER, "52_GetStamina.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
@@ -784,7 +792,7 @@ function doCrimeJob(job, energy, energyNeeded){
             logV2(WARNING, "JOB", "Problem Starting Job Crime Event");
             makeScreenShot("MRJobCrimeEventStartProblem");
         }
-        energy = getEnergyOrStamina(energyObj);
+        energy = getEnergyOrStamina(job.job.type, energyObj);
     }
 }
 
@@ -846,8 +854,9 @@ function evaluateCrimeEvent(joinedCrime){
             }
             else if (msg.startsWith("YOU HAVE ALREADY STARTED")){
                 started = false;
+                configMRObj = initMRObject(MR.MR_CONFIG_FILE)
                 configMRObj.crimeEvent.enabled=false;
-                writeObject(configMRObj, MR_CONFIG_FILE);
+                writeMRObject(configMRObj, MR.MR_CONFIG_FILE);
             }
             else {
                 logV2(WARNING, "CRIME EVENT", "Unknown status");
@@ -911,6 +920,7 @@ function helpCrimeEvent(){
                 }
                 logV2(INFO, "JOB", "Crime Event Job: " + position);
                 var job = {"job": {"type": configMRObj.activeJob.type}};
+                //var energyStamina = get
                 var energy = getEnergyOrStamina(job);
                 var energyNeeded = configMRObj.activeJob.energyOrStamina;
                 if (energyNeeded <= energy) {
@@ -978,6 +988,200 @@ function getCrimeEventPercentCompleted(text){
     return 100;
 }
 
+function restartStory(){
+    var obj = initMRObject(MR.MR_CONFIG_FILE);
+    for (var i = 1; i <= 4; i++) {
+        var story = "story" + i;
+        obj.storyEvent[story].completed = false;
+        obj.storyEvent[story].node1.started = false;
+    }
+    obj.storyEvent.restart = false;
+    configMRObj = obj;
+    writeMRObject(obj, MR.MR_CONFIG_FILE);
+}
+
+function startStoryEvent(){
+    logV2(INFO, "JOB", "Start Story Event");
+    var retCode = playMacro(JOB_FOLDER, "40_StoryEvent_Init.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS) {
+        if (configMRObj.storyEvent.restart){
+            restartStory();
+        }
+        doStoryChoice("story1");
+        status = doStoryTask("story1");
+        if (status == CONSTANTS.STORY.DONE){
+            doStoryChoice("story2");
+            status = doStoryTask("story2");
+        }
+        if (status == CONSTANTS.STORY.DONE){
+            doStoryChoice("story3");
+            status = doStoryTask("story3");
+        }
+        if (status == CONSTANTS.STORY.DONE){
+            doStoryChoice("story4");
+            status = doStoryTask("story4");
+        }
+    }
+    else {
+        logV2(WARNING, "JOB", "Problem Init Story Event");
+        makeScreenShot("MRJobStoryEventInitStoryProblem");
+    }
+    logV2(INFO, "JOB", "---------------------------------------------------------------");
+}
+
+function getStoryTypeId(type){
+    for (var i=0; i < configMRObj.storyEvent.types.length; i++){
+        var typeObj = configMRObj.storyEvent.types[i];
+        if (typeObj.type == type){
+            logV2(INFO, "STORY", "Type Found: " + JSON.stringify(typeObj));
+            return typeObj.id;
+        }
+    }
+    return null;
+}
+
+function doStoryChoice(story){
+    var nodeObj = configMRObj.storyEvent[story].node1;
+    var status = CONSTANTS.STORY.DONE;
+    logV2(INFO, "STORY", "NODE: " + JSON.stringify(nodeObj));
+    if (!nodeObj.started) {
+        logV2(INFO, "STORY", "Story Choice: " + story);
+        logV2(INFO, "STORY", "Node ID: " + nodeObj.id);
+        addMacroSetting("NODE", nodeObj.id);
+        addMacroSetting("ID", nodeObj.EnergyId);
+        retCode = playMacro(JOB_FOLDER, "41_StoryEvent_ChoiceExtract.iim", MACRO_INFO_LOGGING);
+        if (retCode == SUCCESS) {
+            var msg = getLastExtract(1, "Story Extract", "Search");
+            logV2(INFO, "STORY", "Msg: " + msg);
+            if (!isNullOrBlank(msg)) {
+                addMacroSetting("NODE", nodeObj.id);
+                addMacroSetting("ID", nodeObj.EnergyId);
+                retCode = playMacro(JOB_FOLDER, "42_StoryEvent_Choice.iim", MACRO_INFO_LOGGING);
+                updateStory2(story, "node1", "started", true);
+            }
+            else {
+                status = CONSTANTS.STORY.PROBLEM;
+            }
+        }
+        else {
+            logV2(WARNING, "JOB", "Problem Starting Story " + story + " node " + nodeObj.id);
+            makeScreenShot("MRJobStoryEventStartStoryProblem");
+        }
+    }
+    return status;
+}
+
+function extractPercentCompleted(category, storyId, nodeId) {
+    logV2(INFO, "STORY", "Story:" + storyId);
+    logV2(INFO, "STORY", "Node:" + nodeId);
+    addMacroSetting("STORY", storyId);
+    addMacroSetting("NODE", nodeId);
+    var retCode = playMacro(JOB_FOLDER, "45_StoryEvent_PercentCompleted.iim", MACRO_INFO_LOGGING);
+    var percentInfo = getLastExtract(1, "Percent Completed", "50%");
+    logV2(INFO, category, "Extract %completed = " + percentInfo);
+    if (!isNullOrBlank(percentInfo)) {
+        percentInfo = percentInfo.replace("%", "").toUpperCase();
+        percentInfo = percentInfo.replace(" COMPLETE", "");
+        var percentCompleted = parseInt(percentInfo);
+        return parseInt(percentCompleted);
+    }
+    else {
+        logV2(WARNING, category, "Problem Extracting Percent Completed");
+        makeScreenShot("MR" + category + "PercentCompletedExtractProblem");
+        return -1;
+    }
+}
+
+function getStoryEnergy(storyId, nodeId){
+    var energy = -1;
+    logV2(INFO, "STORY", "Story:" + storyId);
+    logV2(INFO, "STORY", "Node:" + nodeId);
+    addMacroSetting("STORY", storyId);
+    addMacroSetting("NODE", nodeId);
+    var retCode = playMacro(JOB_FOLDER, "46_StoryEvent_Energy.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS) {
+        var msg = getLastExtract(1, "STORY", "30");
+        if (!isNullOrBlank(msg)){
+            energy = parseInt(msg);
+        }
+        else {
+            logV2(WARNING, category, "Problem Extracting Story Energy");
+            makeScreenShot("MRExtractStoryEnergyProblem");
+        }
+    }
+    else {
+        logV2(WARNING, category, "Problem Story Energy");
+        makeScreenShot("MRStoryEnergyProblem");
+    }
+    return energy;
+}
+
+function doStoryTask(story){
+    logV2(INFO, "STORY", "doStoryTask: " + story);
+    var storyObj = configMRObj.storyEvent[story];
+    logV2(INFO, "STORY", "NODE: " + JSON.stringify(storyObj));
+    if (storyObj.completed){
+        return CONSTANTS.STORY.DONE;
+    }
+    var status = CONSTANTS.STORY.PROBLEM;
+    var retCode = -1;
+    var energyJob = getStoryEnergy(storyObj.id, storyObj.node2.id);
+    if (energyJob == -1){
+        return CONSTANTS.STORY.PROBLEM;
+    }
+    logV2(INFO, "STORY", "Energy For Story Job: " + energyJob);
+    var energyStaminaObj = extractEnergyStamina();
+    var energy = getEnergyOrStamina(storyObj.type, energyStaminaObj);
+    logV2(INFO, "STORY", "Energy Available: " + energy);
+    var percentCompleted = extractPercentCompleted("STORY", storyObj.id, storyObj.node2.id);
+    if (percentCompleted == 100) {
+        updateStory(story, "completed", true);
+        return CONSTANTS.STORY.DONE;
+    }
+    while (energyJob <= energy && percentCompleted < 100){
+            //if (percentCompleted == -1) {
+            //    break;
+            //}
+            addMacroSetting("NODE", storyObj.node2.id);
+            retCode = playMacro(JOB_FOLDER, "44_StoryEvent_Task.iim", MACRO_INFO_LOGGING);
+            if (retCode == SUCCESS){
+                checkIfLevelUp();
+                energyStaminaObj = extractEnergyStamina();
+                energy = getEnergyOrStamina("ENERGY", energyStaminaObj);
+                percentCompleted = extractPercentCompleted("STORY", storyObj.id, storyObj.node2.id);
+                if (percentCompleted == 100) {
+                    closePopup();
+                    updateStory(story, "completed", true);
+                    status = CONSTANTS.STORY.DONE;
+                }
+            }
+            else {
+                logV2(WARNING, "JOB", "Problem executing Story Task");
+                makeScreenShot("MRJobStoryTaskProblem");
+            }
+            if (energy < energyJob){
+                status = CONSTANTS.STORY.NOENERGY;
+            }
+    }
+    return status;
+}
+
+function updateStory2(story, node, property, value){
+    logV2(INFO, "STORY", "Saving " + story);
+    var object = initMRObject(MR.MR_CONFIG_FILE);
+    object.storyEvent[story][node][property] = value;
+    configMRObj.storyEvent[story][node][property] = value;
+    writeMRObject(object, MR.MR_CONFIG_FILE);
+}
+
+function updateStory(story, property, value){
+    logV2(INFO, "STORY", "Saving " + property + " / Value: " + value);
+    var object = initMRObject(MR.MR_CONFIG_FILE);
+    object.storyEvent[story][property] = value;
+    configMRObj.storyEvent[story][property] = value;
+    writeMRObject(object, MR.MR_CONFIG_FILE);
+}
+
 function init(){
 		
 	localConfigObject = initObject(LOCAL_CONFIG_JSON_FILE);
@@ -997,7 +1201,7 @@ function init(){
 			logV2(INFO, "INIT", "OneDrive Datasource Path = " + SCRIPT_ONEDRIVE_DIR.fullPath());
 		}
 	}
-		validateDirectory(LOG_DIR);
+    validateDirectory(LOG_DIR);
 }
 
 function validateDirectory(directoryName){

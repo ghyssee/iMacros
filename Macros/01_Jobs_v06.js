@@ -416,11 +416,12 @@ function processJob(jobItem, energyObj){
             logV2(WARNING, "JOB", "Problem with Job " + jobItem.jobId);
             globalSettings.lastChapter = null;
             globalSettings.lastDistrict = null;
-           return status;
+           return CONSTANTS.STATUS.SKIP;
         }
         validJob = isValidJob(jobItem);
         if (validJob.error){
             status = CONSTANTS.STATUS.PROBLEM;
+            jobItem.ok = false; // skip job in next run
             return status;
         }
         if (validJob.valid) {

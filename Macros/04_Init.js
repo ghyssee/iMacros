@@ -3,38 +3,89 @@ var ONEDRIVEPATH = getOneDrivePath();
 var MACROS_PATH = getMacrosPath();
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.3.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded.js"));
 
 var localConfigObject = null;
 LOG_FILE = new LogFile(LOG_DIR, "MRInit");
+var GLOBAL_SAVE = false;
 
 init();
-logV2(INFO, "INIT", "Mafia Reloaded Initialization");
-var profile = getFirefoxSetting(MR_BRANCH,  MR_PROFILE_KEY);
-if (isNullOrBlank(profile)){
-    profile = "";
-}
-var inputTxt = prompt("Set Profile", profile);
-if (inputTxt == null) {
-    // cancel pressed
-}
-else {
-    profile = inputTxt;
-    changeFirefoxSetting(MR_BRANCH, MR_PROFILE_KEY, profile);
-    logV2(INFO, "INIT", "Set Profile to " + profile);
-    setMRPath("MRInit");
-    createDirectory(MR_DIR);
-    validateDirectory(MR_DIR);
+setProfile();
+checkMRProperties();
+
+function checkMRProperties(){
+    var initFile = new ConfigFile(MR_DIR + 'INIT\\', MR.MR_CONFIG_FILE);
+    var obj = initObject(initFile);
+    var profileObj = initObject(MR_PROFILE_FILE);
+    profileObj.list.forEach(function (item) {
+        var profilerFile = new ConfigFile(MR_DIR + (item.main ? '' : (item.id + '\\')), MR.MR_CONFIG_FILE);
+        var profilerObj = initObject(profilerFile);
+        logV2(INFO, "INIT", "Profile:" + item.name);
+        check(obj, profilerObj);
+        if (GLOBAL_SAVE){
+            logV2(INFO, "INIT", "Update File: " + JSON.stringify(profilerObj));
+        }
+    });
+    //setMRPathProfile("INIT","MRInit");
 }
 
-function LogFile(path, fileId){
-    this.path = path;
-    this.fileId = fileId;
-    this.fullPath = function() { return this.path + "log." + this.fileId + "." + getDateYYYYMMDD() + ".txt"};
+function check(obj, profilerObj){
+    if (hasProperties(obj)) {
+        var arrayOfKeys = Object.getOwnPropertyNames(obj);
+        arrayOfKeys.forEach(function (key) {
+            //logV2(INFO, "INIT", "Key: " + key);
+            if (hasProperties(obj[key])) {
+                logV2(INFO, "INIT", "Sub Properties: " + key);
+                if (!profilerObj.hasOwnProperty(key)){
+                    logV2(INFO, "INIT", "Property With Children does not exist: " + key);
+                    profilerObj[key] = obj[key];
+                    GLOBAL_SAVE = true;
+                }
+                check(obj[key], profilerObj[key]);
+            }
+            else if (profilerObj.hasOwnProperty(key)){
+                logV2(INFO, "INIT", "Property OK: " + key);
+            }
+            else {
+                logV2(INFO, "INIT", "Property does not exist: " + key);
+                profilerObj[key] = obj[key];
+                GLOBAL_SAVE = true;
+            }
+        });
+    }
 }
 
+function hasProperties(obj){
+    if (obj != null && typeof obj == 'object') {
+        //logV2(INFO, "INIT", "hasProperties: " + JSON.stringify(obj));
+        var tmp = Object.getOwnPropertyNames(obj);
+        //logV2(INFO, "INIT", "tmp: " + tmp.length);
+        return tmp.length > 0;
+    }
+    return false;
+}
+
+function setProfile(){
+    logV2(INFO, "INIT", "Mafia Reloaded Set Profile");
+    var profile = getFirefoxSetting(MR_BRANCH,  MR_PROFILE_KEY);
+    if (isNullOrBlank(profile)){
+        profile = "";
+    }
+    var inputTxt = prompt("Set Profile", profile);
+    if (inputTxt == null) {
+        // cancel pressed
+    }
+    else {
+        profile = inputTxt;
+        changeFirefoxSetting(MR_BRANCH, MR_PROFILE_KEY, profile);
+        logV2(INFO, "INIT", "Set Profile to " + profile);
+        setMRPath("MRInit");
+        createDirectory(MR_DIR);
+        validateDirectory(MR_DIR);
+    }
+}
 
 function init(){
 

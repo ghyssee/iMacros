@@ -235,7 +235,7 @@ function makeScreenShot(file){
    createDirectory(SCREENSHOT_DIR + folder);
    iimSet("folder", folder);
    iimSet("file", file);
-   return simpleMacroPlayFolder(folder, "fbScreenshot.iim");
+   return macroPlay("fbScreenshot.iim");
 }
 
 function screenshot(profile, file){

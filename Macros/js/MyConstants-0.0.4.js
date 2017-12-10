@@ -9,7 +9,8 @@
  */
  
 var BASE_DIR = "c:\\My Programs\\iMacros\\";
-var LOG_DIR = BASE_DIR + "logs\\";
+var ORIG_LOG_DIR = BASE_DIR + "logs\\";
+var LOG_DIR = ORIG_LOG_DIR;
 var SCREENSHOT_DIR = BASE_DIR + "screenshots\\";
 var GENERAL_DATASOURCE_DIR = BASE_DIR + "Datasources\\";
 var DATASOURCE_DIR = BASE_DIR + "Datasources\\";

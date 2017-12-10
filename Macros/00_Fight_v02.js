@@ -344,7 +344,7 @@ function attackFightList(){
     var fighters = getFightList();
     if (configMRObj.fight.fightList) {
         var filteredFightersList = filterFightList(fighters);
-        var minFightList = isNullOrBlank(configMRObj.fight.minLengthOfFightList) ? 0 : configMRObj.fight.minLengthOfFightList;
+        var minFightList = configMRObj.fight.minLengthOfFightList == null ? 0 : configMRObj.fight.minLengthOfFightList;
         logV2(INFO, "FIGHT", "Min Fighters on Fight List: " + minFightList);
         if (filteredFightersList.length >= minFightList) {
             status = processList(filteredFightersList, CONSTANTS.FIGHTERTPE.NORMAL);

@@ -109,6 +109,11 @@ function getTitle(pos){
 	var retCode = simpleMacroPlayFolder("Amazon_15_GetTitle.iim", MACRO_FOLDER);
 	if (retCode == 1){
 		title = iimGetLastExtract(1);
+		if (isNullOrBlank(title)){
+            iimSet("pos", pos);
+			retCode = simpleMacroPlayFolder("Amazon_16_GetTitle.iim", MACRO_FOLDER);
+			title = iimGetLastExtract(2);
+		}
 	}
 	return title;
 }

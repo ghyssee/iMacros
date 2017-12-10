@@ -152,7 +152,7 @@ function pad(number, length) {
 }
 
 function isNullOrBlank(param){
-   if (param != null && param != "#EANF#" && param != ""){
+	if (param != null && param.toUpperCase() != "#EANF#" && param != ""){
       return false;
    }
    return true;
