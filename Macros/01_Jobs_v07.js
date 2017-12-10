@@ -53,6 +53,7 @@ function start() {
     var listOfJobs = getListOfEnabledJobs(jobsObj.activeJobs);
     try {
         var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
+        globalSettings.currentLevel = getLevel();
         if (retCode == SUCCESS) {
             var newJobs = initJobs(listOfJobs);
             do {
