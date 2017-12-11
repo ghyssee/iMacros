@@ -389,3 +389,13 @@ function strcmp(a, b)
 {
     return (a<b?-1:(a>b?1:0));
 }
+
+function addValueToProperty(obj, property, add){
+    if (obj.hasOwnProperty(property)){
+        obj[property] += add;
+    }
+    else
+    {
+        obj[property] = add;
+    }
+}

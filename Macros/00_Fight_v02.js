@@ -1140,16 +1140,10 @@ function updateStatistics(fighter, fighterType){
                 fighterItem.lastIced = fighter.lastIced;
             }
             if (fighter.alive != null && fighter.alive > 0) {
-                fighterItem.alive++;
-            }
-            else {
-                fighterItem.alive = 1;
+                addValueToProperty(fighterItem, "alive", 1);
             }
             if (fighter.dead != null && fighter.dead > 0) {
-                fighterItem.dead++;
-            }
-            else {
-                fighterItem.dead = 1;
+                addValueToProperty(fighterItem, "dead", 1);
             }
             fighterItem.gangId = fighter.gangId;
             fighterItem.gangName = fighter.gangName;
