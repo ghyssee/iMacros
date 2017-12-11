@@ -384,3 +384,8 @@ function contains(text, search){
 function isUndefined(property){
     return (typeof property == 'undefined');
 }
+
+function strcmp(a, b)
+{
+    return (a<b?-1:(a>b?1:0));
+}

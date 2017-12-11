@@ -26,6 +26,7 @@ function checkMRProperties(){
         check(obj, profilerObj);
         if (GLOBAL_SAVE){
             logV2(INFO, "INIT", "Update File: " + JSON.stringify(profilerObj));
+            writeObject(profilerObj, profilerFile);
         }
     });
     //setMRPathProfile("INIT","MRInit");
@@ -37,7 +38,7 @@ function check(obj, profilerObj){
         arrayOfKeys.forEach(function (key) {
             //logV2(INFO, "INIT", "Key: " + key);
             if (hasProperties(obj[key])) {
-                logV2(INFO, "INIT", "Sub Properties: " + key);
+                //logV2(INFO, "INIT", "Sub Properties: " + key);
                 if (!profilerObj.hasOwnProperty(key)){
                     logV2(INFO, "INIT", "Property With Children does not exist: " + key);
                     profilerObj[key] = obj[key];
@@ -46,7 +47,7 @@ function check(obj, profilerObj){
                 check(obj[key], profilerObj[key]);
             }
             else if (profilerObj.hasOwnProperty(key)){
-                logV2(INFO, "INIT", "Property OK: " + key);
+                //logV2(INFO, "INIT", "Property OK: " + key);
             }
             else {
                 logV2(INFO, "INIT", "Property does not exist: " + key);

@@ -53,9 +53,7 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
                       "skippedHealth": 0, "maxHealed": 0, "heals": 0, "stopOnLevelUp": false,
                         "forceHealing": false,
                       "boss": {"attacks": 0}};
-//var fighters = getFightList();
 startScript();
-
 
 function startScript(){
     try {
@@ -354,7 +352,10 @@ function attackFightList(){
             }
         }
         else {
-            status = startProfileAttack();
+            status = homeFeedAttack();
+            if (continueFighting(status)) {
+                status = startProfileAttack();
+            }
         }
     }
     logV2(INFO, "FIGHT", "Status: " + status);
@@ -1365,6 +1366,39 @@ function startNormalAttack(fighters){
     return status;
 }
 
+function homeFeedAttack(){
+    var status = CONSTANTS.ATTACKSTATUS.OK;
+    if (!configMRObj.fight.homefeedAttack){
+        logV2(INFO, "FIGHT", "Homefeed Attack disabled");
+        status = CONSTANTS.ATTACKSTATUS.OK;
+    }
+    else {
+        checkMiniHomeFeed();
+        logV2(INFO, "FIGHT", "Start Fight List Using Home Feed");
+        var list = [];
+        fighterObj.fighters.forEach(function (fighter) {
+            if (fighter.hasOwnProperty("homefeed") && fighter.homefeed != null) {
+                list.push(fighter);
+            }
+        });
+
+        // sort list by most recent first
+        list.sort(function (a, b) {
+            return strcmp(b.homefeed, a.homefeed);
+        });
+        list = list.slice(0, configMRObj.fight.homefeedAttackSize);
+        list.forEach(function (fighter) {
+            logV2(INFO, "FIGHT", fighter.id + ": " + fighter.homefeed);
+        });
+
+        logV2(INFO, "FIGHT", "Nr of Homefeed Fighters Found: " + list.length);
+        //var status = profileAttack(list, CONSTANTS.FIGHTERTPE.PROFILE);
+    }
+    return status;
+}
+
+
+
 function startProfileAttack(){
     logV2(INFO, "FIGHT", "Start Profile Attack");
     var nr = fighterObj.fighters.length;
@@ -1439,10 +1473,9 @@ function randomIntFromInterval(min,max)
 function getFighterObject(id, name, level){
     return {"id":id, "name":name, "level": level, "skip": false,
         "gangId": null, "gangName": null, "bigHealth": false, "lastAttacked": null, "lastIced": null,
-        "iced": 0, "alive": 0, "dead": 0
+        "iced": 0, "alive": 0, "dead": 0, "homefeed": null
     };
 }
-
 
 function extractIdNameFromString (text, type){
     var gangObj = {id:null, name:null};
@@ -1485,7 +1518,7 @@ function extractTimeFromHomefeed(msg, time){
 
 function getHomeFeedObj(time, feed){
     var obj = {"timeMsg": time, "feedMsg": feed, "timeStamp": null, "currentTime": null, "name": null, "fighterId": null,
-               "gangId": null, "gangName": null};
+               "gangId": null, "gangName": null, "processed": false};
     return obj;
 }
 
@@ -1550,16 +1583,16 @@ function isAttacker(fighterId){
     return false;
 }
 
-function getHomeFeed(homefeedObj){
+function getHomeFeed(homefeedObj) {
     logV2(INFO, "HOMEFEED", "Get Home Feed");
     var retCode = playMacro(COMMON_FOLDER, "30_Home.iim", MACRO_INFO_LOGGING);
     var listOfKills = [];
     var listOfLines = [];
-    if (retCode == SUCCESS){
-        for (var i=1; i <= configMRObj.homefeedLines; i++) {
+    if (retCode == SUCCESS) {
+        for (var i = 1; i <= configMRObj.homefeedLines; i++) {
             addMacroSetting("POS", i.toString());
             retCode = playMacro(COMMON_FOLDER, "31_HomeFeedLine.iim", MACRO_INFO_LOGGING);
-            if (retCode == SUCCESS){
+            if (retCode == SUCCESS) {
                 var timeMsg = getLastExtract(1, "Home Feed Time", "1 hour, 34 minutes ago:");
                 var originalMsg = getLastExtract(2, "Home Feed Line", "BlaBla");
                 var txtMsg = getLastExtract(3, "Home Feed Line", "BlaBla");
@@ -1601,21 +1634,21 @@ function getHomeFeed(homefeedObj){
                 break;
             }
         }
-        if (isUndefined(homefeedObj.kills)){
+        if (isUndefined(homefeedObj.kills)) {
             homefeedObj.kills = [];
         }
-        if (isUndefined(homefeedObj.lines)){
+        if (isUndefined(homefeedObj.lines)) {
             homefeedObj.lines = [];
         }
-        for (var i=(listOfKills.length-1);i >= 0; i--){
+        for (var i = (listOfKills.length - 1); i >= 0; i--) {
             homefeedObj.kills.push(listOfKills[i]);
         }
-        for (var i=(listOfLines.length-1);i >= 0; i--){
+        for (var i = (listOfLines.length - 1); i >= 0; i--) {
             homefeedObj.lines.push(listOfLines[i]);
         }
         writeMRObject(homefeedObj, MR.MR_HOMEFEED_FILE);
         retCode = playMacro(COMMON_FOLDER, "32_HomeFeedClear.iim", MACRO_INFO_LOGGING);
-        if (retCode != SUCCESS){
+        if (retCode != SUCCESS) {
             logV2(INFO, "FIGHT", "Problem clearing home feed");
         }
     }
@@ -1623,3 +1656,90 @@ function getHomeFeed(homefeedObj){
         logV2(INFO, "FIGHT", "Problem Going To MR Home Page");
     }
 }
+
+function updateHomefeedFighter(fighterId, homefeed){
+    var found = false;
+    for (var i=0; i < fighterObj.fighters.length; i++){
+        var fighterItem = fighterObj.fighters[i];
+        if (fighterItem.id == fighterId){
+            found = true;
+            if (!fighterItem.hasOwnProperty("homefeed") || fighterItem.homefeed < homefeed) {
+                fighterItem.homefeed = homefeed;
+                logV2(INFO, "FIGHT", "Update Homefeed: " + JSON.stringify(fighterItem));
+                writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+            }
+            else {
+                //logV2(INFO, "FIGHT", "NO Update Homefeed: " + JSON.stringify(fighterItem));
+            }
+            break;
+        }
+    }
+    if (!found){
+        logV2(INFO, "FIGHT", "Problem Updating homefeed for " + fighterId);
+    }
+}
+
+function addHomeFeedKillToList(list, lineObj){
+
+    var processed = false;
+    if (list.hasOwnProperty(lineObj.fighterId)){
+            //logV2(INFO, "HOMEFEED", "Already Added: " + lineObj.fighterId);
+            processed = true;
+    }
+    if (findFighter(friendObj.fighters, lineObj.fighterId)){
+        logV2(INFO, "HOMEFEED", "FRIEND: " + lineObj.fighterId);
+        processed = true;
+    }
+    else if (findFighter(fightersToExclude.fighters, lineObj.fighterId)){
+        logV2(INFO, "HOMEFEED", "STRONGER: " + lineObj.fighterId);
+        processed = true;
+    }
+    else if (findFighter(fighterObj.fighters, lineObj.fighterId)){
+        logV2(INFO, "HOMEFEED", "FIGHTER: " + lineObj.fighterId);
+        updateHomefeedFighter(lineObj.fighterId, lineObj.timeStamp);
+        processed = true;
+    }
+    else if (filterGang(lineObj.gangId)){
+        logV2(INFO, "HOMEFEED", "FRIENDGANG: " + lineObj.fighterId + " / GANG: " + lineObj.gangId);
+        processed = true;
+    }
+    if (!processed){
+        list[lineObj.fighterId] = lineObj;
+        var fighter = getFighterObject(lineObj.fighterId, lineObj.name, 0);
+        fighter.gangId = lineObj.gangId;
+        fighter.gangName = lineObj.gangName;
+        fighter.homefeed = lineObj.timeStamp;
+        addFighter(fighter);
+        logV2(INFO, "HOMEFEED", "ADD: " + lineObj.fighterId);
+    }
+}
+
+    function checkMiniHomeFeed(){
+        var file = new ConfigFile(ORIG_MR_DIR + "02\\", MR.MR_HOMEFEED_FILE);
+        var obj = initObject(file);
+        var length = obj.kills.length;
+        var listToCheck = {};
+        var save = false;
+        for (var i=length-1; i>=0; i--){
+            var lineObj = obj.kills[i];
+            if (!lineObj.hasOwnProperty("processed") || !lineObj.processed){
+                addHomeFeedKillToList(listToCheck, lineObj);
+                lineObj.processed = true;
+                save = true;
+            }
+            else {
+                logV2(INFO, "HOMEFEED", "Last Homefeed Line processed: " + lineObj.timeMsg + " " + lineObj.feedMsg);
+                break;
+            }
+        }
+        if (save) {
+            writeObject(obj, file);
+        }
+        var arrayOfKeys = Object.getOwnPropertyNames(listToCheck);
+        logV2(INFO, "HOMEFEED", "List Of Fighters Added");
+        logV2(INFO, "HOMEFEED", "======================");
+        arrayOfKeys.forEach(function (key) {
+            logV2(INFO, "ADD", listToCheck[key].fighterId);
+        });
+        logV2(INFO, "HOMEFEED", JSON.stringify(listToCheck));
+    }
