@@ -1155,6 +1155,9 @@ function updateStatistics(fighter, fighterType){
     if (!found){
         logV2(INFO, "FIGHT", "Problem Updating statistics for " + fighter.id);
     }
+    else {
+        writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+    }
 }
 
 function findFighter(list, id){
@@ -1350,6 +1353,7 @@ function removeItemFromArray(file, id){
 	if (index >= 0){
         obj.fighters.splice(index, 1);
         writeMRObject(obj, file);
+        fighterObj = initMRObject(file);
 	}
 	return index > -1;
 }
@@ -1386,7 +1390,7 @@ function homeFeedAttack(){
         });
 
         logV2(INFO, "FIGHT", "Nr of Homefeed Fighters Found: " + list.length);
-        //var status = profileAttack(list, CONSTANTS.FIGHTERTPE.PROFILE);
+        var status = profileAttack(list, CONSTANTS.FIGHTERTPE.PROFILE);
     }
     return status;
 }
@@ -1414,7 +1418,7 @@ function profileAttack(array, fighterType){
     logV2(INFO, "FIGHT", "Profile Fighting: Nr Of Fighters: " + array.length);
     for (var i=0; i < array.length; i++) {
         var arrayItem = array[i];
-        logV2(INFO, JSON.stringify(arrayItem));
+        logV2(INFO, "PROFILE", JSON.stringify(arrayItem));
         if (filterGang(arrayItem.gangId)){
             logV2(INFO, "FIGHT", "Profile Fighting: Friendly Gang Found for fighter " + arrayItem.id + " - " + arrayItem.name);
             continue;

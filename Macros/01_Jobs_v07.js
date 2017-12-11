@@ -70,7 +70,6 @@ function start() {
                     startStoryEvent();
                 }
                 var wait = doJobs(newJobs);
-                wait = true;
                 if (wait) {
                     waitV2("60");
                 }
