@@ -1077,7 +1077,7 @@ function updateStatistics(fighter, fighterType){
             if (fighter.lastAttacked != null) {
                 fighterItem.lastAttacked = fighter.lastAttacked;
             }
-            fighterItem.iced += fighter.iced;
+            addValueToProperty(fighterItem, "iced", 1);
             fighterItem.bigHealth = fighter.bigHealth;
             if (fighter.lastIced != null) {
                 fighterItem.lastIced = fighter.lastIced;
