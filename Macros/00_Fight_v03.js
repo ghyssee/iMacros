@@ -1039,7 +1039,7 @@ function filterFightList(fightList){
                     logV2(INFO, "FIGHTLIST", "Max Level: " + maxLevel);
 					if (fighter.level <= maxLevel){
 						// MOD 15/11
-					    if (isAllyGang(firendObj.gangs, fighter.gangId)){
+					    if (isAllyGang(friendObj.gangs, fighter.gangId)){
                             logV2(INFO, "FIGHTLIST", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
                         }
                         else {
@@ -1316,7 +1316,7 @@ function profileAttack(array, fighterType){
     for (var i=0; i < array.length; i++) {
         var arrayItem = array[i];
         logV2(INFO, "PROFILE", JSON.stringify(arrayItem));
-        if (isAllyGang(firendObj.gangs, arrayItem.gangId)){
+        if (isAllyGang(friendObj.gangs, arrayItem.gangId)){
             logV2(INFO, "FIGHT", "Profile Fighting: Friendly Gang Found for fighter " + arrayItem.id + " - " + arrayItem.name);
             continue;
         }

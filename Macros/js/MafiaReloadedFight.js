@@ -156,6 +156,8 @@ function isAttacker(configMRObj, fighterId){
 
 function isExcludedPlayer(homefeedObj, fighterId){
     var found = false;
+    logV2(INFO, "HOMEFEED", 'isExcludedPlayer homefeedObj' + JSON.stringify(homefeedObj));
+    logV2(INFO, "HOMEFEED", 'isExcludedPlayer fighterId' + fighterId);
     for (var i=0; i < homefeedObj.excludePlayers.length; i++){
         var playObj = homefeedObj.excludePlayers[i];
         if (playObj.id == fighterId){
@@ -165,6 +167,7 @@ function isExcludedPlayer(homefeedObj, fighterId){
             break;
         }
     }
+    logV2(INFO, "HOMEFEED", 'isExcludedPlayer ' + found);
     return found;
 }
 
@@ -242,5 +245,6 @@ function getHomeFeed(configMRObj, homefeedObj){
     else {
         logV2(INFO, "FIGHT", "Problem Going To MR Home Page");
     }
+    logV2(INFO, "HOMEFEED", "End Home Feed");
 }
 

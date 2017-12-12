@@ -205,15 +205,7 @@ function attack(fighter, fighterType){
                 case CONSTANTS.OPPONENT.WON :
                     // ADD 15/11
                     fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
-                    if (fighter.lastIced != null) {
-                        fighterItem.lastIced = fighter.lastIced;
-                    }
-                    if (fighter.alive != null && fighter.alive > 0) {
-                        addValueToProperty(fighterItem, "alive", 1);
-                    }
-                    if (fighter.dead != null && fighter.dead > 0) {
-                        addValueToProperty(fighterItem, "dead", 1);
-                    }
+                    addValueToProperty(fighter, "alive", 1);
                     var attackStatusObj = attackTillDeath(fighter);
                     if (checkIfLevelUp() && configMRObj.fight.stopOnLevelUp){
                         statusObj.status = CONSTANTS.ATTACKSTATUS.STOPONLEVELUP;
@@ -619,6 +611,8 @@ function getStatusObject(){
 
 // ADD 15/11
 function updateStatistics(fighter, fighterType){
+    logV2(INFO, "FIGHT", "Updating statistics for " + fighter.id);
+    logV2(INFO, "FIGHT", "Fighter: " + JSON.stringify(fighter));
     var found = false;
     var list = [];
     if (fighterType == CONSTANTS.FIGHTERTPE.ASSASSIN){
@@ -627,17 +621,20 @@ function updateStatistics(fighter, fighterType){
     else {
         list = assassinObj.homefeedPlayers;
     }
-    for (var i=0; i < list; i++){
+    logV2(INFO, "FIGHT", "Fighter: " + JSON.stringify(list));
+    for (var i=0; i < list.length; i++){
         var fighterItem = list[i];
         if (fighterItem.id == fighter.id){
             logV2(INFO, "FIGHT", "Updating statistics for " + fighter.id);
             if (fighter.lastAttacked != null) {
                 fighterItem.lastAttacked = fighter.lastAttacked;
             }
-            addValueToProperty(fighterItem, "iced", 1);
             fighterItem.bigHealth = fighter.bigHealth;
             if (fighter.lastIced != null) {
                 fighterItem.lastIced = fighter.lastIced;
+            }
+            if (fighter.iced != null && fighter.iced > 0) {
+                addValueToProperty(fighterItem, "iced", 1);
             }
             if (fighter.alive != null && fighter.alive > 0) {
                 addValueToProperty(fighterItem, "alive", 1);
@@ -869,7 +866,14 @@ function homeFeedAttack(){
         list = list.slice(0, 2);
         list.forEach(function (fighter) {
             logV2(INFO, "FIGHT", fighter.id + ": " + fighter.homefeed);
+            // reset statistics
+            fighter.lastIced = null;
+            fighter.lastAttacked = null;
+            fighter.dead = 0;
+            fighter.alive = 0;
+            fighter.iced = 0;
         });
+        logV2(INFO, "FIGHT", "List: " + JSON.stringify(list));
 
         logV2(INFO, "FIGHT", "Nr of Homefeed Fighters Found: " + list.length);
         var status = profileAttack(list, CONSTANTS.FIGHTERTPE.HOMEFEED);
