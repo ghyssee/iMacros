@@ -4,7 +4,7 @@ eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
 
 //xxx : 180-9 = 171
 
@@ -560,7 +560,7 @@ function executeJob(jobItem){
             closePopup();
         }
         jobItem.percentCompleted = completeAfter;
-        checkSaldo();
+        globalSettings.money += checkSaldo();
         success = true;
 
     }
@@ -578,7 +578,7 @@ function executeMacroJob(jobItem) {
         retCode = playMacro(JOB_FOLDER, "04_Job_Start.iim", MACRO_INFO_LOGGING);
     }
     if (retCode === SUCCESS){
-        checkSaldo();
+        globalSettings.money += checkSaldo();
         globalSettings.jobsCompleted++;
     }
     return retCode;
@@ -594,18 +594,6 @@ function findDistrict(jobItem){
         }
     });
     return district;
-}
-
-function getLevel(){
-    var level = 0;
-    var retCode = playMacro(COMMON_FOLDER, "12_GetLevel.iim", MACRO_INFO_LOGGING);
-    if (retCode == SUCCESS) {
-        var msg = getLastExtract(1, "Level 300").toUpperCase();
-        msg = msg.replace("LEVEL ", "");
-        msg = removeComma(msg);
-        level = parseInt(msg);
-    }
-    return level;
 }
 
 function checkIfLevelUp(){
@@ -706,53 +694,11 @@ function getPercentCompleted(jobItem){
     return 100;
 }
 
-function checkSaldo(){
-	logV2(INFO, "SALDO", "Get Saldo");
-	var saldo = 0;
-	saldo = getSaldo();
-	if (saldo > 10){
-		bank(saldo);
-	}
-}
-
-function bank(saldo){
-	playMacro(COMMON_FOLDER, "10_Bank.iim", MACRO_INFO_LOGGING);
-	logV2(INFO, "BANK", "Banking " + saldo);
-	globalSettings.money += saldo;
-}
-
-function getSaldo(){
-	var retCode = playMacro(COMMON_FOLDER, "11_GetSaldo.iim", MACRO_INFO_LOGGING);
-	if (retCode == SUCCESS) {
-        var saldoInfo = getLastExtract(1, "Saldo", "$500");
-        //var saldoInfo = prompt("Saldo", "500");
-        logV2(INFO, "BANK", "saldoInfo = " + saldoInfo);
-        if (!isNullOrBlank(saldoInfo)) {
-            saldoInfo = removeComma(saldoInfo);
-            var saldo = parseInt(saldoInfo.replace("$", ""));
-            return saldo;
-        }
-        else {
-            logV2(WARNING, "JOB", "Problem Extracting Saldo");
-            makeScreenShot("MRJobExtractSaldoProblem");
-        }
-    }
-    else {
-        logV2(WARNING, "JOB", "Problem getting Saldo");
-        makeScreenShot("MRJobGetSaldoProblem");
-    }
-	return 0;
-}
-
-function closePopup(){
-	return playMacro(COMMON_FOLDER, "02_ClosePopup.iim", MACRO_INFO_LOGGING);
-}
-
 function collectCrimeEvent(){
     var retCode = playMacro(JOB_FOLDER, "35_CrimeEvent_Collect.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS){
         closePopup();
-        checkSaldo();
+        globalSettings.money += checkSaldo();
         logV2(INFO, "JOB", "Crime Event Collected");
     }
 }
