@@ -1294,8 +1294,6 @@ function homeFeedAttack(){
     return status;
 }
 
-
-
 function startProfileAttack(){
     logV2(INFO, "FIGHT", "Start Profile Attack");
     var nr = fighterObj.fighters.length;
