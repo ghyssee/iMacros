@@ -403,3 +403,7 @@ function addValueToProperty(obj, property, add){
 function valueNotNullAndGreaterThan(field, value){
     return (field != null && field > value);
 }
+
+function clone (object){
+	return JSON.parse(JSON.stringify(object));
+}

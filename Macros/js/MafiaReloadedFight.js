@@ -320,6 +320,7 @@ function addHomeFeedKillToList(friendObj, fightersToExclude, fighterObj, list, l
 }
 
 function checkMiniHomeFeed(friendObj, fightersToExclude, fighterObj){
+    logV2(INFO, "HOMEFEED", "checkMiniHomeFeed");
     var file = new ConfigFile(ORIG_MR_DIR + "02\\", MR.MR_HOMEFEED_FILE);
     var obj = initObject(file);
     var length = obj.kills.length;

@@ -1059,32 +1059,37 @@ function updateStatistics(fighter, fighterType){
         return;
     }
     var found = false;
-    for (var i=0; i < fighterObj.fighters.length; i++){
-        var fighterItem = fighterObj.fighters[i];
-        if (fighterItem.id == fighter.id){
-            logV2(INFO, "FIGHT", "Updating statistics for " + fighter.id);
-            if (fighter.lastAttacked != null) {
-                fighterItem.lastAttacked = fighter.lastAttacked;
+    if (fighterType == CONSTANTS.FIGHTERTPE.NORMAL || fighterType == CONSTANTS.FIGHTERTPE.NORMALPROFILE) {
+        for (var i = 0; i < fighterObj.fighters.length; i++) {
+            var fighterItem = fighterObj.fighters[i];
+            if (fighterItem.id == fighter.id) {
+                logV2(INFO, "FIGHT", "Updating statistics for " + fighter.id);
+                if (fighter.lastAttacked != null) {
+                    fighterItem.lastAttacked = fighter.lastAttacked;
+                }
+                fighterItem.bigHealth = fighter.bigHealth;
+                if (valueNotNullAndGreaterThan(fighterItem.iced, 0)) {
+                    addValueToProperty(fighterItem, "iced", 1);
+                }
+                if (fighter.lastIced != null) {
+                    fighterItem.lastIced = fighter.lastIced;
+                }
+                if (valueNotNullAndGreaterThan(fighterItem.alive, 0)) {
+                    addValueToProperty(fighterItem, "alive", 1);
+                }
+                if (valueNotNullAndGreaterThan(fighterItem.dead, 0)) {
+                    addValueToProperty(fighterItem, "dead", 1);
+                }
+                fighterItem.gangId = fighter.gangId;
+                fighterItem.gangName = fighter.gangName;
+                found = true;
+                logV2(INFO, "FIGHT", JSON.stringify(fighterItem));
+                break;
             }
-            fighterItem.bigHealth = fighter.bigHealth;
-            if (valueNotNullAndGreaterThan(fighterItem.iced, 0)){
-                addValueToProperty(fighterItem, "iced", 0);
-            }
-            if (fighter.lastIced != null) {
-                fighterItem.lastIced = fighter.lastIced;
-            }
-            if (valueNotNullAndGreaterThan(fighterItem.alive, 0)){
-                addValueToProperty(fighterItem, "alive", 1);
-            }
-            if (valueNotNullAndGreaterThan(fighterItem.dead, 0)){
-                addValueToProperty(fighterItem, "dead", 1);
-            }
-            fighterItem.gangId = fighter.gangId;
-            fighterItem.gangName = fighter.gangName;
-            found = true;
-            logV2(INFO, "FIGHT", JSON.stringify(fighterItem));
-            break;
         }
+    }
+    else {
+        found = true;
     }
     if (!found){
         logV2(INFO, "FIGHT", "Problem Updating statistics for " + fighter.id);

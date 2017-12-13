@@ -622,31 +622,38 @@ function updateStatistics(fighter, fighterType){
         list = assassinObj.homefeedPlayers;
     }
     logV2(INFO, "FIGHT", "Fighter Update List: " + JSON.stringify(list));
-    for (var i=0; i < list.length; i++){
-        var fighterItem = list[i];
-        if (fighterItem.id == fighter.id){
-            if (fighter.lastAttacked != null) {
-                fighterItem.lastAttacked = fighter.lastAttacked;
+    if (fighterType == CONSTANTS.FIGHTERTPE.HOMEFEED) {
+        // only update statistics for fighters coming from homefeed
+        // assassin type (coming from list players): object is already updated
+        for (var i = 0; i < list.length; i++) {
+            var fighterItem = list[i];
+            if (fighterItem.id == fighter.id) {
+                if (fighter.lastAttacked != null) {
+                    fighterItem.lastAttacked = fighter.lastAttacked;
+                }
+                fighterItem.bigHealth = fighter.bigHealth;
+                if (fighter.lastIced != null) {
+                    fighterItem.lastIced = fighter.lastIced;
+                }
+                if (valueNotNullAndGreaterThan(fighter.iced, 0)) {
+                    addValueToProperty(fighterItem, "iced", 1);
+                }
+                if (valueNotNullAndGreaterThan(fighter.alive, 0)) {
+                    addValueToProperty(fighterItem, "alive", 1);
+                }
+                if (valueNotNullAndGreaterThan(fighter.dead, 0)) {
+                    addValueToProperty(fighterItem, "dead", 1);
+                }
+                fighterItem.gangId = fighter.gangId;
+                fighterItem.gangName = fighter.gangName;
+                found = true;
+                logV2(INFO, "FIGHT", JSON.stringify(fighterItem));
+                break;
             }
-            fighterItem.bigHealth = fighter.bigHealth;
-            if (fighter.lastIced != null) {
-                fighterItem.lastIced = fighter.lastIced;
-            }
-            if (valueNotNullAndGreaterThan(fighter.iced, 0)){
-                addValueToProperty(fighterItem, "iced", 1);
-            }
-            if (valueNotNullAndGreaterThan(fighter.alive, 0)) {
-                addValueToProperty(fighterItem, "alive", 1);
-            }
-            if (valueNotNullAndGreaterThan(fighter.dead, 0)) {
-                addValueToProperty(fighterItem, "dead", 1);
-            }
-            fighterItem.gangId = fighter.gangId;
-            fighterItem.gangName = fighter.gangName;
-            found = true;
-            logV2(INFO, "FIGHT", JSON.stringify(fighterItem));
-            break;
         }
+    }
+    else {
+        found = true;
     }
     if (!found){
         if (fighterType == CONSTANTS.FIGHTERTPE.ASSASSIN) {
@@ -852,7 +859,7 @@ function homeFeedAttack(){
         var list = [];
         fighterObj.fighters.forEach(function (fighter) {
             if (fighter.hasOwnProperty("homefeed") && fighter.homefeed != null) {
-                list.push(fighter);
+                list.push(clone(fighter));
             }
         });
 
