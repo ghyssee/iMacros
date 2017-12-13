@@ -48,7 +48,7 @@ function getHealth(){
         var health = parseInt(tmp[0]);
         return health;
     }
-    return 0;
+    return -1;
 }
 
 function heal(){
@@ -156,7 +156,7 @@ function isAttacker(configMRObj, fighterId){
 
 function isExcludedPlayer(homefeedObj, fighterId){
     var found = false;
-    logV2(INFO, "HOMEFEED", 'isExcludedPlayer homefeedObj' + JSON.stringify(homefeedObj));
+    logV2(INFO, "HOMEFEED", 'isExcludedPlayer homefeedObj ' + JSON.stringify(homefeedObj));
     logV2(INFO, "HOMEFEED", 'isExcludedPlayer fighterId' + fighterId);
     for (var i=0; i < homefeedObj.excludePlayers.length; i++){
         var playObj = homefeedObj.excludePlayers[i];
@@ -248,3 +248,103 @@ function getHomeFeed(configMRObj, homefeedObj){
     logV2(INFO, "HOMEFEED", "End Home Feed");
 }
 
+function addFighter(fighterObj, fighter){
+    if (!findFighter(fighterObj.fighters, fighter.id)){
+        fighterObj.fighters.push(fighter);
+        writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+    }
+}
+
+function getFighterObject(id, name, level){
+    return {"id":id, "name":name, "level": level, "skip": false,
+        "gangId": null, "gangName": null, "bigHealth": false, "lastAttacked": null, "lastIced": null,
+        "iced": 0, "alive": 0, "dead": 0, "homefeed": null
+    };
+}
+
+function updateHomefeedFighter(fighterObj, fighterId, homefeed){
+    var found = false;
+    for (var i=0; i < fighterObj.fighters.length; i++){
+        var fighterItem = fighterObj.fighters[i];
+        if (fighterItem.id == fighterId){
+            found = true;
+            if (!fighterItem.hasOwnProperty("homefeed") || fighterItem.homefeed < homefeed) {
+                fighterItem.homefeed = homefeed;
+                logV2(INFO, "FIGHT", "Update Homefeed: " + JSON.stringify(fighterItem));
+                writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+            }
+            else {
+                //logV2(INFO, "FIGHT", "NO Update Homefeed: " + JSON.stringify(fighterItem));
+            }
+            break;
+        }
+    }
+    if (!found){
+        logV2(INFO, "FIGHT", "Problem Updating homefeed for " + fighterId);
+    }
+}
+
+function addHomeFeedKillToList(friendObj, fightersToExclude, fighterObj, list, lineObj){
+
+    var processed = false;
+    if (list.hasOwnProperty(lineObj.fighterId)){
+        //logV2(INFO, "HOMEFEED", "Already Added: " + lineObj.fighterId);
+        processed = true;
+    }
+    if (findFighter(friendObj.fighters, lineObj.fighterId)){
+        logV2(INFO, "HOMEFEED", "FRIEND: " + lineObj.fighterId);
+        processed = true;
+    }
+    else if (findFighter(fightersToExclude.fighters, lineObj.fighterId)){
+        logV2(INFO, "HOMEFEED", "STRONGER: " + lineObj.fighterId);
+        processed = true;
+    }
+    else if (findFighter(fighterObj.fighters, lineObj.fighterId)){
+        logV2(INFO, "HOMEFEED", "FIGHTER: " + lineObj.fighterId);
+        updateHomefeedFighter(fighterObj, lineObj.fighterId, lineObj.timeStamp);
+        processed = true;
+    }
+    else if (isAllyGang(friendObj.gangs, lineObj.gangId)){
+        logV2(INFO, "HOMEFEED", "FRIENDGANG: " + lineObj.fighterId + " / GANG: " + lineObj.gangId);
+        processed = true;
+    }
+    if (!processed){
+        list[lineObj.fighterId] = lineObj;
+        var fighter = getFighterObject(lineObj.fighterId, lineObj.name, 0);
+        fighter.gangId = lineObj.gangId;
+        fighter.gangName = lineObj.gangName;
+        fighter.homefeed = lineObj.timeStamp;
+        addFighter(fighterObj, fighter);
+        logV2(INFO, "HOMEFEED", "ADD: " + lineObj.fighterId);
+    }
+}
+
+function checkMiniHomeFeed(friendObj, fightersToExclude, fighterObj){
+    var file = new ConfigFile(ORIG_MR_DIR + "02\\", MR.MR_HOMEFEED_FILE);
+    var obj = initObject(file);
+    var length = obj.kills.length;
+    var listToCheck = {};
+    var save = false;
+    for (var i=length-1; i>=0; i--){
+        var lineObj = obj.kills[i];
+        if (!lineObj.hasOwnProperty("processed") || !lineObj.processed){
+            addHomeFeedKillToList(friendObj, fightersToExclude, fighterObj, listToCheck, lineObj);
+            lineObj.processed = true;
+            save = true;
+        }
+        else {
+            logV2(INFO, "HOMEFEED", "Last Homefeed Line processed: " + lineObj.timeMsg + " " + lineObj.feedMsg);
+            break;
+        }
+    }
+    if (save) {
+        writeObject(obj, file);
+    }
+    var arrayOfKeys = Object.getOwnPropertyNames(listToCheck);
+    logV2(INFO, "HOMEFEED", "List Of Fighters Added");
+    logV2(INFO, "HOMEFEED", "======================");
+    arrayOfKeys.forEach(function (key) {
+        logV2(INFO, "ADD", listToCheck[key].fighterId);
+    });
+    logV2(INFO, "HOMEFEED", JSON.stringify(listToCheck));
+}

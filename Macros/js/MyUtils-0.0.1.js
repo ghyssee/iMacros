@@ -399,3 +399,7 @@ function addValueToProperty(obj, property, add){
         obj[property] = add;
     }
 }
+
+function valueNotNullAndGreaterThan(field, value){
+    return (field != null && field > value);
+}

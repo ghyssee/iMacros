@@ -42,7 +42,7 @@ function selectType(){
 function selectArtist(){
 	var artist = null;
 	var msg = "Albumartist (Laat leeg indien verzamel CD of artist is ingevuld): ";
-	var inputTxt = prompt(msg, "0");
+	var inputTxt = prompt(msg, "");
 	if (inputTxt != null){
 		if (inputTxt != ""){
 			artist = inputTxt;

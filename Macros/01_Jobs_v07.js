@@ -9,7 +9,6 @@ eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
 //xxx : 180-9 = 171
 
 var localConfigObject = null;
-var SUCCESS = 1;
 setMRPath("MRJobs");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 
@@ -35,9 +34,6 @@ var CONSTANTS = Object.freeze({
     }
 });
 init();
-var JOB_FOLDER = "MR/Jobs";
-var COMMON_FOLDER = "MR/Common";
-var FIGHT_FOLDER = "MR/Fight";
 
 var jobsObj = initMRObject(MR.MR_JOBS_FILE);
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
@@ -50,35 +46,30 @@ start();
 
 function start() {
 
-    var listOfJobs = getListOfEnabledJobs(jobsObj.activeJobs);
     try {
-        var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
+        var listOfJobs = getListOfEnabledJobs(jobsObj.activeJobs);
+        startMafiaReloaded();
         globalSettings.currentLevel = getLevel();
-        if (retCode == SUCCESS) {
-            var newJobs = initJobs(listOfJobs);
-            do {
-                if (configMRObj.crimeEvent.enabled){
-                    startCrimeEvent();
-                    clearDistrict();
-                }
-                if (configMRObj.crimeEvent.joinedCrimes){
-                    helpCrimeEvent();
-                    clearDistrict();
-                }
-                if (configMRObj.storyEvent.enabled){
-                    clearDistrict();
-                    startStoryEvent();
-                }
-                var wait = doJobs(newJobs);
-                if (wait) {
-                    waitV2("60");
-                }
+        var newJobs = initJobs(listOfJobs);
+        do {
+            if (configMRObj.crimeEvent.enabled){
+                startCrimeEvent();
+                clearDistrict();
             }
-            while (true);
+            if (configMRObj.crimeEvent.joinedCrimes){
+                helpCrimeEvent();
+                clearDistrict();
+            }
+            if (configMRObj.storyEvent.enabled){
+                clearDistrict();
+                startStoryEvent();
+            }
+            var wait = doJobs(newJobs);
+            if (wait) {
+                waitV2("60");
+            }
         }
-        else {
-            logV2(INFO, "JOB", "Problem Starting Mafia Wars");
-        }
+        while (true);
     }
     catch (ex) {
         logError(ex);

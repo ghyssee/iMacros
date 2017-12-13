@@ -17,6 +17,7 @@ checkMRProperties();
 
 function checkMRProperties(){
     var initFile = new ConfigFile(MR_DIR + 'INIT\\', MR.MR_CONFIG_FILE);
+    logV2(INFO, "INIT", "Check MR Config File For All Profiles: " + initFile.fullPath());
     var obj = initObject(initFile);
     var profileObj = initObject(MR_PROFILE_FILE);
     profileObj.list.forEach(function (item) {
@@ -82,7 +83,6 @@ function setProfile(){
         profile = inputTxt;
         changeFirefoxSetting(MR_BRANCH, MR_PROFILE_KEY, profile);
         logV2(INFO, "INIT", "Set Profile to " + profile);
-        setMRPath("MRInit");
         createDirectory(MR_DIR);
         validateDirectory(MR_DIR);
     }

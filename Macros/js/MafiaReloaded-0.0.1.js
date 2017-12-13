@@ -15,6 +15,10 @@ var MR_ASSASSIN_FILE = new ConfigFile(MR_DIR, "Assassin-a-Nator.json");
 var MR_PROFILE_ERIC = 1;
 var MR_PROFILE_MALIN = 2;
 
+var FIGHT_FOLDER = "MR/Fight";
+var COMMON_FOLDER = "MR/Common";
+var JOB_FOLDER = "MR/Jobs";
+
 var MR = Object.freeze({
     "MR_FIGHTERS_EXCLUDE_FILE" : "FightersToExclude.json",
     "MR_FRIENDS_FILE": "Friends.json",
@@ -145,3 +149,14 @@ function getLevel(){
     return level;
 }
 
+function startMafiaReloaded(){
+    var retCode = SUCCESS;
+    do {
+        retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
+        if (retCode != SUCCESS){
+            logV2(WARNING, "MRINIT", "There was a Problem starting MR... Retrying in 60 seconds.");
+            waitV2("60");
+        }
+    }
+    while (retCode != SUCCESS);
+}
