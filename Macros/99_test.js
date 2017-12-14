@@ -8,26 +8,19 @@ eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 var FIGHT_FOLDER = "MR/Fight";
 var COMMON_FOLDER = "MR/Common";
 var JOB_FOLDER = "MR/Jobs";
+test();
 
-getMacrosPath();
-var msg = "<img src=\"https://d2swil18r7bmmr.cloudfront.net/img/items/200/bone_dagger.png\" style=\"width: 75px; height: 75px; outline: 1px solid blue;\" class=\"item\" data-id=\"120\">";
-var regExp = /src=\"(.*)\" style/;
-var matches = msg.match(regExp);
-if (matches != null && matches.length > 0){
-    var level = matches[1];
+function test() {
+    alert("1");
+    try {
+        alert("1");
+    	var file = IO.getFile("Desktop", "myinfo.txt");
+        alert("2");
+        var stream = IO.newOutputStream(file, "text");
+    } catch (ex) {
+        alert(ex);
+    }
 }
-/*
-MR_FIGHTERS_FILE.file = MR_FIGHTERS_FILE.file + ".json";
-var fighterObj = initObject(MR_FIGHTERS_FILE);
-var testObj = findFighter(fighterObj.fighters, "135578150533601");
-alert (testObj.name);
-writeObject(fighterObj, MR_FIGHTERS_FILE);
-*/
-msg = "<div style=\"outline: 1px solid blue;\"><a href=\"#\" class=\"ajax_request tag\" data-params=\"controller=gang&amp;action=view&amp;id=3985490\">*TBC*</a> <a href=\"#\" class=\"ajax_request\" data-params=\"controller=profile&amp;action=view&amp;id=10154593768213783\" style=\"outline: 1px solid blue;\">Lunatic</a> Level 4,139</div>";
-//msg = "<div style=\"outline: 1px solid blue;\"><a href=\"#\" class=\"ajax_request tag\" data-params=\"controller=gang&amp;action=view&amp;id=3985490\">*TBC*</a> <a href=\"#\" class=\"ajax_request\" data-params=\"controller=profile&amp;action=view&amp;id=10154593768213783\" style=\"outline: 1px solid blue;\">Lunatic</a> Level 4,139</div>";
-alert(JSON.stringify(getGangInformation(msg)));
-//extractGangIdFromString(msg.toUpperCase());
-
 function getGangInformation (text){
 	var gangObj = {id:null, name:null};
 	text = text.toUpperCase();
@@ -153,31 +146,6 @@ function getHealth(){
 		return health;
 	}
 	return 0;
-}
-
-function test(){
-var retcode = 1;
-var exitLoop = false;
-var counter = 0;
-var total = 0;
-do {
-	retcode = iimPlay("tmp/MWAddOnLogIn.iim");
-	if (retcode == 1){
-	   // not logged in
-	   counter++;
-	   if (counter > 50){
-		counter=0;
-		logV2(INFO, "TEST", "Total Login attempts: " + total, "C:/tmp/logins.txt");
-	   }
-	   total++;
-	}
-	else {
-		// logged in
-		exitLoop = true;
-	}
-}
-while (!exitLoop);
-
 }
 
 function getActiveCity(citiesToScan){
