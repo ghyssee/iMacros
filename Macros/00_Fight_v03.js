@@ -8,8 +8,8 @@ eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight.js"));
 
+// 182-11 = 171
 var localConfigObject = null;
-var NODE_ID = "";
 setMRPath("MRFight");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 
@@ -149,20 +149,24 @@ function fightBoss(){
     }
     return bossObj.status;
 }
-
 function evaluateBossResult(){
     var retCode = playMacro(FIGHT_FOLDER, "75_Boss_Attack_Result.iim", MACRO_INFO_LOGGING);
-    if (retCode == SUCCESS){
+    if (retCode == SUCCESS) {
         var msg = getLastExtract(1, "Boss Attack Result", 'You WON the fight');
-        msg = msg.toUpperCase();
-        logV2(DEBUG, "BOSS", "Boss Result: " + msg);
-        if (msg.startsWith('YOU WON THE FIGHT')){
+        if (!isNullOrBlank(msg)) {
+            logV2(INFO, "BOSS", "Boss Result: " + msg);
+            msg = msg.toUpperCase();
+            if (msg.startsWith('YOU WON THE FIGHT')) {
+            }
+            else if (msg.startsWith("You DO NOT FEEL HEALTHY")) {
+            }
         }
-        else if (msg.startsWith("You DO NOT FEEL HEALTHY")){
+        else {
+            logV2(WARNING, "BOSS", "Problem Extracting Boss Msg");
         }
     }
     else {
-        logV2(DEBUG, "BOSS", "Problem Getting Boss Result");
+        logV2(WARNING, "BOSS", "Problem Getting Boss Result");
     }
 }
 
