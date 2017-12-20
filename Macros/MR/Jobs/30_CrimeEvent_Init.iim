@@ -4,3 +4,5 @@ TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=home&action=view*
 WAIT SECONDS=1
 TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=crime*&action=view*
 WAIT SECONDS=1
+TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=crime*&action=view&tab=1*
+WAIT SECONDS=1
