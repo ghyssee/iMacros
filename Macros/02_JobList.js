@@ -79,8 +79,13 @@ function startList() {
         if (retCode == SUCCESS) {
             jobsObj.districts.forEach(function (district) {
                 if (district.scan){
-                    for (var i=district.scanChapterStart; i<= district.scanChapterEnd; i++){
-                        startChapter(district.id, i.toString());
+                    if (!district.event) {
+                        for (var i = district.scanChapterStart; i <= district.scanChapterEnd; i++) {
+                            startChapter(district.id, i.toString());
+                        }
+                    }
+                    else {
+                        startSpecialEvent(district.id);
                     }
                 }
             });
@@ -94,33 +99,6 @@ function startList() {
     catch (ex) {
         logError(ex);
     }
-
-}
-
-function startListOld() {
-    try {
-        var retCode = playMacro(COMMON_FOLDER, "01_Start.iim", MACRO_INFO_LOGGING);
-        if (retCode == SUCCESS) {
-            // district 1
-            for (var i=3; i <= 10; i++) {
-                startChapter("1", i.toString());
-            }
-
-            // district 2
-            /*
-            for (var i=13; i <= 20; i++) {
-                startChapter("2", i.toString());
-            }*/
-            writeMRObject(jobsObj, MR.MR_JOBS_FILE);
-        }
-        else
-            {
-                logV2(INFO, "JOBLIST", "Problem Starting Mafia Wars");
-            }
-    }
-    catch (ex) {
-            logError(ex);
-        }
 
 }
 
@@ -174,6 +152,25 @@ function startListOld() {
         else {
             logV2(INFO, "JOBLIST", "Update Chapter: " + districtId + "/" + chapterObj.id);
             district.chapters[found] = chapterObj;
+        }
+    }
+
+    function startSpecialEvent(districtId){
+
+        try {
+            var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
+            if (retCode == SUCCESS) {
+                retCode = playMacro(JOB_FOLDER, "06_Job_DistrictEvent.iim", MACRO_INFO_LOGGING);
+                if (retCode == SUCCESS) {
+                        extractJobs(districtId, null);
+                }
+            }
+            else {
+                logV2(INFO, "JOBLIST", "Problem With Init Job");
+            }
+        }
+        catch (ex) {
+            logError(ex);
         }
     }
 

@@ -11,6 +11,7 @@ var MR_CONFIG_FILE = new ConfigFile(MR_DIR, "MafiaReloaded.json");
 var MR_HOMEFEED_FILE = new ConfigFile(MR_DIR, "Homefeed.json");
 var MR_PROFILE_FILE = new ConfigFile(MR_DIR, "profile.json");
 var MR_ASSASSIN_FILE = new ConfigFile(MR_DIR, "Assassin-a-Nator.json");
+var MR_SETTINGS_FILE = new ConfigFile(MR_DIR, "Settings.json");
 
 var MR_PROFILE_ERIC = 1;
 var MR_PROFILE_MALIN = 2;
@@ -159,4 +160,12 @@ function startMafiaReloaded(){
         }
     }
     while (retCode != SUCCESS);
+}
+
+function makeMRScreenshot(file){
+    var profile = getProfile();
+    if (!isNullOrBlank(profile)) {
+        file = profile + "_" + file;
+    }
+    makeScreenShot(file);
 }

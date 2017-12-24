@@ -44,6 +44,7 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
 //enableMacroPlaySimulation();
 start();
 
+
 function start() {
 
     try {
@@ -70,6 +71,7 @@ function start() {
             var wait = doJobs(newJobs);
             if (wait) {
                 checkSkillTokens();
+                checkDailyLink();
                 waitV2("60");
             }
         }
@@ -191,8 +193,9 @@ function initJobs(listOfJobs){
                     logV2(WARNING, "JOB", "Problem Finding District " + jobItem.districtId);
                 }
                 else {
+                    //logV2(INFO, "JOBS", "Dis: " + JSON.stringify(district));
                     district.jobs.forEach(function (v) {
-                        if (v.chapter == jobItem.chapter) {
+                        if (district.event || v.chapter == jobItem.chapter) {
                             var jobTask = getJobTaskObject(jobItem.districtId, v.id, "COMPLETE");
                             newJobs.push(jobTask);
                         }
@@ -312,7 +315,14 @@ function checkIfEnoughEnerygOrStamina(jobItem, energyStaminaObj){
 function isDistrictSelected(jobItem){
     var districtId = jobItem.districtId;
     addMacroSetting("DISTRICT", districtId);
-    var retCode = playMacro(JOB_FOLDER, "15_DistrictSelect.iim", MACRO_INFO_LOGGING);
+    var retCode = SUCCESS;
+    if (jobItem.district.event){
+        retCode = playMacro(JOB_FOLDER, "16_DistrictSelectEvent.iim", MACRO_INFO_LOGGING);
+        logV2(INFO, "SPECIAL: 16_DistrictSelectEvent.iim");
+    }
+    else {
+        retCode = playMacro(JOB_FOLDER, "15_DistrictSelect.iim", MACRO_INFO_LOGGING);
+    }
     if (retCode == SUCCESS){
         var selectInfo = getLastExtract(1, "District Selected", "<a href=\"#\" class=\"ajax_request h2_btn selected\" data-params=\"controller=job&amp;action=hip&amp;loc=2\" style=\"outline: 1px solid blue;\">The Getaway</a>");
         if (!isNullOrBlank(selectInfo)) {
@@ -839,9 +849,10 @@ function evaluateCrimeEvent(pos, activeJob, joinedCrime){
             else if (contains(msg, "YOU HAVE ALREADY STARTED")){
                 logV2(INFO, "CRIME EVENT", msg);
                 crimeObj.started = false;
-                configMRObj = initMRObject(MR.MR_CONFIG_FILE)
-                configMRObj.crimeEvent.enabled=false;
-                writeMRObject(configMRObj, MR.MR_CONFIG_FILE);
+                crimeObj.exist = false;
+                //configMRObj = initMRObject(MR.MR_CONFIG_FILE)
+                //configMRObj.crimeEvent.enabled=false;
+                //writeMRObject(configMRObj, MR.MR_CONFIG_FILE);
             }
             else {
                 crimeObj.started = false;
@@ -1397,5 +1408,34 @@ function closePopupByText(text){
     var retCode = playMacro(COMMON_FOLDER, "03_ClosePopupText.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS){
         logV2(INFO, "POPUP", "Popup Closed");
+    }
+}
+
+function checkDailyLink(){
+
+    var strDate = getDateYYYYMMDD();
+    var lastTimeExecuted = configMRObj.dailyLink.lastTimeExecuted;
+    if (lastTimeExecuted == null || lastTimeExecuted < strDate){
+
+        var settingsObj = initObject(MR_SETTINGS_FILE);
+        if (lastTimeExecuted == null || settingsObj.dailyLink.date > lastTimeExecuted) {
+            logV2(INFO, "DAILYLINK", "Start Dailylink");
+            addMacroSetting("URL", settingsObj.dailyLink.link);
+            var retCode = playMacro(MACRO_COMMON_FOLDER, "01_GoTo.iim", MACRO_INFO_LOGGING);
+            if (retCode == SUCCESS){
+                logV2(INFO, "DAILYLINK", "Update lastTimeExecuted to " + settingsObj.dailyLink.date);
+                configMRObj = initMRObject(MR.MR_CONFIG_FILE);
+                configMRObj.dailyLink.lastTimeExecuted = settingsObj.dailyLink.date;
+                configMRObj.dailyLink.link = settingsObj.dailyLink.link;
+                writeMRObject(configMRObj, MR.MR_CONFIG_FILE);
+                waitV2("1");
+                makeMRScreenshot("MRDailyLink");
+                logV2(INFO, "DAILYLINK", "End Dailylink");
+            }
+            else {
+                logV2(WARNING, "DAILYLINK", "Problem With Dailylink");
+            }
+            closeTab();
+        }
     }
 }

@@ -46,8 +46,11 @@ function randomNumber (from, to){
    return random;
 }
 
-function getDateYYYYMMDD(){
-	var d = new Date();
+function getDateYYYYMMDD(date){
+    var d = new Date();
+    if ((typeof date !== 'undefined') && date !== null){;
+        d = date;
+    }
 	var curr_date = d.getDate();
 	var curr_month = d.getMonth();
 	curr_month++;

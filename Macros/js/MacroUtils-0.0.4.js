@@ -26,6 +26,7 @@ var MACRO_PLAY_SIMULATION = false;
 var MACRO_PLAY_LOGGING = false;
 
 var MACRO_SETTINGS = [];
+var MACRO_COMMON_FOLDER = "Common";
 
 var USER_CANCEL = "UserCancelError";
 var FRAME="0";
@@ -165,7 +166,7 @@ function playMacro(folder, macroName, logging, frame){
 }
 
 function macroPlay(macroName, logError, onErrorRetry, logging){
-	if (logging == null){
+    if (logging == null){
 		logging = enableLoggingForMacroPlay();
 	}
 	if (logging){
@@ -219,7 +220,7 @@ function macroPlay(macroName, logError, onErrorRetry, logging){
 }
 
 function closeTab(){
-	macroPlay("closeTab");
+	macroPlay(MACRO_COMMON_FOLDER + "/closeTab.iim");
 }
 
 function addMacroSetting(key, value, logEnabled){
