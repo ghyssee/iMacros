@@ -17,7 +17,8 @@ var JOBSELECT = Object.freeze({
         "ENERGYRANGE": 6,
         "EXPRANGE": 7,
         "DISTRICT": 8,
-        "CHAPTER": 9
+        "CHAPTER": 9,
+        "MONEYRATIO": 10
     },
     "SORTING" : {
         "MONEY" : "moneyRatio",
@@ -134,6 +135,18 @@ function isJobSelectable(filters, district, job){
             case JOBSELECT.SELECTTYPES.DISTRICT:
                 if ((typeObj.value == JOBSELECT.FILTER.WHATEVER || typeObj.value == JOBSELECT.FILTER.YES)
                     && district.id == typeObj.min
+                )
+                {
+                    valid = valid && true;
+                }
+                else {
+                    valid = false;
+                }
+                break;
+            case JOBSELECT.SELECTTYPES.MONEYRATIO:
+                var moneyRatio = getMoneyRatio(job);
+                if ((typeObj.value == JOBSELECT.FILTER.WHATEVER || typeObj.value == JOBSELECT.FILTER.YES)
+                    && moneyRatio >= typeObj.min
                 )
                 {
                     valid = valid && true;

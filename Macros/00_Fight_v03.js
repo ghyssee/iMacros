@@ -877,45 +877,6 @@ function evaluateAttackMessage(msg){
 	}
 }
 
-function getStamina(){
-	playMacro(FIGHT_FOLDER, "52_GetStamina.iim", MACRO_INFO_LOGGING);
-	var staminaInfo = getLastExtract(1, "Stamina Left", "300/400");
-	logV2(INFO, "STAMINA", "stamina = " + staminaInfo);
-	if (!isNullOrBlank(staminaInfo)){
-        staminaInfo = staminaInfo.replace(/,/g, '');
-		var tmp = staminaInfo.split("/");
-		var stamina = parseInt(tmp[0]);
-		return stamina;
-	}
-	return 0;
-}
-
-function getEnergy(){
-    var ret = playMacro(JOB_FOLDER, "10_GetEnergy.iim", MACRO_INFO_LOGGING);
-    var energyInfo = getLastExtract(1, "Energy Left", "500/900");
-    logV2(INFO, "ENERGY", "energy = " + energyInfo);
-    if (!isNullOrBlank(energyInfo)){
-        energyInfo = energyInfo.replace(/,/g, '');
-        var tmp = energyInfo.split("/");
-        var energy = parseInt(tmp[0]);
-        return energy;
-    }
-    return 0;
-}
-
-function getExperience(){
-	logV2(INFO, "EXP", "Get Experience");
-	ret = playMacro(COMMON_FOLDER, "13_GetExperience.iim", MACRO_INFO_LOGGING);
-	var exp = 0;
-	if (ret == SUCCESS){
-		var msg = getLastExtract(1, "Experience Left", "5,886 (1,264 to level)");
-		exp = extractExperience(msg);
-		logV2(INFO, "EXP", "Experience Left: " + exp);
-	}
-	return exp;
-
-}
-
 // MOD 22/11
 function checkHealth(autoHeal, stamina){
     autoHeal = typeof autoHeal !== 'undefined' ? autoHeal : configMRObj.fight.autoHeal;
@@ -1123,18 +1084,6 @@ function extractIdFromString(text){
         return matches[matches.length-1];
     }
     return text;
-}
-
-function extractExperience(text){
-    text = text.toUpperCase().replace(/,/g, "");
-    var regExp = /(?:.*)[0-9]{1,10} \((.*) TO LEVEL/; //5,886 (1,264 to level)
-    var matches = text.match(regExp);
-    var exp = 0;
-    if (matches != null && matches.length > 0){
-        exp = parseInt(matches[matches.length-1]);
-    }
-    return exp;
-
 }
 
 function init(){
