@@ -68,11 +68,20 @@ function start() {
                 clearDistrict();
                 startStoryEvent();
             }
-            var wait = doJobs(newJobs);
+            var wait = true;
+            if (configMRObj.jobs.money){
+                var moneyJobs = getMoneyJobs();
+                wait = doJobs(moneyJobs);
+            }
+            else {
+                wait = doJobs(newJobs);
+            }
+            if (wait) {
+                wait = checkExperience();
+            }
             if (wait) {
                 checkSkillTokens();
                 checkDailyLink();
-                checkExperience();
                 waitV2("60");
             }
         }
@@ -159,7 +168,7 @@ function updateJobItem(jobItem){
     var obj = initMRObject(MR.MR_JOBS_FILE);
     var save = false;
     obj.activeJobs.forEach( function (item) {
-        if (item.id == jobItem.id){
+        if (item.id != null && item.id == jobItem.id){
             logV2(INFO, "JOB", "Update Job " + item.id + ": " + "numberOfTimesExecuted: " + item.numberOfTimesExecuted);
             item.numberOfTimesExecuted = jobItem.numberOfTimesExecuted;
             save = true;
@@ -1457,14 +1466,42 @@ function repeatMoneyJob(jobObj, energyObj, exp){
     return levelUp;
 }
 
+function getMoneyJobs(){
+    var filters = [
+        addFilter(JOBSELECT.SELECTTYPES.EVENT, JOBSELECT.FILTER.NO),
+        addFilter(JOBSELECT.SELECTTYPES.MONEYCOST, JOBSELECT.FILTER.NO),
+        addFilter(JOBSELECT.SELECTTYPES.JOBTYPE, JOBSELECT.FILTER.ENERGY),
+        addFilter(JOBSELECT.SELECTTYPES.MONEY, JOBSELECT.FILTER.YES),
+        addFilter(JOBSELECT.SELECTTYPES.MONEYRATIO, JOBSELECT.FILTER.YES, 50),
+        addFilter(JOBSELECT.SELECTTYPES.CONSUMABLECOST, JOBSELECT.FILTER.NO)
+    ];
+    var jobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.MONEY, JOBSELECT.SORTING.DESCENDING);
+    var moneyJobs = [];
+    if (jobs.length == 0){
+        logV2(WARNING, "MONEYJOBS", "No Money Jobs Found");
+    }
+    else {
+        for (var i=0; i < jobs.length; i++){
+            var jobObj = jobs[i];
+            var activeJobObj = getJobTaskObject(jobObj.districtId, jobObj.id, jobObj.type);
+            activeJobObj.enabled = true;
+            activeJobObj.type = "REPEAT";
+            fillDistrictInfo(activeJobObj);
+            moneyJobs.push(activeJobObj);
+        }
+    }
+    return initJobs(moneyJobs);
+}
+
 function checkExperience(){
     dummyBank();
+    var wait = true;
     var exp = getExperience();
     var energyObj = extractEnergyStamina();
     if (exp > 0 && exp < configMRObj.jobs.levelUpExp && energyObj.energy >= configMRObj.jobs.levelUpMinEnergy){
         logV2(INFO, "JOBS", "Check For Money Jobs");
         // check for money energy job
-        var selections = [
+        var filters = [
             addFilter(JOBSELECT.SELECTTYPES.EVENT, JOBSELECT.FILTER.NO),
             addFilter(JOBSELECT.SELECTTYPES.MONEYCOST, JOBSELECT.FILTER.NO),
             addFilter(JOBSELECT.SELECTTYPES.JOBTYPE, JOBSELECT.FILTER.ENERGY),
@@ -1473,7 +1510,7 @@ function checkExperience(){
             addFilter(JOBSELECT.SELECTTYPES.MONEYRATIO, JOBSELECT.FILTER.YES, 50),
             addFilter(JOBSELECT.SELECTTYPES.CONSUMABLECOST, JOBSELECT.FILTER.NO)
         ];
-        var jobs = getJobs(jobsObj.districts, selections, !JOBSELECT_LOG, null, JOBSELECT.SORTING.EXP, JOBSELECT.SORTING.DESCENDING);
+        var jobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.EXP, JOBSELECT.SORTING.DESCENDING);
         var levelUp = false;
         logV2(INFO, "JOBS", "Money Jobs; " + jobs.length);
         var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
@@ -1482,7 +1519,7 @@ function checkExperience(){
                 var jobObj = jobs[i];
                 if (jobObj.energy <= energyObj.energy){
                     logV2(INFO, "JOBS", "Money Job; " + JSON.stringify(jobObj));
-                    var activeJobObj = getJobTaskObject(jobObj.districtId, jobObj.id, "ENERGY");
+                    var activeJobObj = getJobTaskObject(jobObj.districtId, jobObj.id, jobObj.type);
                     activeJobObj.type = "REPEAT";
                     fillDistrictInfo(activeJobObj);
                     if (activeJobObj.district != null) {
@@ -1490,6 +1527,7 @@ function checkExperience(){
                         logV2(INFO, "JOBS", "energyObj; " + JSON.stringify(energyObj));
                         if (levelUp){
                             logV2(INFO, "MONEYJOB", "Leveled Up. Skipping rest of Money Jobs");
+                            wait = false;
                             break;
                         }
                     }
@@ -1504,4 +1542,5 @@ function checkExperience(){
             logV2(WARNING, "MONEYJOB", "Problem With Init Job");
         }
     }
+    return wait;
 }

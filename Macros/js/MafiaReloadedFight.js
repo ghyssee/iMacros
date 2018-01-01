@@ -156,7 +156,6 @@ function isAttacker(configMRObj, fighterId){
 
 function isExcludedPlayer(homefeedObj, fighterId){
     var found = false;
-    logV2(INFO, "HOMEFEED", 'isExcludedPlayer homefeedObj ' + JSON.stringify(homefeedObj));
     logV2(INFO, "HOMEFEED", 'isExcludedPlayer fighterId' + fighterId);
     for (var i=0; i < homefeedObj.excludePlayers.length; i++){
         var playObj = homefeedObj.excludePlayers[i];
@@ -191,6 +190,10 @@ function getHomeFeed(configMRObj, homefeedObj){
                 line.gangId = gangObj.id;
                 line.gangName = gangObj.name;
                 var fighterObj = extractIdNameFromString(msg, "PROFILE");
+                if (fighterObj.id == null){
+                    logV2(WARNING, "HOMEFEED", "Problem with homefeed line: " + originalMsg);
+                    continue;
+                }
                 line.fighterId = fighterObj.id;
                 line.name = fighterObj.name;
                 var currDate = new Date();

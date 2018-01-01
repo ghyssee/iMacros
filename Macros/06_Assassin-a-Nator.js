@@ -11,6 +11,7 @@ eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight.js"));
 var localConfigObject = null;
 setMRPath("MRAssassin-a-Nator");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
+// 185 - 14 = 171
 
 var CONSTANTS = Object.freeze({
     "OPPONENT" : {

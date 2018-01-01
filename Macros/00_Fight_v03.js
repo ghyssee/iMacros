@@ -968,7 +968,7 @@ function getFightList(){
 		}
 	}
 	else {
-		throw new Error("Problem With Extract Start");
+        logV2(WARNING, "FIGHTLIST", "Problem With Starting Fight List. Retcode= " + retCode);
 	}
 	return list;
 }
