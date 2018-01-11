@@ -179,7 +179,7 @@ function attackBoss(){
     retCode = playMacro(FIGHT_FOLDER, "73_Boss_StartAttack.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
         bossHealth = getBossHealth();
-        while(bossHealth > 0 && bossHealth > configMRObj.boss.stopWhenHealth) {
+        while(bossHealth > 0 && bossHealth > configMRObj.boss.stopWhenHealthBelow) {
             var stamina = getStamina();
             if (stamina >= 5) {
                 if (checkHealth(AUTOHEAL, stamina)) {
@@ -220,6 +220,9 @@ function attackBoss(){
                 status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
                 break;
             }
+        }
+        if (bossHealth > 0 && bossHealth <= configMRObj.boss.stopWhenHealthBelow){
+            logV2(INFO, "BOSS", "Boss Health is lower than stopWhenHealthBelow: " + bossHealth + "/" + configMRObj.boss.stopWhenHealthBelow);
         }
     }
     else {
@@ -716,7 +719,13 @@ function attackTillDeath(fighter, fighterType){
 					logV2(DEBUG, "ATTACK", "Victim Health changed: " + deltaHealth);
 				}
 				previousHealth = health;
-				if (nrOfAttacks > configMRObj.fight.maxNumberOfAttacks && health > configMRObj.fight.attackTillDiedHealth){
+				if (health > 100){
+                    logV2(INFO, "ATTACK", "Victim has too much health: " + health);
+                    statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
+                    fighter.bigHealth = true;
+                    break;
+                }
+				else if (nrOfAttacks > configMRObj.fight.maxNumberOfAttacks && health > configMRObj.fight.attackTillDiedHealth){
 					logV2(INFO, "ATTACK", "Max. Nr Of Attacks Reached. Skipping...");
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
