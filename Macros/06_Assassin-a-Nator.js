@@ -529,7 +529,7 @@ function checkHealth(autoHeal, stamina){
                     if (health == 0) {
                         logV2(INFO, "FIGHT", "Killed by another player");
                         autoHeal = false;
-                        if (underAttack(configMRObj)) {
+                        if (underAttack(configMRObj, assassinObj.processHomefeedLines)) {
                             // Went To Home page;
                             // interrupt Attack / Boss Fight => disable autoHeal switch
                         }

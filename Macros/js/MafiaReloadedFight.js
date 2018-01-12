@@ -131,11 +131,13 @@ function extractTimeFromHomefeed(msg, time){
     return 0;
 }
 
-function underAttack(configMRObj){
+function underAttack(configMRObj, processHomefeed){
     var homefeedObj = initMRObject(MR.MR_HOMEFEED_FILE);
     var bullied = false;
     waitV2("1");
-    getHomeFeed(configMRObj, homefeedObj);
+    if (processHomefeed) {
+        getHomeFeed(configMRObj, homefeedObj);
+    }
     if (checkForAttackers(configMRObj, homefeedObj) > 1){
         var waitTime = configMRObj.fight.underAttackWaitSeconds.toString();
         bullied = true;

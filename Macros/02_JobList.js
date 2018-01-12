@@ -5,7 +5,7 @@ eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
 
 var localConfigObject = null;
 var NODE_ID = "";
