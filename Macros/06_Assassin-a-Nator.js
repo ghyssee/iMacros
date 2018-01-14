@@ -797,7 +797,7 @@ function profileAttack(array, fighterType){
 
 function homeFeedAttack(){
     var status = CONSTANTS.ATTACKSTATUS.OK;
-    if (!configMRObj.fight.homefeedAttack){
+    if (!assassinObj.homeFeedAttack){
         logV2(INFO, "FIGHT", "Homefeed Attack disabled");
         status = CONSTANTS.ATTACKSTATUS.OK;
     }

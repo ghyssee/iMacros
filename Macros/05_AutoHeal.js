@@ -52,7 +52,7 @@ function checkHealth(){
     while (health == 0) {
         heal();
         if (tries == 0 && health == 0){
-            underAttack(configMRObj);
+            underAttack(configMRObj, true);
         }
         tries++;
         dummyBank();
