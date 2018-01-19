@@ -16,6 +16,9 @@ var MR_SETTINGS_FILE = new ConfigFile(MR_DIR, "Settings.json");
 var MR_PROFILE_ERIC = 1;
 var MR_PROFILE_MALIN = 2;
 
+var MR_PROFILE_ERIC_ID = "01";
+var MR_PROFILE_MALIN_ID = "02";
+
 var FIGHT_FOLDER = "MR/Fight";
 var COMMON_FOLDER = "MR/Common";
 var JOB_FOLDER = "MR/Jobs";
@@ -25,9 +28,11 @@ var MR = Object.freeze({
     "MR_FRIENDS_FILE": "Friends.json",
     "MR_FIGHTERS_FILE": "Fighters.json",
     "MR_JOBS_FILE": "Jobs.json",
+    "MR_SETTINGS_FILE": "Settings.json",
     "MR_CONFIG_FILE": "MafiaReloaded.json",
     "MR_HOMEFEED_FILE": "Homefeed.json",
-    "MR_ASSASSIN_FILE": "Assassin-a-Nator.json"
+    "MR_ASSASSIN_FILE": "Assassin-a-Nator.json",
+    "MR_TEMP_SETTINGS_FILE" : "TempSettings.json"
     }
 );
 
@@ -44,6 +49,20 @@ function getMRFileByIndex(fileId, idx){
     }
     else {
         logV2(INFO, "INIT", "Profile not found for index " + idx);
+    }
+    return getMRFile(fileId);
+}
+
+
+function getMRFileById(fileId, profileId){
+    var profile = getProfileObject(profileId);
+    alert(JSON.stringify(profile));
+    if (profile != null){
+        var file = new ConfigFile(ORIG_MR_DIR + profile.id + '\\', fileId);
+        return file;
+    }
+    else {
+        logV2(WARNING, "INIT", "Profile not found for id " + profileId);
     }
     return getMRFile(fileId);
 }
@@ -73,6 +92,18 @@ function getProfileByIndex(idx){
     var profiles = initObject(MR_PROFILE_FILE);
     if (idx >= 1 && idx <= profiles.list.length){
         return profiles.list[idx-1];
+    }
+    return null;
+}
+
+
+function getProfileObject(id){
+    var profiles = initObject(MR_PROFILE_FILE);
+    for (var i=0; i < profiles.list.length; i++){
+        var profileObj = profiles.list[i];
+        if (profileObj.id == id){
+            return profileObj;
+        }
     }
     return null;
 }
@@ -196,16 +227,30 @@ function getExperience(){
 }
 
 function getStamina(){
+    var stamina = getStaminaObj;
+    return stamina.leftOver;
+}
+
+function getStaminaForFighting(limit){
+    var stamina = getStaminaObj;
+    if (limit > 0 && stamina.leftOver <= limit){
+        throw new UserCancelError("Stamina Limit Reached: " + limit);
+    }
+    return stamina;
+}
+
+function getStaminaObj(){
     playMacro(FIGHT_FOLDER, "52_GetStamina.iim", MACRO_INFO_LOGGING);
     var staminaInfo = getLastExtract(1, "Stamina Left", "300/400");
+    var staminaObj = {"leftOver": 0, "total": 0};
     logV2(INFO, "STAMINA", "stamina = " + staminaInfo);
     if (!isNullOrBlank(staminaInfo)){
         staminaInfo = staminaInfo.replace(/,/g, '');
         var tmp = staminaInfo.split("/");
-        var stamina = parseInt(tmp[0]);
-        return stamina;
+        staminaObj.leftOver = parseInt(tmp[0]);
+        staminaObj.total = parseInt(tmp[1]);
     }
-    return 0;
+    return staminaObj;
 }
 
 function getEnergy(){
@@ -221,3 +266,21 @@ function getEnergy(){
     return 0;
 }
 
+function getTempSetting(property){
+    var tmpObj = initMRObject(MR.MR_TEMP_SETTINGS_FILE);
+    if (tmpObj.hasOwnProperty(property)){
+        return tmpObj[property];
+    }
+    return null;
+}
+
+function setTempSetting(profileId, property, value){
+    if (profileId == null){
+        profileId = getProfile();
+    }
+    var file = getMRFileById(MR.MR_TEMP_SETTINGS_FILE, profileId);
+    alert(file.fullPath());
+    var tmpObj = initObject(file);
+    tmpObj[property] = value;
+    writeObject(tmpObj, file);
+}

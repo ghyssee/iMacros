@@ -51,6 +51,8 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
                         "forceHealing": false,
                       "boss": {"attacks": 0}};
 startScript();
+//var tmp = getTempSetting("homefeedAttack");
+//setTempSetting("02", "homefeedAttack", true);
 
 function startScript(){
     try {
@@ -88,6 +90,7 @@ function startScript(){
     }
     catch (ex) {
         if (ex instanceof UserCancelError){
+            logV2(INFO, "CANCEL", ex.message);
             writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
             // do nothing
         }
@@ -170,6 +173,37 @@ function evaluateBossResult(){
     }
 }
 
+function performBossAttack(staminaObj){
+    var pummel = false;
+    if (configMRObj.boss.pummel){
+        var staminaRequired = Math.ceil(staminaObj.total * 0.2);
+        logV2(DEBUG, "PUMMEL", "Stamina Required: " + staminaRequired);
+        logV2(DEBUG, "PUMMEL", "Stamina Left: " + staminaObj.leftOver);
+        if (staminaObj.leftOver >= staminaRequired){
+            var healthObj = getHealthObj();
+            var healthRequired = Math.ceil(healthObj.total * 0.5);
+            if (healthObj.leftOver > healthRequired) {
+                logV2(INFO, "PUMMEL", "Pummel Attack activated");
+                pummel = true;
+            }
+            else {
+                logV2(INFO, "PUMMEL", "Not Enough health for pummel attack:" + healthObj.leftOver);
+            }
+        }
+        else {
+            logV2(INFO, "PUMMEL", "Not Enough stamina for pummel attack: " + staminaObj.leftOver);
+        }
+    }
+    var retCode = SUCCESS;
+    if (pummel) {
+        retCode = playMacro(FIGHT_FOLDER, "74_Boss_Attack.iim", MACRO_INFO_LOGGING);
+    }
+    else {
+        retCode = playMacro(FIGHT_FOLDER, "74_Boss_Attack.iim", MACRO_INFO_LOGGING);
+    }
+    return retCode;
+}
+
 // MOD 17/11
 function attackBoss(){
     var status = CONSTANTS.ATTACKSTATUS.OK;
@@ -178,11 +212,12 @@ function attackBoss(){
     var AUTOHEAL = true;
     retCode = playMacro(FIGHT_FOLDER, "73_Boss_StartAttack.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
-        do {
-            var stamina = getStamina();
-            if (stamina >= 5) {
-                if (checkHealth(AUTOHEAL, stamina)) {
-                    retCode = playMacro(FIGHT_FOLDER, "74_Boss_Attack.iim", MACRO_INFO_LOGGING);
+        bossHealth = getBossHealth();
+        while(bossHealth > 0 && bossHealth > configMRObj.boss.stopWhenHealthBelow) {
+            var staminaObj = getStaminaForFighting(configMRObj.fighting.stopWhenStaminaBelow);
+            if (staminaObj.leftOver >= 5) {
+                if (checkHealth(AUTOHEAL, staminaObj.leftOver)) {
+                    retCode = performBossAttack(staminaObj);
                     if (retCode == SUCCESS) {
                         bossHealth = getBossHealth();
                         if (bossHealth == 0) {
@@ -220,7 +255,9 @@ function attackBoss(){
                 break;
             }
         }
-        while (bossHealth > 0);
+        if (bossHealth > 0 && bossHealth <= configMRObj.boss.stopWhenHealthBelow){
+            logV2(INFO, "BOSS", "Boss Health is lower than stopWhenHealthBelow: " + bossHealth + "/" + configMRObj.boss.stopWhenHealthBelow);
+        }
     }
     else {
         logV2(INFO, "BOSS", "Problem With Start Attacking boss");
@@ -243,15 +280,15 @@ function getBossHealth(){
                 health = parseInt(list[0]);
             }
             else {
-                logV2(INFO, "BOSS", "Problem Parsing health");
+                logV2(WARNING, "BOSS", "Problem Parsing health");
             }
         }
         else {
-            logV2(INFO, "BOSS", "Problem Extracting health");
+            logV2(WARNING, "BOSS", "Problem Extracting health");
         }
     }
     else {
-        logV2(INFO, "BOSS", "Problem Getting Boss Health");
+        logV2(WARNING, "BOSS", "Problem Getting Boss Health");
     }
     return health;
 }
@@ -441,7 +478,8 @@ function waitTillEnoughStamina(){
     do {
 	    // refreshing stats (health / exp / stamina / energy)
 		playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
-		stamina = getStamina();
+		var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow);
+		stamina = staminaObj.leftOver;
 		energy = getEnergy();
 		var health = getHealth();
 		total = stamina + energy;
@@ -716,7 +754,13 @@ function attackTillDeath(fighter, fighterType){
 					logV2(DEBUG, "ATTACK", "Victim Health changed: " + deltaHealth);
 				}
 				previousHealth = health;
-				if (nrOfAttacks > configMRObj.fight.maxNumberOfAttacks && health > configMRObj.fight.attackTillDiedHealth){
+				if (health > 100){
+                    logV2(INFO, "ATTACK", "Victim has too much health: " + health);
+                    statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
+                    fighter.bigHealth = true;
+                    break;
+                }
+				else if (nrOfAttacks > configMRObj.fight.maxNumberOfAttacks && health > configMRObj.fight.attackTillDiedHealth){
 					logV2(INFO, "ATTACK", "Max. Nr Of Attacks Reached. Skipping...");
 					statusObj.status = CONSTANTS.ATTACKSTATUS.OK;
 					break;
@@ -743,7 +787,8 @@ function attackTillDeath(fighter, fighterType){
 				}
 				else {
 					// MOD 15/11
-                    var stamina = getStamina();
+                    var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow);
+                    stamina = staminaObj.leftOver;
 				    if (!checkHealth(configMRObj.fight.autoHeal, stamina)){
                         statusObj.status = CONSTANTS.ATTACKSTATUS.HEALINGDISABLED;
                         logV2(INFO, "ATTACK", "Healing Disabled");
@@ -882,7 +927,8 @@ function checkHealth(autoHeal, stamina){
     autoHeal = typeof autoHeal !== 'undefined' ? autoHeal : configMRObj.fight.autoHeal;
     var tries = 0;
     if (typeof stamina == 'undefined'){
-        stamina = getStamina();
+        var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow);
+        stamina = staminaObj.leftOver;
     }
         logV2(DEBUG, "FIGHT", "Checking Health");
         var health = getHealth();
@@ -903,7 +949,7 @@ function checkHealth(autoHeal, stamina){
                         if (health == 0) {
                             logV2(INFO, "FIGHT", "Killed by another player");
                             autoHeal = false;
-                            if (underAttack(configMRObj)) {
+                            if (underAttack(configMRObj, configMRObj.homefeed.processLines)) {
                                 // Went To Home page;
                                 // interrupt Attack / Boss Fight => disable autoHeal switch
                             }
@@ -1214,12 +1260,16 @@ function startNormalAttack(fighters){
 
 function homeFeedAttack(){
     var status = CONSTANTS.ATTACKSTATUS.OK;
-    if (!configMRObj.fight.homefeedAttack){
+    if (!configMRObj.homefeed.attack){
         logV2(INFO, "FIGHT", "Homefeed Attack disabled");
         status = CONSTANTS.ATTACKSTATUS.OK;
     }
+    else if (getTempSetting("homefeedAttack") == false){
+        logV2(INFO, "FIGHT", "Homefeed Attack temporary disabled");
+        status = CONSTANTS.ATTACKSTATUS.OK;
+    }
     else {
-        if (configMRObj.fight.checkMiniHomeFeed) {
+        if (configMRObj.homefeed.checkMini) {
             checkMiniHomeFeed(friendObj, fightersToExclude, fighterObj);
         }
         logV2(INFO, "FIGHT", "Start Fight List Using Home Feed");
@@ -1234,7 +1284,7 @@ function homeFeedAttack(){
         list.sort(function (a, b) {
             return strcmp(b.homefeed, a.homefeed);
         });
-        list = list.slice(0, configMRObj.fight.homefeedAttackSize);
+        list = list.slice(0, configMRObj.homefeed.attackSize);
         list.forEach(function (fighter) {
             logV2(INFO, "FIGHT", fighter.id + ": " + fighter.homefeed);
         });
@@ -1263,6 +1313,9 @@ function startProfileAttack(){
 function profileAttack(array, fighterType){
     var refresh = false;
     var status = CONSTANTS.ATTACKSTATUS.OK;
+    if (!configMRObj.fight.profileAttack){
+        return status;
+    }
     logV2(INFO, "FIGHT", "Profile Fighting: Nr Of Fighters: " + array.length);
     for (var i=0; i < array.length; i++) {
         var arrayItem = array[i];

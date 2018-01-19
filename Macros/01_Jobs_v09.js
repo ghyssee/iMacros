@@ -38,6 +38,7 @@ init();
 
 var jobsObj = initMRObject(MR.MR_JOBS_FILE);
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
+var settingsObj = initObject(MR.MR_SETTINGS_FILE);
 var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                       "lastDistrict": null, "lastChapter": null, "lowestEnergy": null, "lowestStamina": null
                      };
@@ -890,8 +891,8 @@ function evaluateCrimeEvent(pos, activeJob, joinedCrime){
 }
 
 function findActiveCrimeJob(position){
-    for (var i=0; i < configMRObj.crimeJobs.length; i++){
-        var crimeJob = configMRObj.crimeJobs[i];
+    for (var i=0; i < settingsObj.crimeJobs.length; i++){
+        var crimeJob = settingsObj.crimeJobs[i];
         if (crimeJob.position == position){
             return crimeJob;
         }
@@ -989,8 +990,8 @@ function helpCrimeEvent(){
 }
 
 function getActiveCrimeJob(){
-    for (var i=0; i < configMRObj.crimeJobs.length; i++){
-        var crimeJobObj = configMRObj.crimeJobs[i];
+    for (var i=0; i < settingsObj.crimeJobs.length; i++){
+        var crimeJobObj = settingsObj.crimeJobs[i];
         if (crimeJobObj.position == configMRObj.crimeEvent.activeJob){
             return crimeJobObj;
         }

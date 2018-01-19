@@ -39,16 +39,23 @@ function findFighter(list, id){
 }
 
 function getHealth(){
+    var healthObj = getHealthObj();
+    return healthObj.leftOver;
+}
+
+
+function getHealthObj(){
     playMacro(FIGHT_FOLDER, "11_GetHealth.iim", MACRO_INFO_LOGGING);
     var healthInfo = getLastExtract(1, "Health", "50/200");
+    var healthObj = {"leftOver": -1, "total": 0};
     //logV2(INFO, "HEALTH", "healthInfo = " + healthInfo);
     if (!isNullOrBlank(healthInfo)){
         healthInfo = removeComma(healthInfo);
         var tmp = healthInfo.split("/");
-        var health = parseInt(tmp[0]);
-        return health;
+        healthObj.leftOver = parseInt(tmp[0]);
+        healthObj.total = parseInt(tmp[1]);
     }
-    return -1;
+    return healthObj;
 }
 
 function heal(){
