@@ -51,8 +51,6 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
                         "forceHealing": false,
                       "boss": {"attacks": 0}};
 startScript();
-//var tmp = getTempSetting("homefeedAttack");
-//setTempSetting("02", "homefeedAttack", true);
 
 function startScript(){
     try {
@@ -90,8 +88,11 @@ function startScript(){
     }
     catch (ex) {
         if (ex instanceof UserCancelError){
-            logV2(INFO, "CANCEL", ex.message);
             writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+            logV2(INFO, "CANCEL", ex.message);
+            if (ex.name != USER_CANCEL){
+                alert(ex.message);
+            }
             // do nothing
         }
         else {
@@ -196,7 +197,7 @@ function performBossAttack(staminaObj){
     }
     var retCode = SUCCESS;
     if (pummel) {
-        retCode = playMacro(FIGHT_FOLDER, "74_Boss_Attack.iim", MACRO_INFO_LOGGING);
+        retCode = playMacro(FIGHT_FOLDER, "76_Boss_Pummel.iim", MACRO_INFO_LOGGING);
     }
     else {
         retCode = playMacro(FIGHT_FOLDER, "74_Boss_Attack.iim", MACRO_INFO_LOGGING);
@@ -214,7 +215,7 @@ function attackBoss(){
     if (retCode == SUCCESS) {
         bossHealth = getBossHealth();
         while(bossHealth > 0 && bossHealth > configMRObj.boss.stopWhenHealthBelow) {
-            var staminaObj = getStaminaForFighting(configMRObj.fighting.stopWhenStaminaBelow);
+            var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow);
             if (staminaObj.leftOver >= 5) {
                 if (checkHealth(AUTOHEAL, staminaObj.leftOver)) {
                     retCode = performBossAttack(staminaObj);
@@ -925,6 +926,8 @@ function evaluateAttackMessage(msg){
 // MOD 22/11
 function checkHealth(autoHeal, stamina){
     autoHeal = typeof autoHeal !== 'undefined' ? autoHeal : configMRObj.fight.autoHeal;
+    autoHeal = getOverwrittenSetting(null, "fight", "autoHeal", configMRObj.fight.autoHeal);
+    iimDisplay("autoHeal: " + autoHeal);
     var tries = 0;
     if (typeof stamina == 'undefined'){
         var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow);
@@ -949,7 +952,9 @@ function checkHealth(autoHeal, stamina){
                         if (health == 0) {
                             logV2(INFO, "FIGHT", "Killed by another player");
                             autoHeal = false;
-                            if (underAttack(configMRObj, configMRObj.homefeed.processLines)) {
+                            var processHomefeedLines = getOverwrittenSetting(null, "homefeed", "processLines", configMRObj.homefeed.processLines);
+                            logV2(INFO, "HOMEFEED", "processHomefeedLines: " + processHomefeedLines);
+                            if (underAttack(configMRObj, processHomefeedLines)) {
                                 // Went To Home page;
                                 // interrupt Attack / Boss Fight => disable autoHeal switch
                             }
@@ -1264,7 +1269,7 @@ function homeFeedAttack(){
         logV2(INFO, "FIGHT", "Homefeed Attack disabled");
         status = CONSTANTS.ATTACKSTATUS.OK;
     }
-    else if (getTempSetting("homefeedAttack") == false){
+    else if (getTempSetting(null, "fight", "homefeedAttack") == false){
         logV2(INFO, "FIGHT", "Homefeed Attack temporary disabled");
         status = CONSTANTS.ATTACKSTATUS.OK;
     }

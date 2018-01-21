@@ -55,6 +55,9 @@ function startScript(){
         startMafiaReloaded();
         globalSettings.currentLevel = getLevel();
         logV2(INFO, "LEVEL", "Starting Level: " + globalSettings.currentLevel);
+        setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", true);
+        setTempSetting(MR_PROFILE_MALIN_ID, "fight", "autoHeal", false);
+        setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", false);
         do  {
             if (globalSettings.stopOnLevelUp){
                 logV2(INFO, "FIGHT", "You Leveled Up and setting stopOnLevelUp is enabled");
@@ -87,6 +90,9 @@ function startScript(){
         logV2(INFO, "SUMMARY", "Total Kills: " + globalSettings.kills);
         logV2(INFO, "SUMMARY", "Heals: " + globalSettings.heals);
     }
+    setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", null);
+    setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", false);
+    setTempSetting(MR_PROFILE_MALIN_ID, "fight", "autoHeal", null);
 }
 
 function continueFighting(status){
@@ -126,7 +132,10 @@ function waitTillEnoughStamina(){
     var energy = 0;
     var total = 0;
     var minStamina = configMRObj.fight.minStaminaToHeal;
+    setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", false);
+    setTempSetting(MR_PROFILE_MALIN_ID, "fight", "autoHeal", null);
     do {
+        dummyBank();
         // refreshing stats (health / exp / stamina / energy)
         playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
         stamina = getStamina();
@@ -135,7 +144,7 @@ function waitTillEnoughStamina(){
         total = stamina + energy;
         var exp = getExperience();
         if (exp > 0){
-            var staminaNeeded = exp / (4.3);
+            var staminaNeeded = exp / (4.5);
             logV2(INFO, "WAIT", "Stamina Needed: " + staminaNeeded);
             logV2(INFO, "WAIT", "Total (Energy + Stamina available): " + total);
             logV2(INFO, "WAIT", "Stamina: " + stamina);
@@ -168,6 +177,8 @@ function waitTillEnoughStamina(){
     }
     while (true);
     logV2(INFO, "WAIT", "Leaving wait");
+    setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", true);
+    setTempSetting(MR_PROFILE_MALIN_ID, "fight", "autoHeal", false);
 }
 
 function attack(fighter, fighterType){
@@ -533,6 +544,8 @@ function checkHealth(autoHeal, stamina){
                             // interrupt Attack / Boss Fight => disable autoHeal switch
                         }
                         // when it's your first heal => don't wait
+                        setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", false);
+                        setTempSetting(MR_PROFILE_MALIN_ID, "fight", "autoHeal", true);
                         waitV2("60");
                         break;
                     }
@@ -816,7 +829,7 @@ function homeFeedAttack(){
         list.sort(function (a, b) {
             return strcmp(b.homefeed, a.homefeed);
         });
-        list = list.slice(0, 2);
+        list = list.slice(0, 1);
         list.forEach(function (fighter) {
             logV2(INFO, "FIGHT", fighter.id + ": " + fighter.homefeed);
             // reset statistics

@@ -15,8 +15,10 @@ var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 init();
 
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
-var globalSettings = {"heals": 0};
+var globalSettings = {"heals": 0, "autoHeal": true, "homefeed": true, "profileId": getProfile()};
+setTempSetting(globalSettings.profileId, "homefeed", "processLines", false);
 startScript();
+setTempSetting(globalSettings.profileId, "homefeed", "processLines", null);
 
 function startScript(){
     var maxHeals = 100;
@@ -47,6 +49,22 @@ function startScript(){
 function checkHealth(){
     var tries = 0;
     logV2(DEBUG, "AUTOHEAL", "Checking Health");
+    //var tmpObj = initMRObject(MR.MR_TEMP_SETTINGS_FILE);
+    var autoHeal = getOverwrittenSetting(null, "autoHeal", "autoHeal", globalSettings.autoHeal);
+    logV2(INFO, "AUTOHEAL", "autoHeal: " + autoHeal);
+    iimDisplay("autoHeal: " + autoHeal);
+    if (!autoHeal){
+        if (globalSettings.homefeed){
+            globalSettings.homefeed = false;
+            setTempSetting(globalSettings.profileId, "homefeed", "processLines", null);
+        }
+        return true;
+    }
+    // AutoHeal is master for processing homefeed lines
+    if (!globalSettings.homefeed){
+        globalSettings.homefeed = true;
+        setTempSetting(globalSettings.profileId, "homefeed", "processLines", false);
+    }
     var health = getHealth();
     var healed = false;
     while (health == 0) {

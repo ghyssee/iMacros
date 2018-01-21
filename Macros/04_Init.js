@@ -21,7 +21,7 @@ function checkMRProperties(){
     var obj = initObject(initFile);
     var profileObj = initObject(MR_PROFILE_FILE);
     profileObj.list.forEach(function (item) {
-        var profilerFile = new ConfigFile(MR_DIR + (item.main ? '' : (item.id + '\\')), MR.MR_CONFIG_FILE);
+        var profilerFile = new ConfigFile(MR_DIR + item.id + '\\', MR.MR_CONFIG_FILE);
         var profilerObj = initObject(profilerFile);
         logV2(INFO, "INIT", "Profile:" + item.name);
         check(obj, profilerObj);

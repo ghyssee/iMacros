@@ -34,7 +34,7 @@ var FRAME="0";
 function UserCancelError(message) {
     this.name = USER_CANCEL;
     if (message !== undefined) {
-        this.message = 'message';
+        this.message = message;
     }
     else {
         this.message = 'User Cancel';

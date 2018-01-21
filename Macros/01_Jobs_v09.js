@@ -38,7 +38,7 @@ init();
 
 var jobsObj = initMRObject(MR.MR_JOBS_FILE);
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
-var settingsObj = initObject(MR.MR_SETTINGS_FILE);
+var settingsObj = initObject(getMRRootFile(MR.MR_SETTINGS_FILE));
 var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                       "lastDistrict": null, "lastChapter": null, "lowestEnergy": null, "lowestStamina": null
                      };
@@ -633,7 +633,7 @@ function checkIfLevelUp(){
 	return leveledUp;
 }
 
-function getStamina(){
+function getStaminaJob(){
     var retCode = playMacro(FIGHT_FOLDER, "52_GetStamina.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
         var staminaInfo = getLastExtract(1, "Stamina Left", "300/400");

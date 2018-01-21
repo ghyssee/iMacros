@@ -41,6 +41,10 @@ function getMRFile(fileId){
     return new ConfigFile(MR_DIR, fileId);
 }
 
+function getMRRootFile(fileId){
+    return new ConfigFile(ORIG_MR_DIR, fileId);
+}
+
 function getMRFileByIndex(fileId, idx){
     var profile = getProfileByIndex(idx);
     if (profile != null){
@@ -56,7 +60,6 @@ function getMRFileByIndex(fileId, idx){
 
 function getMRFileById(fileId, profileId){
     var profile = getProfileObject(profileId);
-    alert(JSON.stringify(profile));
     if (profile != null){
         var file = new ConfigFile(ORIG_MR_DIR + profile.id + '\\', fileId);
         return file;
@@ -227,14 +230,14 @@ function getExperience(){
 }
 
 function getStamina(){
-    var stamina = getStaminaObj;
+    var stamina = getStaminaObj();
     return stamina.leftOver;
 }
 
 function getStaminaForFighting(limit){
-    var stamina = getStaminaObj;
+    var stamina = getStaminaObj();
     if (limit > 0 && stamina.leftOver <= limit){
-        throw new UserCancelError("Stamina Limit Reached: " + limit);
+        throw new UserCancelError("Stamina Limit Reached. Limit is " + limit + ", Stamina Left is " + stamina.leftOver);
     }
     return stamina;
 }
@@ -266,21 +269,33 @@ function getEnergy(){
     return 0;
 }
 
-function getTempSetting(property){
-    var tmpObj = initMRObject(MR.MR_TEMP_SETTINGS_FILE);
-    if (tmpObj.hasOwnProperty(property)){
-        return tmpObj[property];
+function getTempSetting(tmpObj, category, property){
+    if (tmpObj == null) {
+        tmpObj = initMRObject(MR.MR_TEMP_SETTINGS_FILE);
+    }
+    if (tmpObj[category].hasOwnProperty(property)){
+        return tmpObj[category][property];
     }
     return null;
 }
 
-function setTempSetting(profileId, property, value){
+function getOverwrittenSetting(tmpObj, category, property, originalValue){
+    if (tmpObj == null) {
+        tmpObj = initMRObject(MR.MR_TEMP_SETTINGS_FILE);
+    }
+    var tmpSetting = getTempSetting(tmpObj, category, property);
+    if (tmpSetting == null){
+        return originalValue;
+    }
+    return tmpSetting;
+}
+
+function setTempSetting(profileId, category, property, value){
     if (profileId == null){
         profileId = getProfile();
     }
     var file = getMRFileById(MR.MR_TEMP_SETTINGS_FILE, profileId);
-    alert(file.fullPath());
     var tmpObj = initObject(file);
-    tmpObj[property] = value;
+    tmpObj[category][property] = value;
     writeObject(tmpObj, file);
 }
