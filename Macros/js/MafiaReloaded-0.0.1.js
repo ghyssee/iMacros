@@ -23,6 +23,8 @@ var FIGHT_FOLDER = "MR/Fight";
 var COMMON_FOLDER = "MR/Common";
 var JOB_FOLDER = "MR/Jobs";
 
+var STOP_SCRIPT = true;
+
 var MR = Object.freeze({
     "MR_FIGHTERS_EXCLUDE_FILE" : "FightersToExclude.json",
     "MR_FRIENDS_FILE": "Friends.json",
@@ -234,10 +236,18 @@ function getStamina(){
     return stamina.leftOver;
 }
 
-function getStaminaForFighting(limit){
+function getStaminaForFighting(limit, stopScript){
     var stamina = getStaminaObj();
     if (limit > 0 && stamina.leftOver <= limit){
-        throw new UserCancelError("Stamina Limit Reached. Limit is " + limit + ", Stamina Left is " + stamina.leftOver);
+        var msg = "Stamina Limit Reached. Limit is " + limit + ", Stamina Left is " + stamina.leftOver;
+        if (stopScript) {
+            alert(msg);
+            throw new UserCancelError(msg);
+        }
+        else {
+            logV2(INFO, "STAMINA", msg);
+            stamina.leftOver = -1;
+        }
     }
     return stamina;
 }
