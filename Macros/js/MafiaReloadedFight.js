@@ -85,7 +85,7 @@ function isAllyGang(list, gangId){
 
 function getHomeFeedObj(time, feed){
     var obj = {"timeMsg": time, "feedMsg": feed, "timeStamp": null, "currentTime": null, "name": null, "fighterId": null,
-        "gangId": null, "gangName": null};
+        "gangId": null, "gangName": null, "id":UUID()};
     return obj;
 }
 
