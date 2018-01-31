@@ -58,6 +58,7 @@ function startScript(){
         setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", true);
         setTempSetting(MR_PROFILE_MALIN_ID, "fight", "autoHeal", false);
         setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", false);
+        setTempSetting(MR_PROFILE_ERIC_ID, "homefeed", "processLines", false);
         do  {
             if (globalSettings.stopOnLevelUp){
                 logV2(INFO, "FIGHT", "You Leveled Up and setting stopOnLevelUp is enabled");
@@ -93,6 +94,7 @@ function startScript(){
     setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", null);
     setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", false);
     setTempSetting(MR_PROFILE_MALIN_ID, "fight", "autoHeal", null);
+    setTempSetting(MR_PROFILE_ERIC_ID, "homefeed", "processLines", null);
 }
 
 function continueFighting(status){
