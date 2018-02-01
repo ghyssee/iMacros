@@ -1040,7 +1040,7 @@ function evaluateAttackMessage(msg){
 // MOD 22/11
 function checkHealth(autoHeal, stamina){
     autoHeal = typeof autoHeal !== 'undefined' ? autoHeal : configMRObj.fight.autoHeal;
-    autoHeal = getOverwrittenSetting(null, "fight", "autoHeal", configMRObj.fight.autoHeal);
+    autoHeal = getOverwrittenSetting(null, "fight", "fightAutoHeal", configMRObj.fight.autoHeal);
     iimDisplay("autoHeal: " + autoHeal);
     var tries = 0;
     if (typeof stamina == 'undefined'){

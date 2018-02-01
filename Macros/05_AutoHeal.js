@@ -50,7 +50,7 @@ function checkHealth(){
     var tries = 0;
     logV2(DEBUG, "AUTOHEAL", "Checking Health");
     //var tmpObj = initMRObject(MR.MR_TEMP_SETTINGS_FILE);
-    var autoHeal = getOverwrittenSetting(null, "autoHeal", "autoHeal", globalSettings.autoHeal);
+    var autoHeal = getOverwrittenSetting(null, "fight", "fightAutoHeal", globalSettings.autoHeal);
     logV2(INFO, "AUTOHEAL", "autoHeal: " + autoHeal);
     iimDisplay("autoHeal: " + autoHeal);
     if (!autoHeal){
@@ -60,7 +60,7 @@ function checkHealth(){
         }
         return true;
     }
-    // AutoHeal is master for processing homefeed lines
+    // Assasin-a-nator script is master for processing homefeed lines
     if (!globalSettings.homefeed){
         globalSettings.homefeed = true;
         setTempSetting(globalSettings.profileId, "homefeed", "processLines", false);
