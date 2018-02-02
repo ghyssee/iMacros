@@ -130,9 +130,10 @@ function getArtist(pos){
 		artist = iimGetLastExtract(1);
 		if (!isNullOrBlank(artist)){
 			artist = artist.replace("–", "");
-		}
+            artist = artist.replace(/\([0-9]{1,2}\)/g, "");
+            artist = artist.replace(/\*$/, "");		}
 	}
-	return artist;
+	return artist.trim();
 }
 
 function getTitle(pos){

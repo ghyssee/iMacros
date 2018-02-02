@@ -8,7 +8,7 @@ eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 var FIGHT_FOLDER = "MR/Fight";
 var COMMON_FOLDER = "MR/Common";
 var JOB_FOLDER = "MR/Jobs";
-test();
+alert (test2());
 
 function test() {
     alert("1");
@@ -20,6 +20,13 @@ function test() {
     } catch (ex) {
         alert(ex);
     }
+}
+
+function test2() {
+ 	var artist = "Margaret (13)*";
+ 	artist = artist.replace(/\([0-9]{1,2}\)/g, "");
+    artist = artist.replace(/\*$/, "");
+ 	return artist.trim();
 }
 function getGangInformation (text){
 	var gangObj = {id:null, name:null};
