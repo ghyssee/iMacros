@@ -16,6 +16,7 @@ init();
 
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var globalSettings = {"heals": 0, "autoHeal": true, "homefeed": true, "profileId": getProfile()};
+logV2(INFO, "TEMP", "script: Fight - Disable Processing of Homefeed for the current Profile " + globalSettings.profileId);
 setTempSetting(globalSettings.profileId, "homefeed", "processLines", false);
 startScript();
 setTempSetting(globalSettings.profileId, "homefeed", "processLines", null);
@@ -33,7 +34,7 @@ function startScript(){
                 waitV2("2");
             }
         }
-        while (globalSettings.heals < maxHeals);
+        while (true);
     }
     catch (ex) {
         if (ex instanceof UserCancelError){
@@ -50,12 +51,13 @@ function checkHealth(){
     var tries = 0;
     logV2(DEBUG, "AUTOHEAL", "Checking Health");
     //var tmpObj = initMRObject(MR.MR_TEMP_SETTINGS_FILE);
-    var autoHeal = getOverwrittenSetting(null, "fight", "fightAutoHeal", globalSettings.autoHeal);
+    var autoHeal = getOverwrittenSetting(null, "autoHeal", "autoHeal", globalSettings.autoHeal);
     logV2(INFO, "AUTOHEAL", "autoHeal: " + autoHeal);
     iimDisplay("autoHeal: " + autoHeal);
     if (!autoHeal){
         if (globalSettings.homefeed){
             globalSettings.homefeed = false;
+            logV2(INFO, "TEMP", "script: Fight - Resetting Processing of homefeed for the current Profile " + globalSettings.profileId);
             setTempSetting(globalSettings.profileId, "homefeed", "processLines", null);
         }
         return true;
@@ -63,6 +65,7 @@ function checkHealth(){
     // Assasin-a-nator script is master for processing homefeed lines
     if (!globalSettings.homefeed){
         globalSettings.homefeed = true;
+        logV2(INFO, "TEMP", "script: Fight - Disable Processing of Homefeed for the current Profile " + globalSettings.profileId);
         setTempSetting(globalSettings.profileId, "homefeed", "processLines", false);
     }
     var health = getHealth();

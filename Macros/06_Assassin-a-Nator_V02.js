@@ -49,16 +49,29 @@ var globalSettings = {"kills": 0, "heals": 0};
 
 startScript();
 
+function activateTempSettings(){
+    // Profile: Malin - Script: AutoHeal - Enable autoHeal
+    setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", true);
+    // Profile: Eric - Script: Fight - Disable HomefeedAttack
+    setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", false);
+    // Profile: Eric - Script: Fight - Disable homefeed processing
+    setTempSetting(MR_PROFILE_ERIC_ID, "homefeed", "processLines", false);
+    // Profile: Eric - Script: Fight - Disable autoHeal
+    setTempSetting(MR_PROFILE_ERIC_ID, "fight", "fightAutoHeal", false);
+}
 
+function deactivateTempSettings(){
+    setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", false);
+    setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", null);
+    setTempSetting(MR_PROFILE_ERIC_ID, "homefeed", "processLines", null);
+    setTempSetting(MR_PROFILE_ERIC_ID, "fight", "fightAutoHeal", null);
+}
 function startScript(){
     try {
         startMafiaReloaded();
         globalSettings.currentLevel = getLevel();
         logV2(INFO, "LEVEL", "Starting Level: " + globalSettings.currentLevel);
-        setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", true);
-        setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", false);
-        setTempSetting(MR_PROFILE_ERIC_ID, "homefeed", "processLines", false);
-        setTempSetting(MR_PROFILE_ERIC_ID, "fight", "fightAutoHeal", false);
+        activateTempSettings();
         do  {
             if (globalSettings.stopOnLevelUp){
                 logV2(INFO, "FIGHT", "You Leveled Up and setting stopOnLevelUp is enabled");
@@ -91,10 +104,7 @@ function startScript(){
         logV2(INFO, "SUMMARY", "Total Kills: " + globalSettings.kills);
         logV2(INFO, "SUMMARY", "Heals: " + globalSettings.heals);
     }
-    setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", false);
-    setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", null);
-    setTempSetting(MR_PROFILE_ERIC_ID, "homefeed", "processLines", null);
-    setTempSetting(MR_PROFILE_ERIC_ID, "fight", "fightAutoHeal", null);
+    deactivateTempSettings();
 }
 
 function continueFighting(status){
@@ -134,7 +144,9 @@ function waitTillEnoughStamina(){
     var energy = 0;
     var total = 0;
     var minStamina = configMRObj.fight.minStaminaToHeal;
+    logV2(INFO, "TEMP", "Profile: Malin, script AutoHeal - disable autoHeal");
     setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", false);
+    logV2(INFO, "TEMP", "Profile: Malin, script Fight - reset autoHeal");
     setTempSetting(MR_PROFILE_MALIN_ID, "fight", "autoHeal", null);
     do {
         dummyBank();
