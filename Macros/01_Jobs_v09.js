@@ -1533,3 +1533,34 @@ function checkExperience(){
     }
     return wait;
 }
+
+function checkForCollectBonus(){
+    var exp = getExperience();
+    var energyObj = extractEnergyStamina();
+    var expCalc = (energyObj.energy *4.50) + (energyObj.stamina * 4.40);
+    var expRest = exp - expCalc;
+    logV2(INFO, "COLLECT", "Calculated Rest Experience: " + expRest);
+    if (expRest > 3000){
+        setTempSetting(globalSettings.profileId, "fight", "stopFighting", true);
+        setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", true);
+        logV2(INFO, "COLLECT", "Calculated Rest Experience: " + expRest);
+        var busyFighting1 = getTempSetting(null, "fight", "busyFighting");
+        var busyFighting2 = getTempSetting(null, "assassin-a-nator", "busyFighting");
+        logV2(INFO, "COLLECT", "Fight: Busy: " + busyFighting1);
+        logV2(INFO, "COLLECT", "Assasin: Busy: " + busyFighting2);
+        if (!busyFighting1 && !busyFighting2){
+            // fight script + assasssin-a-nator is not busy fighting
+            var collected = collectBonus();
+            if (collected){
+
+            }
+            else {
+                logV2(WARNING, "COLLECT", "Could Not Collect");
+            }
+        }
+    }
+}
+
+function collectBonus(){
+    return true;
+}
