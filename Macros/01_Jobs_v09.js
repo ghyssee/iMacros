@@ -61,7 +61,7 @@ function start() {
                 startCrimeEvent();
                 clearDistrict();
             }
-            if (configMRObj.crimeEvent.joinedCrimes){
+            if (configMRObj.crimeEvent.help){
                 helpCrimeEvent();
                 clearDistrict();
             }
