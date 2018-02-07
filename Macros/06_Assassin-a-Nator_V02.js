@@ -73,12 +73,16 @@ function startScript(){
         logV2(INFO, "LEVEL", "Starting Level: " + globalSettings.currentLevel);
         activateTempSettings();
         do  {
-            if (globalSettings.stopOnLevelUp){
+            if (checkForStopFighting("assassin-a-nator")){
+                continue;
+            }
+            else if (globalSettings.stopOnLevelUp){
                 logV2(INFO, "FIGHT", "You Leveled Up and setting stopOnLevelUp is enabled");
                 waitV2("60");
             }
             else {
                 waitTillEnoughStamina();
+                setTempSetting(globalSettings.profileId, "assassin-a-nator", "busyFighting", true);
                 // if (health is 0, don't check for underAttack, it's already checked
                 globalSettings.forceHealing = true;
                 configMRObj = initMRObject(MR.MR_CONFIG_FILE);
@@ -90,6 +94,7 @@ function startScript(){
                 else {
                     logV2(INFO, "FIGHT", "AutoHeal Disabled. Waiting till enough health again if autoheal disabled or stamina if minimum stamina has reached");
                 }
+                setTempSetting(globalSettings.profileId, "assassin-a-nator", "busyFighting", false);
             }
         }
         while (true);
@@ -104,6 +109,7 @@ function startScript(){
         logV2(INFO, "SUMMARY", "Total Kills: " + globalSettings.kills);
         logV2(INFO, "SUMMARY", "Heals: " + globalSettings.heals);
     }
+    setTempSetting(globalSettings.profileId, "assassin-a-nator", "busyFighting", false);
     deactivateTempSettings();
 }
 

@@ -60,7 +60,10 @@ function startScript(){
         logV2(INFO, "LEVEL", "Starting Level: " + globalSettings.currentLevel);
         do  {
             dummyBank();
-            if (globalSettings.stopOnLevelUp){
+            if (checkForStopFighting("fight")){
+                continue;
+            }
+            else if (globalSettings.stopOnLevelUp){
                 logV2(INFO, "FIGHT", "You Leveled Up and setting stopOnLevelUp is enabled");
                 waitV2("60");
             }
@@ -77,6 +80,7 @@ function startScript(){
                 }
                 else {
                     waitV2("60");
+                    iimdisplay("");
                 }
             }
             else if (globalSettings.autoHealWait){
@@ -90,6 +94,7 @@ function startScript(){
                     continue;
                 }
                 waitTillEnoughStamina();
+                setTempSetting(globalSettings.profileId, "fight", "busyFighting", true);
                 globalSettings.forceHealing = true;
                 status = CONSTANTS.ATTACKSTATUS.OK;
                 configMRObj = initMRObject(MR.MR_CONFIG_FILE);
@@ -111,6 +116,7 @@ function startScript(){
                 if (status == CONSTANTS.ATTACKSTATUS.HEALINGDISABLED){
                     globalSettings.autoHealWait = true;
                 }
+                setTempSetting(globalSettings.profileId, "fight", "busyFighting", false);
             }
         }
         while (true);
@@ -127,6 +133,7 @@ function startScript(){
         else {
             logError(ex);
         }
+        setTempSetting(globalSettings.profileId, "fight", "busyFighting", false);
         logV2(INFO, "SUMMARY", "Total Iced: " + globalSettings.iced);
         logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
         logV2(INFO, "SUMMARY", "Nr Of Attacks: " + globalSettings.nrOfAttacks);
@@ -513,7 +520,7 @@ function processList(list, fighterType){
                     refresh = true;
                     break;
                 case CONSTANTS.ATTACKSTATUS.STOPONLEVELUP :
-                    logV2(INFO, "FIGHT", "Stop On Levl Up");
+                    logV2(INFO, "FIGHT", "Stop On Level Up");
                     status = CONSTANTS.ATTACKSTATUS.STOPONLEVELUP;
                     refresh = true;
                     break;
@@ -537,10 +544,10 @@ function waitTillEnoughStamina(){
     do {
 	    // refreshing stats (health / exp / stamina / energy)
 		playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
-		var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, STOP_SCRIPT);
+		var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
 		stamina = staminaObj.leftOver;
 		if (stamina == -1){
-		    // limit reached
+		    // Stamina Below specified value
         }
         else {
             energy = getEnergy();
@@ -1055,7 +1062,7 @@ function checkHealth(autoHeal, stamina){
     iimDisplay("autoHeal: " + autoHeal);
     var tries = 0;
     if (typeof stamina == 'undefined'){
-        var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, STOP_SCRIPT);
+        var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
         stamina = staminaObj.leftOver;
     }
     var health = getHealth();
@@ -1108,9 +1115,8 @@ function checkHealth(autoHeal, stamina){
             globalSettings.heals++;
         }
     }
-    logV2(INFO, "AUTOHEAL", "autoHeal: " + autoHeal);
+    logV2(DEBUG, "AUTOHEAL", "autoHeal: " + autoHeal);
     globalSettings.forceHealing = false;
-    logV2(DEBUG, "FIGHT", "Check Health Exit: " + autoHeal);
     return autoHeal;
 }
 

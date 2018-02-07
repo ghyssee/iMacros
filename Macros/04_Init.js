@@ -9,13 +9,13 @@ eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
 
 var localConfigObject = null;
 LOG_FILE = new LogFile(LOG_DIR, "MRInit");
-var GLOBAL_SAVE = false;
 
 init();
 setProfile();
-checkMRProperties();
+checkMRProperties(MR.MR_CONFIG_FILE);
+checkMRProperties(MR.MR_TEMP_SETTINGS_FILE);
 
-function checkMRProperties(){
+function checkMRPropertiesOld(){
     var initFile = new ConfigFile(MR_DIR + 'INIT\\', MR.MR_CONFIG_FILE);
     logV2(INFO, "INIT", "Check MR Config File For All Profiles: " + initFile.fullPath());
     var obj = initObject(initFile);
@@ -33,7 +33,26 @@ function checkMRProperties(){
     //setMRPathProfile("INIT","MRInit");
 }
 
+function checkMRProperties(configFileCode){
+    var initFile = new ConfigFile(MR_DIR + 'INIT\\', configFileCode);
+    logV2(INFO, "INIT", "Check Following File For All Profiles: " + initFile.fullPath());
+    var obj = initObject(initFile);
+    var profileObj = initObject(MR_PROFILE_FILE);
+    profileObj.list.forEach(function (item) {
+        var profilerFile = new ConfigFile(MR_DIR + item.id + '\\', configFileCode);
+        var profilerObj = initObject(profilerFile);
+        logV2(INFO, "INIT", "Profile:" + item.name);
+        var save = check(obj, profilerObj);
+        if (save){
+            logV2(INFO, "INIT", "Update File: " + JSON.stringify(profilerObj));
+            writeObject(profilerObj, profilerFile);
+        }
+    });
+    //setMRPathProfile("INIT","MRInit");
+}
+
 function check(obj, profilerObj){
+    var save = false;
     if (hasProperties(obj)) {
         var arrayOfKeys = Object.getOwnPropertyNames(obj);
         arrayOfKeys.forEach(function (key) {
@@ -43,9 +62,9 @@ function check(obj, profilerObj){
                 if (!profilerObj.hasOwnProperty(key)){
                     logV2(INFO, "INIT", "Property With Children does not exist: " + key);
                     profilerObj[key] = obj[key];
-                    GLOBAL_SAVE = true;
+                    save = true;
                 }
-                check(obj[key], profilerObj[key]);
+                save = check(obj[key], profilerObj[key]) || save;
             }
             else if (profilerObj.hasOwnProperty(key)){
                 //logV2(INFO, "INIT", "Property OK: " + key);
@@ -53,10 +72,11 @@ function check(obj, profilerObj){
             else {
                 logV2(INFO, "INIT", "Property does not exist: " + key);
                 profilerObj[key] = obj[key];
-                GLOBAL_SAVE = true;
+                save = true;
             }
         });
     }
+    return save;
 }
 
 function hasProperties(obj){

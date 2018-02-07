@@ -361,3 +361,15 @@ function checkMiniHomeFeed(friendObj, fightersToExclude, fighterObj){
     });
     logV2(INFO, "HOMEFEED", JSON.stringify(listToCheck));
 }
+
+function checkForStopFighting(category){
+    var stopFighting = getTempSetting(null, category, "stopFighting");
+    if (stopFighting){
+        var msg = "Fighting temporary disabled";
+        logV2(INFO, category.toUpperCase(), msg);
+        iimdisplay(msg);
+        waitV2("60");
+        iimdisplay("");
+    }
+    return stopFighting;
+}

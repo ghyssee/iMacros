@@ -890,16 +890,6 @@ function evaluateCrimeEvent(pos, activeJob, joinedCrime){
     return crimeObj;
 }
 
-function findActiveCrimeJob(position){
-    for (var i=0; i < settingsObj.crimeJobs.length; i++){
-        var crimeJob = settingsObj.crimeJobs[i];
-        if (crimeJob.position == position){
-            return crimeJob;
-        }
-    }
-    return null;
-}
-
 function extractCrimeEventJob(text) {
 
     var regExp = /&(?:amp;)?task=([0-9])\"/;
@@ -989,26 +979,21 @@ function helpCrimeEvent(){
     logV2(INFO, "JOB", "---------------------------------------------------------------");
 }
 
-function getActiveCrimeJob(){
+function findActiveCrimeJob(position){
     for (var i=0; i < settingsObj.crimeJobs.length; i++){
-        var crimeJobObj = settingsObj.crimeJobs[i];
-        if (crimeJobObj.position == configMRObj.crimeEvent.activeJob){
-            return crimeJobObj;
+        var crimeJob = settingsObj.crimeJobs[i];
+        if (crimeJob.position == position){
+            return crimeJob;
         }
     }
-    logV2(WARN, "CRIMEJOB", "Active CrimeJob Not Found: " + configMRObj.crimeEvent.activeJob);
+    return null;
 }
 
 function startCrimeEvent(){
     logV2(INFO, "JOB", "Start Crime Event");
     var position = configMRObj.crimeEvent.position;
-    configMRObj.activeJob = findActiveCrimeJob(position);
-    if (configMRObj.activeJob == null){
-        logV2(WARNING, "JOB", "Problem Finding Crime Job " + position);
-        return;
-    }
     logV2(INFO, "JOB", "Crime Event Job: " + position);
-    var activeJob = getActiveCrimeJob();
+    var activeJob = findActiveCrimeJob(position);
     if (activeJob != null) {
         var energyObj = extractEnergyStamina();
         var energy = getEnergyOrStamina(activeJob.type, energyObj);
@@ -1030,6 +1015,9 @@ function startCrimeEvent(){
             logV2(INFO, "JOB", "Not Enough Energy/Stamina For Crime Job. EnergyOrStamina Needed: " + energyNeeded + "/" + energy);
         }
         logV2(INFO, "JOB", "---------------------------------------------------------------");
+    }
+    else {
+        logV2(WARNING, "JOB", "Problem Finding Crime Job " + position);
     }
 }
 
