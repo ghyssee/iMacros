@@ -235,6 +235,9 @@ function getJobs(districts, filters, logging, file, sorting, order){
         for (var i = 0; i < selectedJobs.length; i++) {
             writeObjectToCSV(selectedJobs[i], file);
         }
+        if (selectedJobs.length == 0){
+            save(file, "");
+        }
         logV2(INFO, "TST", "Result written to: " + file);
     }
     return selectedJobs;

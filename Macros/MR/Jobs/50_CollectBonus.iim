@@ -1,0 +1,5 @@
+﻿SET !TIMEOUT_STEP 1
+TAG POS=1 TYPE=A ATTR=data-params:controller=home&action=view*
+WAIT SECONDS=1.5
+TAG POS=1 TYPE=A ATTR=data-params:controller=home&action={{COLLECT}}&id={{RESOURCE}}
+WAIT SECONDS=1.5
