@@ -357,6 +357,15 @@ function logV2(type, id, outputText, logFile){
    }
 }
 
+function logHeader(type, id, outputText, token, logFile){
+    if (typeof(token) == 'undefined' || token == null) {
+    	token = "=";
+    }
+	log(token.repeat(100));
+	logV2(type, id, outputText, logFile);
+    log(token.repeat(100));
+}
+
 function log(outputText, logObj) {
         //var filename = LOG_DIR + "log." + getDateYYYYMMDD() + ".txt";
 	var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);

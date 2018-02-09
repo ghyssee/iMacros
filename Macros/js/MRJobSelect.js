@@ -201,14 +201,14 @@ function getJobs(districts, filters, logging, file, sorting, order){
         for (var j=0; j < nrOfJobs; j++){
             var job = district.jobs[j];
             var test = isJobSelectable(filters, district, job);
-            job.ratio = getRatio(job);
-            job.moneyRatio = getMoneyRatio(job);
-            job.districtId = district.id;
-            job.districtName = district.description;
             if (logging) {
                 logJob2(job, "SELECTABLE", test);
             }
             if (test) {
+                job.ratio = getRatio(job);
+                job.moneyRatio = getMoneyRatio(job);
+                job.districtId = district.id;
+                job.districtName = district.description;
                 selectedJobs.push(job);
             }
         }
@@ -225,9 +225,6 @@ function getJobs(districts, filters, logging, file, sorting, order){
             });
             break;
     }
-    logV2(INFO, "SORTED", "Sorted...");
-    logV2(INFO, "SORTED", "-----------------------------------------------------------------------------");
-    logV2(INFO, "TST", JSON.stringify(selectedJobs));
     var profile = getProfile();
     if (file != null) {
         file = DATASOURCE_DIR + (isNullOrBlank(profile) ? "": profile + "_") + file;
@@ -238,7 +235,7 @@ function getJobs(districts, filters, logging, file, sorting, order){
         if (selectedJobs.length == 0){
             save(file, "");
         }
-        logV2(INFO, "TST", "Result written to: " + file);
+        logV2(INFO, "JOBSELECT", "Result written to: " + file);
     }
     return selectedJobs;
 
