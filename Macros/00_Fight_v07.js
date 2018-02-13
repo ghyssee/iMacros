@@ -31,7 +31,8 @@ var CONSTANTS = Object.freeze({
         "HEALINGDISABLED": 4,
         "UNKNOWN": 5,
         "STOPONLEVELUP": 6,
-        "EXPREACHED": 7
+        "EXPREACHED": 7,
+        "STAMINALIMIT": 8
     },
     "FIGHTERTPE" : {
         "NORMAL" : 0,
@@ -270,7 +271,7 @@ function attackBoss(){
     if (retCode == SUCCESS) {
         bossHealth = getBossHealth();
         while(bossHealth > 0 && bossHealth > configMRObj.boss.stopWhenHealthBelow) {
-            var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, STOP_SCRIPT);
+            var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
             if (staminaObj.leftOver >= 5) {
                 if (checkHealth(AUTOHEAL, staminaObj.leftOver)) {
                     var status  = performBossAttack(staminaObj);
@@ -307,7 +308,7 @@ function attackBoss(){
             }
             else if (staminaObj.leftOver == -1) {
                 logV2(INFO, "BOSS", "Stamina Limit Reached");
-                status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
+                status = CONSTANTS.ATTACKSTATUS.STAMINALIMIT;
                 break;
             }
             else {
@@ -406,7 +407,8 @@ function evaluateBossMessage() {
 function continueFighting(status){
     var cont = false;
     if (status != CONSTANTS.ATTACKSTATUS.NOSTAMINA && status != CONSTANTS.ATTACKSTATUS.HEALINGDISABLED
-        && status != CONSTANTS.ATTACKSTATUS.STOPONLEVELUP && status != CONSTANTS.ATTACKSTATUS.EXPREACHED){
+        && status != CONSTANTS.ATTACKSTATUS.STOPONLEVELUP && status != CONSTANTS.ATTACKSTATUS.EXPREACHED
+        && status != CONSTANTS.ATTACKSTATUS.STAMINALIMIT){
         cont = true;
     }
     logV2(INFO, "FIGHT", "continueFighting: " + cont + " / Status = " + status);
@@ -507,6 +509,11 @@ function processList(list, fighterType){
                     logV2(INFO, "FIGHT", "Out Of Stamina. Exiting processList");
                     status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
                     //waitTillEnoughStamina();
+                    refresh = true;
+                    break;
+                case CONSTANTS.ATTACKSTATUS.STAMINALIMIT :
+                    logV2(INFO, "FIGHT", "Stamina Limit Reached");
+                    status = CONSTANTS.ATTACKSTATUS.STAMINALIMIT;
                     refresh = true;
                     break;
                 case CONSTANTS.ATTACKSTATUS.HEALINGDISABLED :
@@ -684,6 +691,10 @@ function attack(fighter, fighterType){
 					   // no stamina
 						statusObj.status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
 					}
+                    else if (attackStatusObj.status == CONSTANTS.ATTACKSTATUS.STAMINALIMIT){
+                        // no stamina
+                        statusObj.status = CONSTANTS.ATTACKSTATUS.STAMINALIMIT;
+                    }
                     else if (attackStatusObj.status == CONSTANTS.ATTACKSTATUS.HEALINGDISABLED){
                         statusObj.status = CONSTANTS.ATTACKSTATUS.HEALINGDISABLED;
                     }
@@ -864,7 +875,7 @@ function attackTillDeath(fighter, fighterType){
                     var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, STOP_SCRIPT);
                     stamina = staminaObj.leftOver;
                     if (stamina == -1){
-                        statusObj.status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
+                        statusObj.status = CONSTANTS.ATTACKSTATUS.STAMINALIMIT;
                         logV2(INFO, "ATTACK", "Stamina Limit Reached");
                         break;
                     }
@@ -1065,6 +1076,7 @@ function checkHealth(autoHeal, stamina){
         var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
         stamina = staminaObj.leftOver;
     }
+    dummyBank();
     var health = getHealth();
     // MOD 22/11
     if (autoHeal) {
@@ -1075,21 +1087,20 @@ function checkHealth(autoHeal, stamina){
                 if (!globalSettings.forceHealing) {
                     if (tries > 1 || health < 500) {
                         logV2(INFO, "FIGHT", tries + " attempt(s) to heal. Possible under attack");
-                        //waitV2("1");
                         dummyBank();
                         health = getHealth();
                         logV2(INFO, "FIGHT", "Health = " + health);
                     }
                     if (health == 0) {
                         logV2(INFO, "FIGHT", "Killed by another player");
-                        autoHeal = false;
+                        //autoHeal = false;
                         var processHomefeedLines = getOverwrittenSetting(null, "homefeed", "processLines", configMRObj.homefeed.processLines);
                         logV2(INFO, "HOMEFEED", "processHomefeedLines: " + processHomefeedLines);
                         if (underAttack(configMRObj, processHomefeedLines)) {
                             // Went To Home page;
                             // interrupt Attack / Boss Fight => disable autoHeal switch
+                            // autoHeal = false; (homefeed not disabled : autoHeal set to true ???
                         }
-                        // when it's your first heal => don't wait
                         waitV2("60");
                         break;
                     }
@@ -1470,6 +1481,11 @@ function profileAttack(array, fighterType){
                     case CONSTANTS.ATTACKSTATUS.NOSTAMINA :
                         logV2(INFO, "FIGHT", "Out Of Stamina. Exiting Profile Fighters List");
                         status = CONSTANTS.ATTACKSTATUS.NOSTAMINA;
+                        exitLoop = true;
+                        break;
+                    case CONSTANTS.ATTACKSTATUS.STAMINALIMIT :
+                        logV2(INFO, "FIGHT", "Stamina Limit. Exiting Profile Fighters List");
+                        status = CONSTANTS.ATTACKSTATUS.STAMINALIMIT;
                         exitLoop = true;
                         break;
                     case CONSTANTS.ATTACKSTATUS.HEALINGDISABLED :

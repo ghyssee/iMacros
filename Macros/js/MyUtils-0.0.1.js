@@ -58,8 +58,11 @@ function getDateYYYYMMDD(date){
 	return ("" + curr_year + pad(curr_month,2) + pad(curr_date,2));
 }
 
-function getDateYYYYMMDDHHMI(){
+function getDateYYYYMMDDHHMI(date){
 	var d = new Date();
+    if ((typeof date !== 'undefined') && date !== null){;
+        d = date;
+    }
 	var curr_date = d.getDate();
 	var curr_month = d.getMonth();
 	curr_month++;
@@ -137,8 +140,11 @@ function getCurrentMonth(){
 	return month;
 }
 
-function formatDateMMDDYYYY(){
-	var d = new Date();
+function formatDateMMDDYYYY(date){
+    var d = new Date();
+    if ((typeof date !== 'undefined') && date !== null){;
+        d = date;
+    }
 	var curr_date = d.getDate();
 	var curr_month = d.getMonth();
 	curr_month++;

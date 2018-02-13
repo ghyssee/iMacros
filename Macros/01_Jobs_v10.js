@@ -6,6 +6,7 @@ eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MRJobSelect.js"));
+eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 
 //xxx : 180-9 = 171
 
@@ -48,8 +49,9 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
 //start();
 //var exp = getExperience();
 var collectObj = {"nrOfLevelUpJobsExecuted": 0};
-doJobsWithoutLevelUp(collectObj, BASE_EXP);
-doLevelUpJob();
+//doJobsWithoutLevelUp(collectObj, BASE_EXP);
+//doLevelUpJob();
+alert(checkAlreadyCollectedEnergyRefill());
 
 function start() {
 
@@ -690,6 +692,30 @@ function getEnergy(){
         makeScreenShot("MRJobEnergyGetEnergyProblem");
     }
 	return 0;
+}
+
+function getEnergyObj(){
+    var retCode = playMacro(JOB_FOLDER, "10_GetEnergy.iim", MACRO_INFO_LOGGING);
+    var energyObj = {"left": 0, "total": 0};
+    if (retCode == SUCCESS) {
+        var energyInfo = getLastExtract(1, "Energy Left", "500/900");
+        logV2(INFO, "ENERGY", "energy = " + energyInfo);
+        if (!isNullOrBlank(energyInfo)) {
+            energyInfo = removeComma(energyInfo);
+            var tmp = energyInfo.split("/");
+            energyObj.left = parseInt(tmp[0]);
+            energyObj.total = parseInt(tmp[1]);
+        }
+        else {
+            logV2(WARNING, "ENERGY", "Problem Extracting Energy");
+            makeScreenShot("MRJobEnergyExtractEenergyProblem");
+        }
+    }
+    else {
+        logV2(WARNING, "ENERGY", "Problem Getting Energy");
+        makeScreenShot("MRJobEnergyGetEnergyProblem");
+    }
+    return energyObj;
 }
 
 function getPercentCompleted(jobItem){
@@ -1546,38 +1572,76 @@ function checkExperience(){
     return wait;
 }
 
-function checkForCollectBonus(){
-    var exp = getExperience();
-    var energyObj = extractEnergyStamina();
-    var expCalc = (energyObj.energy *4.50) + (energyObj.stamina * 4.40);
-    var expRest = exp - expCalc;
-    logV2(INFO, "COLLECT", "Calculated Rest Experience: " + expRest);
-    if (expRest > 3000){
-        setTempSetting(globalSettings.profileId, "fight", "stopFighting", true);
-        setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", true);
-        logV2(INFO, "COLLECT", "Calculated Rest Experience: " + expRest);
-        var busyFighting1 = getTempSetting(null, "fight", "busyFighting");
-        var busyFighting2 = getTempSetting(null, "assassin-a-nator", "busyFighting");
-        logV2(INFO, "COLLECT", "Busy Fighting: " + busyFighting1);
-        logV2(INFO, "COLLECT", "Busy Assassin-a-nator: " + busyFighting2);
-        if (!busyFighting1 && !busyFighting2){
-            // fight script + assasssin-a-nator is not busy fighting
-            var collected = collectBonus();
-            if (collected){
-                var collectObj = {"nrOfLevelUpJobsExecuted": 0};
-                doJobsWithoutLevelUp(collectObj, exp);
-                doLevelUpJob();
-                setTempSetting(globalSettings.profileId, "fight", "stopFighting", false);
-                setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", false);
-            }
-            else {
-                logV2(WARNING, "COLLECT", "Could Not Collect");
-            }
-        }
+function getCollectDate(){
+    var LIMIT1 = 65 // 01:05
+    var LIMIT2 = 785 // 13:05
+    var currentDate = new Date();
+    currentDate.setSeconds(0);
+    var calcMinutes = currentDate.getHours() * 60 + currentDate.getMinutes();
+    var limitDate = currentDate;
+    if (calcMinutes < LIMIT1){
+        limitDate = dateAdd(limitDate, -1, "days");
+        limitDate = dateAdd(limitDate, LIMIT2-calcMinutes, "minutes");
+    }
+    else if (calcMinutes >= LIMIT1 && calcMinutes < LIMIT2){
+        limitDate = dateAdd(limitDate, LIMIT1-calcMinutes, "minutes");
     }
     else {
-        setTempSetting(globalSettings.profileId, "fight", "stopFighting", false);
-        setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", false);
+        limitDate = dateAdd(limitDate, LIMIT2-calcMinutes, "minutes");
+    }
+    logV2(INFO, "COLLECT", "Collect Date: " + limitDate);
+    return getDateYYYYMMDDHHMI(limitDate);
+}
+
+function checkAlreadyCollectedEnergyRefill(){
+    var readyToCollect = false;
+    var collectEnergyObj = configMRObj.bonus.energy;
+    if (collectEnergyObj.enabled){
+        if (collectEnergyObj.refill == getCollectDate()){
+        }
+        else {
+            readyToCollect = true;
+        }
+    }
+    logV2(INFO, "COLLECT", "Already Collected: " + readyToCollect);
+    return readyToCollect;
+}
+
+function checkForCollectBonus(){
+
+    if (!checkAlreadyCollectedEnergyRefill()) {
+        var exp = getExperience();
+        var energyObj = extractEnergyStamina();
+        var expCalc = (energyObj.energy * 4.50) + (energyObj.stamina * 4.40);
+        var expRest = exp - expCalc;
+        logV2(INFO, "COLLECT", "Calculated Rest Experience: " + expRest);
+        if (expRest > 3000) {
+            setTempSetting(globalSettings.profileId, "fight", "stopFighting", true);
+            setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", true);
+            logV2(INFO, "COLLECT", "Calculated Rest Experience: " + expRest);
+            var busyFighting1 = getTempSetting(null, "fight", "busyFighting");
+            var busyFighting2 = getTempSetting(null, "assassin-a-nator", "busyFighting");
+            logV2(INFO, "COLLECT", "Busy Fighting: " + busyFighting1);
+            logV2(INFO, "COLLECT", "Busy Assassin-a-nator: " + busyFighting2);
+            if (!busyFighting1 && !busyFighting2) {
+                // fight script + assasssin-a-nator is not busy fighting
+                var collected = collectBonus();
+                if (collected) {
+                    var collectObj = {"nrOfLevelUpJobsExecuted": 0};
+                    doJobsWithoutLevelUp(collectObj, exp);
+                    doLevelUpJob();
+                    setTempSetting(globalSettings.profileId, "fight", "stopFighting", false);
+                    setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", false);
+                }
+                else {
+                    logV2(WARNING, "COLLECT", "Could Not Collect");
+                }
+            }
+        }
+        else {
+            setTempSetting(globalSettings.profileId, "fight", "stopFighting", false);
+            setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", false);
+        }
     }
 }
 
@@ -1622,13 +1686,20 @@ function doJobsWithoutLevelUp(collectObj, exp){
     //logV2(INFO, "COLLECT", "Experience Left: " + getExperience());
 }
 
-function collectBonus(){
+function collectBonus() {
     addMacroSetting("COLLECT", "gid");
     addMacroSetting("RESOURCE", "0");
     var retCode = playMacro(JOB_FOLDER, "50_CollectBonus.iim", MACRO_INFO_LOGGING);
     logV2(INFO, "COLLECT", "collectBonus Status: " + retCode);
     makeScreenShot("MRJobCollectBonus");
-    return (retCode == SUCCESS);
+    var collected = false;
+    if (retCode == SUCCESS) {
+        var energyObj = getEnergyObj();
+        if (energyObj.total > 0 && energyObj.left == energyObj.energy) {
+            collected = true;
+        }
+    }
+    return collected;
 }
 
 function travel(jobItem){

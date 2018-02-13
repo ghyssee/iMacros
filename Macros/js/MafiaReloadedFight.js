@@ -141,7 +141,6 @@ function extractTimeFromHomefeed(msg, time){
 function underAttack(configMRObj, processHomefeed){
     var homefeedObj = initMRObject(MR.MR_HOMEFEED_FILE);
     var bullied = false;
-    waitV2("1");
     if (processHomefeed) {
         getHomeFeed(configMRObj, homefeedObj);
     }

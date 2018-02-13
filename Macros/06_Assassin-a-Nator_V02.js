@@ -65,6 +65,7 @@ function deactivateTempSettings(){
     setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", null);
     setTempSetting(MR_PROFILE_ERIC_ID, "homefeed", "processLines", null);
     setTempSetting(MR_PROFILE_ERIC_ID, "fight", "fightAutoHeal", null);
+    setTempSetting(globalSettings.profileId, "assassin-a-nator", "busyFighting", false);
 }
 function startScript(){
     try {
@@ -109,7 +110,6 @@ function startScript(){
         logV2(INFO, "SUMMARY", "Total Kills: " + globalSettings.kills);
         logV2(INFO, "SUMMARY", "Heals: " + globalSettings.heals);
     }
-    setTempSetting(globalSettings.profileId, "assassin-a-nator", "busyFighting", false);
     deactivateTempSettings();
 }
 
