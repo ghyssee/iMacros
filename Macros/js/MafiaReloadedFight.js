@@ -138,12 +138,17 @@ function extractTimeFromHomefeed(msg, time){
     return 0;
 }
 
-function underAttack(configMRObj, processHomefeed){
-    var homefeedObj = initMRObject(MR.MR_HOMEFEED_FILE);
-    var bullied = false;
+function processHomefeed(processHomefeed){
+    logV2(INFO, "HOMEFEED", "processHomefeedLines: " + processHomefeed);
     if (processHomefeed) {
         getHomeFeed(configMRObj, homefeedObj);
     }
+    return processHomefeed;
+}
+
+function underAttack(configMRObj, processHomefeed){
+    var homefeedObj = initMRObject(MR.MR_HOMEFEED_FILE);
+    var bullied = false;
     if (checkForAttackers(configMRObj, homefeedObj) > 1){
         var waitTime = configMRObj.fight.underAttackWaitSeconds.toString();
         bullied = true;
