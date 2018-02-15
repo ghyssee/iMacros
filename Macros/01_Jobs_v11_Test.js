@@ -1457,8 +1457,8 @@ function checkSkillTokens(){
 }
 
 function getSkillAction(){
-    for (var i=0; i < settingsObj.skills.length; i++){
-        var skillObj = settingsObj.skills[i];
+    for (var i=0; i < configMRObj.skillPoints.skills.length; i++){
+        var skillObj = configMRObj.skillPoints.skills[i];
         if (skillObj.id == configMRObj.skillPoints.skill){
             return skillObj;
         }
@@ -1689,8 +1689,8 @@ function checkForCollectBonus(newJobs){
                 var collected = collectBonus();
                 if (collected) {
                     var collectObj = {"nrOfLevelUpJobsExecuted": 0};
-                    //doJobsWithoutLevelUp(newJobs, collectObj, exp);
-                    //doLevelUpJob();
+                    doJobsWithoutLevelUp(newJobs, collectObj, exp);
+                    doLevelUpJob();
                     setTempSetting(globalSettings.profileId, "fight", "stopFighting", false);
                     setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", false);
                 }
@@ -1710,8 +1710,9 @@ function doScheduledJobs(newJobs, collectObj){
     logHeader(INFO, "COLLECT", "doScheduledJobs", "*");
     for (var i=0; i < newJobs.length; i++){
         var activeJobObj = newJobs[i];
-        var energyObj = extractEnergyStamina();
-        var status = isValidJob(activeJobObj, energyObj);
+        var energyObj = {"energy": 5000, "stamina": 20};
+        //var energyObj = extractEnergyStamina();
+        var status = isValidJobTemp(activeJobObj, energyObj);
         if (status == CONSTANTS.STATUS.OK){
             repeatSingleJob(collectObj, activeJobObj);
         }
@@ -1757,30 +1758,23 @@ function doJobsWithoutLevelUp(newJobs, collectObj, exp){
         }
     }
     logV2(INFO, "COLLECT", "nrOfLevelUpJobsExecuted: " + collectObj.nrOfLevelUpJobsExecuted);
-    logHeader(INFO, "COLLECT", "Experience Left: " + getExperience());
+    logHeader(INFO, "COLLECT", "Experience Left: " + BASE_EXP, "-");
+    //logV2(INFO, "COLLECT", "Experience Left: " + getExperience());
 }
 
 function collectBonus() {
+    addMacroSetting("COLLECT", "gid");
+    addMacroSetting("RESOURCE", "0");
+    var retCode = playMacro(JOB_FOLDER, "50_CollectBonus.iim", MACRO_INFO_LOGGING);
+    logV2(INFO, "COLLECT", "collectBonus Status: " + retCode);
+    makeScreenShot("MRJobCollectBonus");
     var collected = false;
-    var counter = 0;
-    do {
-        counter++;
-        if (counter > 1) {
-            logV2(WARNING, "COLLECT", "Collect Bonus Retries: " + counter);
-        }
-        addMacroSetting("COLLECT", "gid");
-        addMacroSetting("RESOURCE", "0");
-        var retCode = playMacro(JOB_FOLDER, "50_CollectBonus.iim", MACRO_INFO_LOGGING);
-        logV2(INFO, "COLLECT", "collectBonus Status: " + retCode);
-        makeScreenShot("MRJobCollectBonus");
-        if (retCode == SUCCESS) {
-            var energyObj = getEnergyObj();
-            if (energyObj.total > 0 && energyObj.left == energyObj.energy) {
-                collected = true;
-            }
+    if (retCode == SUCCESS) {
+        var energyObj = getEnergyObj();
+        if (energyObj.total > 0 && energyObj.left == energyObj.energy) {
+            collected = true;
         }
     }
-    while (!collected && counter < 5);
     return collected;
 }
 
@@ -1811,14 +1805,17 @@ function repeatSingleJob(collectObj, jobItem){
     if (!checkExpLevelUpJob(jobItem)){
         return CONSTANTS.STATUS.SKIP;
     }
-    var status = travel(jobItem);
+    //var status = travel(jobItem);
+    var status = CONSTANTS.STATUS.OK;
     if (status == CONSTANTS.STATUS.OK){
         logJob(jobItem);
         var counter = 1;
         while (checkExpLevelUpJob(jobItem)){
-            var energyObj = extractEnergyStamina();
+            //var energyObj = extractEnergyStamina();
             logV2(INFO, "COLLECT", "Count: " + counter++);
-            var status = checkIfEnoughEnerygOrStamina(jobItem, energyObj);
+            var energyObj = {"energy": 5000, "stamina": 20};
+            //var status = checkIfEnoughEnerygOrStamina(jobItem, energyObj);
+            var status = CONSTANTS.STATUS.OK;
             if (status == CONSTANTS.STATUS.OK) {
                 status = performSingleJob(jobItem);
                 if (checkIfLevelUp()){
@@ -1852,7 +1849,8 @@ function checkExpLevelUpJob(jobItem){
 
 function performSingleJob(jobItem){
     logV2(INFO, "COLLECT", "Perform Single Job" + NEWLINE);
-    var retCode = executeMacroJob(jobItem.job.id, jobItem.district.event, jobItem.job.chapter);
+    // var retCode = executeMacroJob(jobItem.job.id, jobItem.district.event, jobItem.job.chapter);
+    var retCode = SUCCESS;
     var status = CONSTANTS.STATUS.OK;
     if (retCode != SUCCESS){
         logV2(INFO, "COLLECT", "Job NOT Executed");
@@ -1872,8 +1870,10 @@ function filterEvent(){
 }
 
 function doLevelUpJob(){
-    var exp = getExperience();
-    var energyObj = extractEnergyStamina();
+    //var exp = getExperience();
+    var exp = BASE_EXP;
+    //var energyObj = extractEnergyStamina();
+    var energyObj = {"energy": 2000, "stamina": 50};
     logHeader(INFO, "COLLECTLEVELUPJOB", "doLevelUpJob", "*");
     logV2(INFO, "COLLECTLEVELUPJOB", "Exp: " + exp);
     logV2(INFO, "COLLECTLEVELUPJOB", "Energy Left: " + energyObj.energy);
@@ -1887,13 +1887,15 @@ function doLevelUpJob(){
     if (jobs.length > 0){
         for (var i=0; i < jobs.length; i++) {
             var jobObj = jobs[i];
-            var status = travel(jobItem);
+            //var status = travel(jobItem);
+            var status = CONSTANTS.STATUS.OK;
             if (status == CONSTANTS.STATUS.OK) {
                 var activeJobObj = getJobTaskObject(jobObj.districtId, jobObj.id, jobObj.type);
                 activeJobObj.enabled = true;
                 activeJobObj.type = "REPEAT";
                 fillDistrictInfo(activeJobObj);
-                var status = checkIfEnoughEnerygOrStamina(activeJobObj, energyObj);
+                //var status = checkIfEnoughEnerygOrStamina(activeJobObj, energyObj);
+                var status = CONSTANTS.STATUS.OK;
                 if (status == CONSTANTS.STATUS.OK) {
                     makeScreenShot("MRJobCollectBeforeLevelUp");
                     logV2(INFO, "COLLECT", JSON.stringify(activeJobObj));
@@ -1921,3 +1923,49 @@ function doLevelUpJob(){
         logV2(WARNING, "COLLECT", "Level Up Job: No Jobs Found");
     }
 }
+
+function isValidJobTemp(jobItem, energyObj){
+    logV2(INFO, "JOB", "Entering isValidJob");
+    validJobStatus = CONSTANTS.STATUS.UNKNOWN;
+    if (isRangeDefined(jobItem)){
+        var resource = getEnergyOrStamina(jobItem.job.type);
+        if (jobItem.minRange >= resource && jobItem.maxRange <= resource){
+            logV2(INFO, "JOB", "Energy/Stamina are not in the range: " + resource + " / Range: " + jobItem.minRange + " - " + jobItem.maxRange);
+            validJobStatus = CONSTANTS.STATUS.SKIP;
+            return validJobStatus;
+        }
+    }
+    if (jobItem.percentCompleted == null || jobItem.percentCompleted == -1) {
+        jobItem.percentCompleted = 100;
+    }
+    switch (jobItem.type) {
+        case CONSTANTS.EXECUTE.REPEAT:
+            if (jobItem.total > 0 && jobItem.numberOfTimesExecuted >= jobItem.total){
+                logV2(INFO, "JOB", "Nr Of Times Exceeded: " + jobItem.numberOfTimesExecuted + "/" + jobItem.total);
+                validJobStatus = CONSTANTS.STATUS.SKIP;
+            }
+            else {
+                validJobStatus = CONSTANTS.STATUS.OK;
+            }
+            break;
+        case CONSTANTS.EXECUTE.COMPLETE:
+            if (jobItem.percentCompleted == -1){
+                validJobStatus = CONSTANTS.STATUS.PROBLEM;
+            }
+            else if (jobItem.percentCompleted < 100) {
+                validJobStatus = CONSTANTS.STATUS.OK;
+            }
+            else if (jobItem.percentCompleted == 100) {
+                validJobStatus = CONSTANTS.STATUS.SKIP;
+            }
+            break;
+    }
+    // step 2 : Check if enough resources to do the job
+    if (validJobStatus == CONSTANTS.STATUS.OK) {
+        validJobStatus = checkIfEnoughEnerygOrStamina(jobItem, energyObj);
+    }
+    logV2(INFO, "JOB", "Job " + jobItem.jobId + " validJobStatus: " + validJobStatus);
+    logV2(INFO, "JOB", "Percent Completed: " + jobItem.percentCompleted);
+    return validJobStatus;
+}
+

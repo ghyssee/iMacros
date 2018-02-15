@@ -357,7 +357,7 @@ function evaluateBossMessage() {
 					logV2(INFO, "BOSS", "No Time Found");
                 }
             }
-            else if (msg.startsWith(configMRObj.boss.name.toUpperCase())) {
+            else if (msg.startsWith(settingsObj.boss.bossName.toUpperCase())) {
                 bossObj.status = FIGHTCONSTANTS.ATTACKSTATUS.OK;
             	logV2(INFO, "BOSS", "BOSS AVAILABLE ???");
             }
