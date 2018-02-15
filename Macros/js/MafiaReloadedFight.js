@@ -1,3 +1,34 @@
+var FIGHTERCONSTANTS = Object.freeze({
+    "OPPONENT" : {
+        "UNKNOWN": 0,
+        "FRIEND": 1,
+        "WON" : 2,
+        "LOST": 3,
+        "DEAD": 4,
+        "NOHEALTH": 5
+    },
+    "ATTACKSTATUS" : {
+        "OK" : 0,
+        "PROBLEM": -1,
+        "NOSTAMINA": 2,
+        "BOSSDEFATED": 1,
+        "BOSSALREADYDEAD": 3,
+        "HEALINGDISABLED": 4,
+        "UNKNOWN": 5,
+        "STOPONLEVELUP": 6,
+        "EXPREACHED": 7,
+        "STAMINALIMIT": 8
+    },
+    "FIGHTERTPE" : {
+        "NORMAL" : 0,
+        "RIVAL" : 1,
+        "PROFILE": 2,
+        "NORMALPROFILE": 3,
+        "ASSASSIN" : 4,
+        "HOMEFEED" : 5
+    }
+});
+
 function extractIdNameFromString (text, type){
     var gangObj = {id:null, name:null};
     text = text.toUpperCase();
