@@ -170,6 +170,7 @@ function extractTimeFromHomefeed(msg, time){
 }
 
 function processHomefeed(processHomefeed){
+    var homefeedObj = initMRObject(MR.MR_HOMEFEED_FILE);
     logV2(INFO, "HOMEFEED", "processHomefeedLines: " + processHomefeed);
     if (processHomefeed) {
         getHomeFeed(configMRObj, homefeedObj);
