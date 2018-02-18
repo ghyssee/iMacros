@@ -169,7 +169,7 @@ function evaluateBossResult(){
     if (retCode == SUCCESS) {
         var msg = getLastExtract(1, "Boss Attack Result", 'You WON the fight');
         if (!isNullOrBlank(msg)) {
-            logV2(INFO, "BOSS", "Boss Result: " + msg);
+            logV2(DEBUG, "BOSS", "Boss Result: " + msg);
             msg = msg.toUpperCase();
             if (msg.startsWith('YOU WON THE FIGHT')) {
             }
@@ -267,7 +267,7 @@ function attackBoss(){
                         }
                     }
                     else {
-                        logV2(INFO, "BOSS", "Problem With Attacking boss");
+                        logV2(WARNING, "BOSS", "Problem With Attacking boss");
                         status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
                         break;
                     }
@@ -335,7 +335,7 @@ function evaluateBossMessage() {
         var msg = getLastExtract(1, "Boss Message", "There are no bosses available to fight. Please try coming back in 20 hours, 57 minutes.");
         if (!isNullOrBlank(msg)){
             msg = msg.toUpperCase();
-            logV2(INFO, "BOSS", "Boss Message: " + msg);
+            logV2(DEBUG, "BOSS", "Boss Message: " + msg);
             if (msg.indexOf("THERE ARE NO BOSSES AVAILABLE") !== -1){
                 var regExp = /BACK IN ([0-9]{1,2}) HOURS, ([0-9]{1,2}) MINUTES/;
                 var matches = msg.match(regExp);
@@ -366,12 +366,12 @@ function evaluateBossMessage() {
         }
         else {
 			bossObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
-            logV2(INFO, "BOSS", "Problem Extracting Boss Message");
+            logV2(WARNING, "BOSS", "Problem Extracting Boss Message");
         }
     }
     else {
 		bossObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
-        logV2(INFO, "BOSS", "Problem Getting Boss Message");
+        logV2(WARNING, "BOSS", "Problem Getting Boss Message");
     }
     return bossObj;
 }
@@ -861,14 +861,16 @@ function attackTillDeath(fighter, fighterType){
 						statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.NOSTAMINA;
 						break;
 					}
-                    var attackStatus = performAttack(fighterType, fighter);
+                    var attackStatus = performAttack(health, fighterType, fighter);
 					firstAttack = false;
 					statusObj.totalStamina += 5;
 					nrOfAttacks++;
                     bigHealthAttacks++;
-					globalSettings.money += checkSaldo();
+                    health = getVictimHealth(fighter);
+                    if (health > configMRObj.fight.attackTillDiedHealth) {
+                        globalSettings.money += checkSaldo();
+                    }
                     // MOD 15/11
-					health = getVictimHealth(fighter);
 					var exitAttack = false;
 					switch (attackStatus){
                         case FIGHTERCONSTANTS.ATTACKSTATUS.OK:
@@ -925,7 +927,7 @@ function performExperienceCheck(){
     return status;
 }
 
-function performAttack(fighterType, fighter){
+function performAttack(victimHealth, fighterType, fighter){
     var retCode = -1;
     var status = performExperienceCheck();
     if (status == FIGHTERCONSTANTS.ATTACKSTATUS.EXP){
@@ -937,8 +939,12 @@ function performAttack(fighterType, fighter){
     else {
         //addMacroSetting("ID", fighter.id);
         logV2(DEBUG, "ATTACK", "ID: " + fighter.id);
-        retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack.iim", MACRO_INFO_LOGGING);
-        //retCode = playMacro(FIGHT_FOLDER, "44_Victim_SpeedAttack.iim", MACRO_INFO_LOGGING);
+        if (victimHealth <= configMRObj.fight.attackTillDiedHealth){
+            retCode = playMacro(FIGHT_FOLDER, "44_Victim_SpeedAttack.iim", MACRO_INFO_LOGGING);
+        }
+        else {
+            retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack.iim", MACRO_INFO_LOGGING);
+        }
     }
     if (retCode != SUCCESS) {
         status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;

@@ -6,12 +6,14 @@ eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MRJobSelect.js"));
+eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 
 //xxx : 180-9 = 171
 
 var localConfigObject = null;
 setMRPath("MRJobs");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
+var BASE_EXP = 4200;
 
 var STAMINA = "STAMINA";
 
@@ -25,7 +27,8 @@ var CONSTANTS = Object.freeze({
         "NOT_ENOUGH": 2,
         "LEVELUP": 3,
         "SKIP": 4,
-        "PROBLEM": 5
+        "PROBLEM": 5,
+        "UNKNOWN": -1
     },
     "STORY" : {
         "DONE": 1,
@@ -40,11 +43,25 @@ var jobsObj = initMRObject(MR.MR_JOBS_FILE);
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var settingsObj = initObject(getMRRootFile(MR.MR_SETTINGS_FILE));
 var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
-                      "lastDistrict": null, "lastChapter": null, "lowestEnergy": null, "lowestStamina": null
+                      "lastDistrict": null, "lastChapter": null, "lowestEnergy": null, "lowestStamina": null,
+                      "resources": null
                      };
 
 //enableMacroPlaySimulation();
-start();
+//start();
+var obj = getResources();
+alert(JSON.stringify(obj));
+//test();
+
+function test(){
+    //var exp = getExperience();
+    var collectObj = {"nrOfLevelUpJobsExecuted": 0};
+    var listOfJobs = getListOfEnabledJobs(jobsObj.activeJobs);
+    var newJobs = initJobs(listOfJobs);
+    doJobsWithoutLevelUp(newJobs, collectObj, BASE_EXP);
+    doLevelUpJob();
+
+}
 
 function start() {
 
@@ -83,6 +100,7 @@ function start() {
             if (wait) {
                 checkSkillTokens();
                 checkDailyLink();
+                //checkForCollectBonus(newJobs);
                 waitV2("60");
             }
         }
@@ -107,46 +125,59 @@ function start() {
 
 function doJobs(listOfJobs){
     var wait = true;
+    logV2(INFO, "JOB", "Init Job");
     var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
         var obj = extractEnergyStamina();
+        var exitLoop = false;
         for (var i = 0; i < listOfJobs.length; i++) {
             if (checkIfLevelUp()) {
                 //obj = extractEnergyStamina();
-                logV2(INFO, "JOB", "DoJob Level Up");
+                logV2(INFO, "JOB", "Level Up. Skipping rest of jobs");
                 wait = false;
                 break;
             }
             var jobItem = listOfJobs[i];
-            if (jobItem.job.type == STAMINA && !jobsObj.staminaJobs){
+            if (jobItem.job.type == STAMINA && !jobsObj.staminaJobs) {
                 // skip stamina jobs
                 logV2(INFO, "JOB", "Skipping stamina job " + jobItem.job.id);
                 continue;
             }
-            obj = extractEnergyStamina();
             var status = processJob(jobItem, obj);
-            if (status == CONSTANTS.STATUS.LEVELUP) {
-                wait = false;
-                break;
+            switch (status) {
+                case CONSTANTS.STATUS.LEVELUP:
+                    logV2(INFO, "JOB", "Level Up. Normally, you can never see this log message");
+                    wait = false;
+                    exitLoop = true;
+                    break;
+                case CONSTANTS.STATUS.OK:
+                    // do the same job again
+                    wait = false;
+                    obj = extractEnergyStamina();
+                    i--;
+                    break;
+                case CONSTANTS.STATUS.SKIP:
+                    break;
+                case CONSTANTS.STATUS.NOT_ENOUGH:
+                    break;
+                case CONSTANTS.STATUS.PROBLEM:
+                    logV2(WARNING, "JOB", "Problem executing job : skip rest of jobs and try again");
+                    makeScreenShot("MRJobDoJobsExecuteProblem");
+                    wait = false;
+                    exitLoop = true;
+                    break;
+                default:
+                    logV2(WARNING, "JOB", "Unknown Status: " + status);
+                    break;
             }
-            else if (status == CONSTANTS.STATUS.OK) {
-                wait = false;
-                i--;
-            }
-            else if (status == CONSTANTS.STATUS.SKIP) {
-                wait = true;
-            }
-            else if (status == CONSTANTS.STATUS.PROBLEM) {
-                logV2(WARNING, "JOB", "Problem executing job : skip rest of jobs and try again");
-                makeScreenShot("MRJobDoJobsExecuteProblem");
-                wait = false;
+            if (exitLoop){
                 break;
             }
         }
     }
     else {
         logV2(WARNING, "JOB", "Problem with job page");
-        makeScreenShot("MRJobInit");
+        makeScreenShot("MRJobInitProblem");
     }
     checkForUdpates(listOfJobs);
     logV2(INFO, "JOB", "Wait: " + wait);
@@ -190,6 +221,8 @@ function getJobTaskObject(districtId, jobId, type){
         numberOfTimesExecuted : 0,
         enabled: true,
         percentCompleted: null,
+        minRange: 0,
+        maxRange: 0
     }
     return obj;
 }
@@ -310,11 +343,7 @@ function checkIfEnoughEnerygOrStamina(jobItem, energyStaminaObj){
     var status = CONSTANTS.STATUS.OK;
     var total = getEnergyOrStamina(jobItem.job.type, energyStaminaObj)
     logV2(INFO, "JOB", "Entering checkIfEnoughEnerygOrStamina - Total = " + total);
-    if (checkIfLevelUp()){
-        logV2(INFO, "JOB", "checkIfEnoughEnerygOrStamina: Level Up");
-        status = CONSTANTS.STATUS.LEVELUP;
-    }
-    else if (total < jobItem.job.energy) {
+    if (total < jobItem.job.energy) {
         logV2(INFO, "JOB", "Not Enough energy/stamina to do job. Needed: " + jobItem.job.energy + " / Left: " + total);
         status = CONSTANTS.STATUS.NOT_ENOUGH;
     }
@@ -329,7 +358,6 @@ function isDistrictSelected(jobItem){
     var retCode = SUCCESS;
     if (jobItem.district.event){
         retCode = playMacro(JOB_FOLDER, "16_DistrictSelectEvent.iim", MACRO_INFO_LOGGING);
-        logV2(INFO, "SPECIAL: 16_DistrictSelectEvent.iim");
     }
     else {
         retCode = playMacro(JOB_FOLDER, "15_DistrictSelect.iim", MACRO_INFO_LOGGING);
@@ -353,9 +381,9 @@ function isDistrictSelected(jobItem){
 }
 
 function isChapterSelected(jobItem){
-    addMacroSetting("DISTRICT", jobItem.districtId);
     var chapter = jobItem.job.chapter;
     var districtId = jobItem.districtId;
+    addMacroSetting("DISTRICT", districtId);
     addMacroSetting("CHAPTER", chapter);
     var retCode = playMacro(JOB_FOLDER, "14_ChapterSelect.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS){
@@ -363,7 +391,7 @@ function isChapterSelected(jobItem){
         if (!isNullOrBlank(selectInfo)) {
             selectInfo = selectInfo.toLowerCase();
             if (contains(selectInfo, "tab_button selected")) {
-                logV2(INFO, "JOB", "Right Chapter Selected: " + districtId + "/" + chapter);
+                logV2(INFO, "JOB", "WRight Chapter Selected: " + districtId + "/" + chapter);
                 return true;
             }
         }
@@ -377,6 +405,40 @@ function isChapterSelected(jobItem){
     return false;
 }
 
+function performDistrict(jobItem){
+    var retCode = -1;
+    var counter = 0;
+    var ok = false;
+    var district = jobItem.districtId;
+    logV2(INFO, "JOB", "Old District: " + globalSettings.lastDistrict);
+    logV2(INFO, "JOB", "Travelling to district " + district);
+    do {
+        counter++;
+        if (counter > 1){
+            logV2(INFO, "JOB", "Travel District Retries: " + counter);
+        }
+        if (jobItem.district.event) {
+            retCode = playMacro(JOB_FOLDER, "06_Job_DistrictEvent.iim", MACRO_INFO_LOGGING);
+        }
+        else {
+            addMacroSetting("DISTRICT", jobItem.districtId);
+            retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
+        }
+        if (retCode == SUCCESS) {
+            if (isDistrictSelected(jobItem)) {
+                globalSettings.lastDistrict = district;
+                ok = true;
+            }
+        }
+        else {
+            logV2(WARNING, "JOB", "Problem with travelling to district " + district + " / Counter = " + counter);
+            ok = true;
+        }
+    }
+    while (!ok && counter < 5);
+    return retCode;
+}
+
 function goToDistrict(jobItem){
     var retCode = -1;
     if (globalSettings.lastDistrict != null && globalSettings.lastDistrict == jobItem.districtId && !isDistrictSelected(jobItem)){
@@ -386,21 +448,42 @@ function goToDistrict(jobItem){
     if (globalSettings.lastDistrict == null || globalSettings.lastDistrict != jobItem.districtId) {
         logV2(INFO, "JOB", "Old District: " + globalSettings.lastDistrict);
         logV2(INFO, "JOB", "Travelling to district " + jobItem.districtId);
-        if (jobItem.district.event) {
-            retCode = playMacro(JOB_FOLDER, "06_Job_DistrictEvent.iim", MACRO_INFO_LOGGING);
-        }
-        else {
-            addMacroSetting("DISTRICT", jobItem.districtId);
-            retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
-        }
-        if (retCode == SUCCESS){
-            globalSettings.lastDistrict = jobItem.districtId;
-        }
+        retCode = performDistrict(jobItem);
     }
     else {
-        logV2(INFO, "JOB", "Active District: " + jobItem.districtId);
+        logV2(INFO, "JOB", "No Travelling. Active District is: " + jobItem.districtId);
         retCode = SUCCESS;
     }
+    return retCode;
+}
+
+function performChapter(jobItem){
+    var retCode = -1;
+    var counter = 0;
+    var ok = false;
+    logV2(INFO, "JOB", "Old Chapter: " + globalSettings.lastChapter);
+    logV2(INFO, "JOB", "Travelling to chapter " + jobItem.job.chapter);
+    do {
+        counter++;
+        if (counter > 1){
+            logV2(INFO, "JOB", "Travel Chapter Retries: " + counter);
+        }
+        addMacroSetting("DISTRICT", jobItem.districtId);
+        addMacroSetting("CHAPTER", jobItem.job.chapter);
+        retCode = playMacro(JOB_FOLDER, "05_Job_Chapter.iim", MACRO_INFO_LOGGING);
+        if (retCode != SUCCESS) {
+            logV2(INFO, "JOB", "Problem Selecting chapter");
+            makeScreenShot("MRJobsChapterSelect");
+            ok = true;
+        }
+        else {
+            if (isChapterSelected(jobItem)) {
+                globalSettings.lastChapter = jobItem.job.chapter;
+                ok = true;
+            }
+        }
+    }
+    while (!ok && counter < 5);
     return retCode;
 }
 
@@ -412,18 +495,7 @@ function goToChapter(jobItem){
             clearDistrict();
         }
         if (globalSettings.lastChapter == null || globalSettings.lastChapter != jobItem.job.chapter) {
-            logV2(INFO, "JOB", "Old District: " + globalSettings.lastChapter);
-            logV2(INFO, "JOB", "Travelling to chapter " + jobItem.job.chapter);
-            addMacroSetting("DISTRICT", jobItem.districtId);
-            addMacroSetting("CHAPTER", jobItem.job.chapter);
-            retCode = playMacro(JOB_FOLDER, "05_Job_Chapter.iim", MACRO_INFO_LOGGING);
-            if (retCode != SUCCESS) {
-                logV2(INFO, "JOB", "Problem Selecting chapter");
-                makeScreenShot("MRJobsChapterSelect");
-            }
-            else {
-                globalSettings.lastChapter = jobItem.job.chapter;
-            }
+            retCode = performChapter(jobItem);
         }
         else {
             logV2(INFO, "JOB", "Active Chapter: " + jobItem.job.chapter);
@@ -439,55 +511,24 @@ function goToChapter(jobItem){
 function processJob(jobItem, energyObj){
 
     var exit = false;
-    var status = CONSTANTS.STATUS.OK;
-    //var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
-	//if (retCode == SUCCESS) {
-        if (!jobItem.ok) {
-            logV2(WARNING, "JOB", "Problem with Job " + jobItem.jobId);
-            globalSettings.lastChapter = null;
-            globalSettings.lastDistrict = null;
-           return CONSTANTS.STATUS.SKIP;
-        }
-        validJob = isValidJob(jobItem);
-        if (validJob.error){
-            status = CONSTANTS.STATUS.PROBLEM;
-            jobItem.ok = false; // skip job in next run
-            return status;
-        }
-        if (validJob.valid) {
-            var status = checkIfEnoughEnerygOrStamina(jobItem, energyObj);
-            if (status != CONSTANTS.STATUS.OK) {
-                return status;
-            }
-
-        }
-        else {
-                logV2(INFO, "JOB", "Job Not Valid: " + jobItem.districtId + "/" + jobItem.jobId);
-                status = CONSTANTS.STATUS.SKIP;
-                return status;
-            }
-        var success = false;
-        retCode = goToDistrict(jobItem);
+    if (!jobItem.ok) {
+        logV2(WARNING, "JOB", "Problem with Job " + jobItem.jobId);
+        clearDistrict();
+        return CONSTANTS.STATUS.SKIP;
+    }
+    var status = isValidJob(jobItem, energyObj);
+    if (status == CONSTANTS.STATUS.OK){
+        retCode = travel(jobItem);
         if (retCode === SUCCESS) {
-            retCode = goToChapter(jobItem);
-            if (retCode != SUCCESS){
-                clearDistrict();
-                status = CONSTANTS.STATUS.SKIP;
-                return status;
-            }
             logJob(jobItem);
             status = testJob(jobItem);
             logV2(INFO, "JOB", "Job Status: " + status);
         }
-        else {
-            logV2(WARNING, "JOB", "Problem Selecting District");
-            makeScreenShot("MRJobDistrictSelectProblem");
-            status = CONSTANTS.STATUS.PROBLEM;
-        }
-    //}
-    //else {
-    //    logV2(INFO, "JOB", "Problem Job Page");
-    //}
+    }
+    else {
+        logV2(INFO, "JOB", "Job Not Valid: " + jobItem.districtId + "/" + jobItem.jobId);
+        logV2(INFO, "JOB", "STATUS: " + status);
+    }
     return status;
 }
 
@@ -501,6 +542,10 @@ function testJob(jobItem){
     if (jobItem.percentCompleted == null || jobItem.percentCompleted == -1){
         logV2(WARNING, "JOB", "Skip This Job for now. There was a problem going to the right chapter");
         status = CONSTANTS.STATUS.PROBLEM;
+    }
+    else if (checkIfLevelUp()){
+        logV2(INFO, "JOB", "testJob: Level Up");
+        status = CONSTANTS.STATUS.LEVELUP;
     }
     else {
         var valid = executeJob(jobItem);
@@ -518,9 +563,22 @@ function testJob(jobItem){
 
 }
 
-function isValidJob(jobItem){
+function isRangeDefined(jobItem){
+    var defined = jobItem.minRange > 0 || jobItem.maxRange > 0;
+    return defined;
+}
+
+function isValidJob(jobItem, energyObj){
     logV2(INFO, "JOB", "Entering isValidJob");
-    validJob = {"valid": false, "error": false};
+    validJobStatus = CONSTANTS.STATUS.UNKNOWN;
+    if (isRangeDefined(jobItem)){
+        var resource = getEnergyOrStamina(jobItem.job.type);
+        if (jobItem.minRange >= resource && jobItem.maxRange <= resource){
+            logV2(INFO, "JOB", "Energy/Stamina are not in the range: " + resource + " / Range: " + jobItem.minRange + " - " + jobItem.maxRange);
+            validJobStatus = CONSTANTS.STATUS.SKIP;
+            return validJobStatus;
+        }
+    }
     if (jobItem.percentCompleted == null || jobItem.percentCompleted == -1) {
         jobItem.percentCompleted = getPercentCompleted(jobItem);
     }
@@ -528,32 +586,45 @@ function isValidJob(jobItem){
         case CONSTANTS.EXECUTE.REPEAT:
             if (jobItem.total > 0 && jobItem.numberOfTimesExecuted >= jobItem.total){
                 logV2(INFO, "JOB", "Nr Of Times Exceeded: " + jobItem.numberOfTimesExecuted + "/" + jobItem.total);
+                validJobStatus = CONSTANTS.STATUS.SKIP;
             }
             else {
-                validJob.valid = true;
+                validJobStatus = CONSTANTS.STATUS.OK;
             }
             break;
         case CONSTANTS.EXECUTE.COMPLETE:
             if (jobItem.percentCompleted == -1){
-                validJob.error = true;
-                validJob.valid = false;
+                validJobStatus = CONSTANTS.STATUS.PROBLEM;
             }
             else if (jobItem.percentCompleted < 100) {
-                validJob.valid = true;
+                validJobStatus = CONSTANTS.STATUS.OK;
+            }
+            else if (jobItem.percentCompleted == 100) {
+                validJobStatus = CONSTANTS.STATUS.SKIP;
             }
             break;
     }
-    logV2(INFO, "JOB", "Job " + jobItem.jobId + " valid: " + JSON.stringify(validJob));
+    // step 2 : Check if enough resources to do the job
+    if (validJobStatus == CONSTANTS.STATUS.OK) {
+        validJobStatus = checkIfEnoughEnerygOrStamina(jobItem, energyObj);
+    }
+    logV2(INFO, "JOB", "Job " + jobItem.jobId + " validJobStatus: " + validJobStatus);
     logV2(INFO, "JOB", "Percent Completed: " + jobItem.percentCompleted);
-    return validJob;
+    return validJobStatus;
 }
 
 function logJob(jobItem){
-    logV2(INFO, "JOB", "DistrictId: " + jobItem.districtId);
+    var line = "DistrictId: " + jobItem.districtId;
     if (jobItem.job.chapter !== null) {
-        logV2(INFO, "JOB", "Chapter: " + jobItem.job.chapter);
+        line += " / Chapter: " + jobItem.job.chapter;
     }
-    logV2(INFO, "JOB", "Id: " + jobItem.jobId);
+    if (jobItem.district.event) {
+        line += " / Event: Yes";
+    }
+    line += " / Id: " + jobItem.job.id;
+    line += " / Energy: " + jobItem.job.energy;
+    line += " / Exp: " + jobItem.job.exp;
+    logHeader(INFO, "JOB", line);
 }
 
 function executeJob(jobItem){
@@ -578,7 +649,6 @@ function executeJob(jobItem){
         jobItem.percentCompleted = completeAfter;
         globalSettings.money += checkSaldo();
         success = true;
-
     }
     return success;
 }
@@ -657,16 +727,17 @@ function getStaminaJob(){
     return 0;
 }
 
-function getEnergy(){
-	var retCode = playMacro(JOB_FOLDER, "10_GetEnergy.iim", MACRO_INFO_LOGGING);
-	if (retCode == SUCCESS) {
+function getEnergyObj(){
+    var retCode = playMacro(JOB_FOLDER, "10_GetEnergy.iim", MACRO_INFO_LOGGING);
+    var energyObj = {"left": 0, "total": 0};
+    if (retCode == SUCCESS) {
         var energyInfo = getLastExtract(1, "Energy Left", "500/900");
         logV2(INFO, "ENERGY", "energy = " + energyInfo);
         if (!isNullOrBlank(energyInfo)) {
             energyInfo = removeComma(energyInfo);
             var tmp = energyInfo.split("/");
-            var energy = parseInt(tmp[0]);
-            return energy;
+            energyObj.left = parseInt(tmp[0]);
+            energyObj.total = parseInt(tmp[1]);
         }
         else {
             logV2(WARNING, "ENERGY", "Problem Extracting Energy");
@@ -677,37 +748,44 @@ function getEnergy(){
         logV2(WARNING, "ENERGY", "Problem Getting Energy");
         makeScreenShot("MRJobEnergyGetEnergyProblem");
     }
-	return 0;
+    return energyObj;
 }
 
 function getPercentCompleted(jobItem){
-    goToDistrict(jobItem);
-    goToChapter(jobItem);
-    addMacroSetting("ID", jobItem.jobId);
-    var retCode = playMacro(JOB_FOLDER, "11_PercentCompleted.iim", MACRO_INFO_LOGGING);
-    if (retCode === SUCCESS) {
-        var percentInfo = getLastExtract(1, "Percent Completed", "50%");
-        logV2(INFO, "JOB", "%completed = " + percentInfo);
-        if (!isNullOrBlank(percentInfo)) {
-            percentInfo = percentInfo.replace("%", "").toUpperCase();
-            percentInfo = percentInfo.replace(" COMPLETE", "");
-            var percentCompleted = parseInt(percentInfo);
-            return parseInt(percentCompleted);
+    var retCode = travel(jobItem);
+    var percent = 100;
+    if (retCode == SUCCESS) {
+        addMacroSetting("ID", jobItem.jobId);
+        var retCode = playMacro(JOB_FOLDER, "11_PercentCompleted.iim", MACRO_INFO_LOGGING);
+        if (retCode === SUCCESS) {
+            var percentInfo = getLastExtract(1, "Percent Completed", "50%");
+            logV2(INFO, "JOB", "%completed = " + percentInfo);
+            if (!isNullOrBlank(percentInfo)) {
+                percentInfo = percentInfo.replace("%", "").toUpperCase();
+                percentInfo = percentInfo.replace(" COMPLETE", "");
+                var percentCompleted = parseInt(percentInfo);
+                percent = parseInt(percentCompleted);
+            }
+            else {
+                clearDistrict();
+                logV2(WARNING, "JOB", "Problem Extracting Percent Completed");
+                makeScreenShot("MRJobPercentCompletedExtractProblem");
+                percent = -1;
+            }
         }
         else {
             clearDistrict();
-            logV2(WARNING, "JOB", "Problem Extracting Percent Completed");
-            makeScreenShot("MRJobPercentCompletedExtractProblem");
-            return -1;
+            logV2(WARNING, "JOB", "Problem getting Percent Completed");
+            makeScreenShot("MRJobPercentCompletedProblem");
+            percent = -1;
         }
     }
     else {
         clearDistrict();
-        logV2(WARNING, "JOB", "Problem getting Percent Completed");
-        makeScreenShot("MRJobPercentCompletedProblem");
-        return -1;
+        logV2(WARNING, "JOB", "Problem With Travel For getPercentCompleted");
+        percent = -1;
     }
-    return 100;
+    return percent;
 }
 
 function collectCrimeEvent(crimeObj){
@@ -1360,8 +1438,8 @@ function checkSkillTokens(){
 }
 
 function getSkillAction(){
-    for (var i=0; i < configMRObj.skillPoints.skills.length; i++){
-        var skillObj = configMRObj.skillPoints.skills[i];
+    for (var i=0; i < settingsObj.skills.length; i++){
+        var skillObj = settingsObj.skills[i];
         if (skillObj.id == configMRObj.skillPoints.skill){
             return skillObj;
         }
@@ -1439,8 +1517,9 @@ function checkDailyLink(){
     }
 }
 
-function repeatMoneyJob(jobObj, energyObj, exp){
+function repeatMoneyJob(jobObj, energyObj){
     var levelUp = false;
+    var exp = getExperience();
     while (jobObj.job.energy <= energyObj.energy && exp < configMRObj.jobs.levelUpExp){
         //var retCode = executeMacroJob(jobObj.id, jobObj.districtId, districtObj.event);
         var status = processJob(jobObj, energyObj);
@@ -1482,6 +1561,34 @@ function getMoneyJobs(){
     return initJobs(moneyJobs);
 }
 
+function processJobsWhenLowOnExperience(jobs, energyObj){
+    var wait = true;
+    var levelUp = false;
+    for (var i=0; i < jobs.length; i++){
+        var jobObj = jobs[i];
+        if (jobObj.energy <= energyObj.energy){
+            logV2(INFO, "JOBS", "Money Job; " + JSON.stringify(jobObj));
+            var activeJobObj = getJobTaskObject(jobObj.districtId, jobObj.id, jobObj.type);
+            activeJobObj.type = "REPEAT";
+            fillDistrictInfo(activeJobObj);
+            if (activeJobObj.district != null) {
+                levelUp = repeatMoneyJob(activeJobObj, energyObj);
+                logV2(INFO, "JOBS", "energyObj; " + JSON.stringify(energyObj));
+                if (levelUp){
+                    logV2(INFO, "MONEYJOB", "Leveled Up. Skipping rest of Money Jobs");
+                    wait = false;
+                    break;
+                }
+            }
+            else {
+                logV2(WARNING, "JOBS", "DistrictId not found for job: " + JSON.stringify(jobObj));
+            }
+        }
+        energyObj = extractEnergyStamina();
+    }
+    return wait;
+}
+
 function checkExperience(){
     dummyBank();
     var wait = true;
@@ -1500,32 +1607,10 @@ function checkExperience(){
             addFilter(JOBSELECT.SELECTTYPES.CONSUMABLECOST, JOBSELECT.FILTER.NO)
         ];
         var jobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.EXP, JOBSELECT.SORTING.DESCENDING);
-        var levelUp = false;
         logV2(INFO, "JOBS", "Money Jobs; " + jobs.length);
         var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
-            for (var i=0; i < jobs.length; i++){
-                var jobObj = jobs[i];
-                if (jobObj.energy <= energyObj.energy){
-                    logV2(INFO, "JOBS", "Money Job; " + JSON.stringify(jobObj));
-                    var activeJobObj = getJobTaskObject(jobObj.districtId, jobObj.id, jobObj.type);
-                    activeJobObj.type = "REPEAT";
-                    fillDistrictInfo(activeJobObj);
-                    if (activeJobObj.district != null) {
-                        levelUp = repeatMoneyJob(activeJobObj, energyObj, exp);
-                        logV2(INFO, "JOBS", "energyObj; " + JSON.stringify(energyObj));
-                        if (levelUp){
-                            logV2(INFO, "MONEYJOB", "Leveled Up. Skipping rest of Money Jobs");
-                            wait = false;
-                            break;
-                        }
-                    }
-                    else {
-                        logV2(WARNING, "JOBS", "DistrictId not found for job: " + JSON.stringify(jobObj));
-                    }
-                }
-                energyObj = extractEnergyStamina();
-            }
+            wait = processJobsWhenLowOnExperience(jobs, energyObj);
         }
         else {
             logV2(WARNING, "MONEYJOB", "Problem With Init Job");
@@ -1534,33 +1619,357 @@ function checkExperience(){
     return wait;
 }
 
-function checkForCollectBonus(){
-    var exp = getExperience();
-    var energyObj = extractEnergyStamina();
-    var expCalc = (energyObj.energy *4.50) + (energyObj.stamina * 4.40);
-    var expRest = exp - expCalc;
-    logV2(INFO, "COLLECT", "Calculated Rest Experience: " + expRest);
-    if (expRest > 3000){
-        setTempSetting(globalSettings.profileId, "fight", "stopFighting", true);
-        setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", true);
-        logV2(INFO, "COLLECT", "Calculated Rest Experience: " + expRest);
-        var busyFighting1 = getTempSetting(null, "fight", "busyFighting");
-        var busyFighting2 = getTempSetting(null, "assassin-a-nator", "busyFighting");
-        logV2(INFO, "COLLECT", "Fight: Busy: " + busyFighting1);
-        logV2(INFO, "COLLECT", "Assasin: Busy: " + busyFighting2);
-        if (!busyFighting1 && !busyFighting2){
-            // fight script + assasssin-a-nator is not busy fighting
-            var collected = collectBonus();
-            if (collected){
+function getCollectDate(){
+    var LIMIT1 = 65 // 01:05
+    var LIMIT2 = 785 // 13:05
+    var currentDate = new Date();
+    currentDate.setSeconds(0);
+    var calcMinutes = currentDate.getHours() * 60 + currentDate.getMinutes();
+    var limitDate = currentDate;
+    if (calcMinutes < LIMIT1){
+        limitDate = dateAdd(limitDate, -1, "days");
+        limitDate = dateAdd(limitDate, LIMIT2-calcMinutes, "minutes");
+    }
+    else if (calcMinutes >= LIMIT1 && calcMinutes < LIMIT2){
+        limitDate = dateAdd(limitDate, LIMIT1-calcMinutes, "minutes");
+    }
+    else {
+        limitDate = dateAdd(limitDate, LIMIT2-calcMinutes, "minutes");
+    }
+    logV2(INFO, "COLLECT", "Collect Date: " + limitDate);
+    return getDateYYYYMMDDHHMI(limitDate);
+}
 
+function checkAlreadyCollectedEnergyRefill(){
+    var readyToCollect = false;
+    var collectEnergyObj = configMRObj.bonus.energy;
+    if (collectEnergyObj.enabled){
+        readyToCollect = (collectEnergyObj.refill != getCollectDate());
+    }
+    logV2(INFO, "COLLECT", "Already Collected: " + readyToCollect);
+    return readyToCollect;
+}
+
+function checkForCollectBonus(newJobs){
+
+    if (!checkAlreadyCollectedEnergyRefill()) {
+        var exp = getExperience();
+        var energyObj = extractEnergyStamina();
+        var expCalc = (energyObj.energy * 4.50) + (energyObj.stamina * 4.40);
+        var expRest = exp - expCalc;
+        logV2(INFO, "COLLECT", "Calculated Rest Experience: " + expRest);
+        if (expRest > 3000) {
+            setTempSetting(globalSettings.profileId, "fight", "stopFighting", true);
+            setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", true);
+            logV2(INFO, "COLLECT", "Calculated Rest Experience: " + expRest);
+            var busyFighting1 = getTempSetting(null, "fight", "busyFighting");
+            var busyFighting2 = getTempSetting(null, "assassin-a-nator", "busyFighting");
+            logV2(INFO, "COLLECT", "Busy Fighting: " + busyFighting1);
+            logV2(INFO, "COLLECT", "Busy Assassin-a-nator: " + busyFighting2);
+            if (!busyFighting1 && !busyFighting2) {
+                // fight script + assasssin-a-nator is not busy fighting
+                var collected = collectBonus();
+                if (collected) {
+                    var collectObj = {"nrOfLevelUpJobsExecuted": 0};
+                    //doJobsWithoutLevelUp(newJobs, collectObj, exp);
+                    //doLevelUpJob();
+                    setTempSetting(globalSettings.profileId, "fight", "stopFighting", false);
+                    setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", false);
+                }
+                else {
+                    logV2(WARNING, "COLLECT", "Could Not Collect");
+                }
             }
-            else {
-                logV2(WARNING, "COLLECT", "Could Not Collect");
-            }
+        }
+        else {
+            setTempSetting(globalSettings.profileId, "fight", "stopFighting", false);
+            setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", false);
         }
     }
 }
 
-function collectBonus(){
-    return true;
+function doScheduledJobs(newJobs, collectObj){
+    logHeader(INFO, "COLLECT", "doScheduledJobs", "*");
+    for (var i=0; i < newJobs.length; i++){
+        var activeJobObj = newJobs[i];
+        var energyObj = extractEnergyStamina();
+        var status = isValidJob(activeJobObj, energyObj);
+        if (status == CONSTANTS.STATUS.OK){
+            repeatSingleJob(collectObj, activeJobObj);
+        }
+    }
+
+}
+
+function doJobsWithoutLevelUp(newJobs, collectObj, exp){
+    doScheduledJobs(newJobs, collectObj);
+    logHeader(INFO, "COLLECT", "doJobsWithoutLevelUp", "*");
+    var filters = [
+        addFilter(JOBSELECT.SELECTTYPES.EVENT, filterEvent()),
+        addFilter(JOBSELECT.SELECTTYPES.MONEYCOST, JOBSELECT.FILTER.NO),
+        addFilter(JOBSELECT.SELECTTYPES.JOBTYPE, JOBSELECT.FILTER.ENERGY),
+        addFilter(JOBSELECT.SELECTTYPES.MONEYRATIO, JOBSELECT.FILTER.YES, 50),
+        addFilter(JOBSELECT.SELECTTYPES.CONSUMABLECOST, JOBSELECT.FILTER.NO),
+        addFilter(JOBSELECT.SELECTTYPES.EXPRANGE, JOBSELECT.FILTER.YES, 0, exp)
+    ];
+    var moneyJobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.MONEY, JOBSELECT.SORTING.DESCENDING);
+    logV2(INFO, "COLLECTMONEYJOBS", "Moneyjobs found: " + moneyJobs.length);
+    // low Energy Jobs to get a low as possible Experience Left
+    filters = [
+        addFilter(JOBSELECT.SELECTTYPES.EVENT, filterEvent()),
+        addFilter(JOBSELECT.SELECTTYPES.MONEYCOST, JOBSELECT.FILTER.NO),
+        addFilter(JOBSELECT.SELECTTYPES.JOBTYPE, JOBSELECT.FILTER.ENERGY),
+        addFilter(JOBSELECT.SELECTTYPES.CONSUMABLECOST, JOBSELECT.FILTER.NO),
+        addFilter(JOBSELECT.SELECTTYPES.ENERGYRANGE, JOBSELECT.FILTER.YES, 0, 50)
+    ];
+    var lowEnergyJobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.EXP, JOBSELECT.SORTING.DESCENDING);
+    var jobs = moneyJobs.concat(lowEnergyJobs);
+    for (var i=0; i < jobs.length; i++) {
+        logV2(INFO, "COLLECT", JSON.stringify(jobs[i]));
+    }
+    logV2(INFO, "COLLECT", "Total Jobs Found: " + jobs.length);
+    for (var i=0; i < jobs.length; i++){
+        var jobObj = jobs[i];
+        var activeJobObj = getJobTaskObject(jobObj.districtId, jobObj.id, jobObj.type);
+        activeJobObj.enabled = true;
+        activeJobObj.type = "REPEAT";
+        fillDistrictInfo(activeJobObj);
+        if (activeJobObj.ok){
+            repeatSingleJob(collectObj, activeJobObj);
+        }
+    }
+    logV2(INFO, "COLLECT", "nrOfLevelUpJobsExecuted: " + collectObj.nrOfLevelUpJobsExecuted);
+    logHeader(INFO, "COLLECT", "Experience Left: " + getExperience());
+}
+
+function collectBonus() {
+    var collected = false;
+    var counter = 0;
+    do {
+        counter++;
+        if (counter > 1) {
+            logV2(WARNING, "COLLECT", "Collect Bonus Retries: " + counter);
+        }
+        addMacroSetting("COLLECT", "gid");
+        addMacroSetting("RESOURCE", "0");
+        var retCode = playMacro(JOB_FOLDER, "50_CollectBonus.iim", MACRO_INFO_LOGGING);
+        logV2(INFO, "COLLECT", "collectBonus Status: " + retCode);
+        makeScreenShot("MRJobCollectBonus");
+        if (retCode == SUCCESS) {
+            var energyObj = getEnergyObj();
+            if (energyObj.total > 0 && energyObj.left == energyObj.energy) {
+                collected = true;
+            }
+        }
+    }
+    while (!collected && counter < 5);
+    return collected;
+}
+
+function travel(jobItem){
+    var status = CONSTANTS.STATUS.SKIP;
+    var retCode = goToDistrict(jobItem);
+    if (retCode === SUCCESS) {
+        retCode = goToChapter(jobItem);
+        if (retCode != SUCCESS) {
+            clearDistrict();
+            status = CONSTANTS.STATUS.SKIP;
+            logV2(WARNING, "COLLECT", "Problem Selecting Chapter");
+        }
+        else {
+            status = CONSTANTS.STATUS.OK;
+        }
+    }
+    else {
+        logV2(WARNING, "COLLECT", "Problem Selecting District");
+        makeScreenShot("MRJobDistrictSelectProblem");
+        status = CONSTANTS.STATUS.SKIP;
+    }
+    return status;
+}
+
+function repeatSingleJob(collectObj, jobItem){
+
+    if (!checkExpLevelUpJob(jobItem)){
+        return CONSTANTS.STATUS.SKIP;
+    }
+    var status = travel(jobItem);
+    if (status == CONSTANTS.STATUS.OK){
+        logJob(jobItem);
+        var counter = 1;
+        while (checkExpLevelUpJob(jobItem)){
+            var energyObj = extractEnergyStamina();
+            logV2(INFO, "COLLECT", "Count: " + counter++);
+            var status = checkIfEnoughEnerygOrStamina(jobItem, energyObj);
+            if (status == CONSTANTS.STATUS.OK) {
+                status = performSingleJob(jobItem);
+                if (checkIfLevelUp()){
+                    status = CONSTANTS.STATUS.LEVELUP;
+                }
+                logV2(INFO, "COLLECT", "BASE_EXP: " + BASE_EXP);
+            }
+            if (status != CONSTANTS.STATUS.OK){
+                logV2(WARNING, "COLLECT", "Wrong status");
+                break;
+            }
+            else {
+                collectObj.nrOfLevelUpJobsExecuted++;
+            }
+        }
+    }
+    if (status == CONSTANTS.STATUS.LEVELUP) {
+        logV2(WARNING, "COLLECT", "Level Up. This should never occur!!!");
+    }
+    return status;
+}
+
+function checkExpLevelUpJob(jobItem){
+    var exp = BASE_EXP; //getExperience();
+    logV2(INFO, "COLLECT", "Exp: " + exp);
+    var expLeft = exp - jobItem.job.exp;
+    logV2(INFO, "COLLECT", "expLeft: " + expLeft);
+    var expGreaterThan0 = (expLeft > 0);
+    return expGreaterThan0;
+}
+
+function performSingleJob(jobItem){
+    logV2(INFO, "COLLECT", "Perform Single Job" + NEWLINE);
+    var retCode = executeMacroJob(jobItem.job.id, jobItem.district.event, jobItem.job.chapter);
+    var status = CONSTANTS.STATUS.OK;
+    if (retCode != SUCCESS){
+        logV2(INFO, "COLLECT", "Job NOT Executed");
+        status = CONSTANTS.STATUS.PROBLEM;
+    }
+    else {
+        logV2(INFO, "COLLECT", "Job Executed");
+        BASE_EXP = BASE_EXP - jobItem.job.exp;
+        globalSettings.money += checkSaldo();
+    }
+    return status;
+}
+
+function filterEvent(){
+    var event = settingsObj.global.eventEnabled ? JOBSELECT.FILTER.WHATEVER : JOBSELECT.FILTER.NO;
+    return event;
+}
+
+function doLevelUpJob(){
+    var exp = getExperience();
+    var energyObj = extractEnergyStamina();
+    logHeader(INFO, "COLLECTLEVELUPJOB", "doLevelUpJob", "*");
+    logV2(INFO, "COLLECTLEVELUPJOB", "Exp: " + exp);
+    logV2(INFO, "COLLECTLEVELUPJOB", "Energy Left: " + energyObj.energy);
+    var filters = [
+        addFilter(JOBSELECT.SELECTTYPES.EVENT, filterEvent()),
+        addFilter(JOBSELECT.SELECTTYPES.JOBTYPE, JOBSELECT.FILTER.ENERGY),
+        addFilter(JOBSELECT.SELECTTYPES.ENERGYRANGE, JOBSELECT.FILTER.YES, 0, energyObj.energy)
+    ];
+    var jobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.EXP, JOBSELECT.SORTING.DESCENDING);
+    logV2(INFO, "COLLECT", "Total Jobs Found: " + jobs.length);
+    if (jobs.length > 0){
+        for (var i=0; i < jobs.length; i++) {
+            var jobObj = jobs[i];
+            var status = travel(jobItem);
+            if (status == CONSTANTS.STATUS.OK) {
+                var activeJobObj = getJobTaskObject(jobObj.districtId, jobObj.id, jobObj.type);
+                activeJobObj.enabled = true;
+                activeJobObj.type = "REPEAT";
+                fillDistrictInfo(activeJobObj);
+                var status = checkIfEnoughEnerygOrStamina(activeJobObj, energyObj);
+                if (status == CONSTANTS.STATUS.OK) {
+                    makeScreenShot("MRJobCollectBeforeLevelUp");
+                    logV2(INFO, "COLLECT", JSON.stringify(activeJobObj));
+                    logJob(activeJobObj);
+                    status = performSingleJob(activeJobObj);
+                    if (status == CONSTANTS.STATUS.OK){
+                        //if (checkIfLevelUp()) {
+                        if (true) {
+                            makeScreenShot("MRJobCollectAfterLevelUp");
+                            break;
+                        }
+                        else {
+                            logV2(INFO, "COLLECT", "Level Up Job Executed but not leveled up. This Should never occur");
+                            energyObj = extractEnergyStamina();
+                        }
+                    }
+                }
+                if (status == CONSTANTS.STATUS.LEVELUP){
+                    logV2(INFO, "COLLECT", "Leveled Up. This should never occur");
+                }
+            }
+        }
+    }
+    else {
+        logV2(WARNING, "COLLECT", "Level Up Job: No Jobs Found");
+    }
+}
+
+function getResources(){
+    var resourceObj = {"energyObj": null, "staminaObj": null, "exp": -1};
+    var retCode = playMacro(COMMON_FOLDER, "14_GetResources.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS) {
+        resourceObj.energyObj = extractEnergy(getLastExtract(1, "1000/5000", "1000"));
+        resourceObj.staminaObj = extractStamina(getLastExtract(2, "1000/4000", "800"));
+        resourceObj.exp = extractExperience(getLastExtract(3, "17,170 to level", "17170"));
+    }
+    else {
+        logV2(WARNING, "RESOURCE", "Problem Getting Resources");
+    }
+    return resourceObj;
+}
+
+
+function getEnergy(){
+    var retCode = playMacro(JOB_FOLDER, "10_GetEnergy.iim", MACRO_INFO_LOGGING);
+    var energy = -1;
+    if (retCode == SUCCESS) {
+        var energyInfo = getLastExtract(1, "Energy Left", "500/900");
+        var energyObj = extractEnergy(energyInfo);
+        energy = energyObj.left;
+    }
+    return energy;
+}
+
+
+function extractEnergy(energyInfo){
+    var energyObj = {"left": -1, "total": -1};
+    if (!isNullOrBlank(energyInfo)) {
+        logV2(INFO, "ENERGY", "energy = " + energyInfo);
+        if (!isNullOrBlank(energyInfo)) {
+            energyInfo = removeComma(energyInfo);
+            var tmp = energyInfo.split("/");
+            energyObj.left = parseInt(tmp[0]);
+            energyObj.total = parseInt(tmp[1]);
+            return energyObj;
+        }
+        else {
+            logV2(WARNING, "ENERGY", "Problem Extracting Energy");
+        }
+    }
+    else {
+        logV2(WARNING, "ENERGY", "Problem Getting Energy");
+    }
+    return -1;
+}
+
+
+function extractStamina(staminaInfo) {
+    var staminaObj = {"left": -1, "total": -1};
+    if (!isNullOrBlank(staminaInfo)) {
+        logV2(INFO, "ENERGY", "energy = " + staminaInfo);
+        if (!isNullOrBlank(staminaInfo)) {
+            staminaInfo = removeComma(staminaInfo);
+            var tmp = staminaInfo.split("/");
+            staminaObj.left = parseInt(tmp[0]);
+            staminaObj.total = parseInt(tmp[1]);
+            return staminaObj;
+        }
+        else {
+            logV2(WARNING, "STAMINA", "Problem Extracting Stamina");
+        }
+    }
+    else {
+        logV2(WARNING, "STAMINA", "Problem Getting Stamina");
+    }
+    return staminaObj;
 }

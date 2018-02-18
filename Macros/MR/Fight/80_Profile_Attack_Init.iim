@@ -4,7 +4,3 @@ URL GOTO=https://mafiareloaded.com/game/?controller=profile&id={{ID}}
 WAIT SECONDS=0.5
 TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fight&action=attackview&id=*
 WAIT SECONDS=1
-SET !ERRORIGNORE YES
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fight&action=attackview&id=*
-WAIT SECONDS=0.2
-SET !ERRORIGNORE NO

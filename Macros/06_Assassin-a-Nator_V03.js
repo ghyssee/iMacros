@@ -27,6 +27,7 @@ startScript();
 function activateTempSettings(){
     // Profile: Malin - Script: AutoHeal - Enable autoHeal
     setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", true);
+    setTempSetting(MR_PROFILE_JORIS_ID, "autoHeal", "autoHeal", true);
     // Profile: Eric - Script: Fight - Disable HomefeedAttack
     setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", false);
     // Profile: Eric - Script: Fight - Disable homefeed processing
@@ -37,6 +38,7 @@ function activateTempSettings(){
 
 function deactivateTempSettings(){
     setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", false);
+    setTempSetting(MR_PROFILE_JORIS_ID, "autoHeal", "autoHeal", false);
     setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", null);
     setTempSetting(MR_PROFILE_ERIC_ID, "homefeed", "processLines", null);
     setTempSetting(MR_PROFILE_ERIC_ID, "fight", "fightAutoHeal", null);
@@ -151,8 +153,10 @@ function waitTillEnoughStamina(){
     var minStamina = configMRObj.fight.minStaminaToHeal;
     logV2(INFO, "TEMP", "Profile: Malin, script AutoHeal - disable autoHeal");
     setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", false);
+    setTempSetting(MR_PROFILE_JORIS_ID, "autoHeal", "autoHeal", false);
     logV2(INFO, "TEMP", "Profile: Malin, script Fight - reset autoHeal");
     setTempSetting(MR_PROFILE_MALIN_ID, "fight", "autoHeal", null);
+    setTempSetting(MR_PROFILE_JORIS_ID, "fight", "autoHeal", null);
     do {
         dummyBank();
         // refreshing stats (health / exp / stamina / energy)
@@ -203,6 +207,8 @@ function waitTillEnoughStamina(){
     logV2(INFO, "WAIT", "Leaving wait");
     setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", true);
     setTempSetting(MR_PROFILE_MALIN_ID, "fight", "autoHeal", false);
+    setTempSetting(MR_PROFILE_JORIS_ID, "autoHeal", "autoHeal", true);
+    setTempSetting(MR_PROFILE_JORIS_ID, "fight", "autoHeal", false);
 }
 
 function attack(fighter, fighterType){
@@ -482,7 +488,7 @@ function checkIfIced(fighter){
         logV2(INFO, "FIGHT", "Problem getting fight status: " + retCode);
     }
     if (iced){
-        logV2(INFO, "FIGHT", "Total Ices: " + ++globalSettings.iced);
+        logV2(INFO, "FIGHT", "Total Ices: " + ++globalSettings.kills);
         // MOD 15/11
         fighter.iced++;
         fighter.lastIced = formatDateToYYYYMMDDHHMISS(new Date());
@@ -806,6 +812,9 @@ function profileAttack(array, fighterType){
     logV2(INFO, "FIGHT", "Assassin-a-Nator: Nr Of Fighters: " + array.length);
     for (var i=0; i < array.length; i++) {
         var arrayItem = array[i];
+        if (!arrayItem.active){
+            continue;
+        }
         logV2(INFO, JSON.stringify(arrayItem));
         if (isAllyGang(friendObj.gangs, arrayItem.gangId)){
             logV2(INFO, "FIGHT", "Friendly Gang Found for fighter " + arrayItem.id + " - " + arrayItem.name);

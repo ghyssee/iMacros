@@ -18,6 +18,7 @@ var MR_PROFILE_MALIN = 2;
 
 var MR_PROFILE_ERIC_ID = "01";
 var MR_PROFILE_MALIN_ID = "02";
+var MR_PROFILE_JORIS_ID = "03";
 
 var FIGHT_FOLDER = "MR/Fight";
 var COMMON_FOLDER = "MR/Common";
@@ -150,13 +151,15 @@ function dummyBank(){
 
 function bank(saldo){
     playMacro(COMMON_FOLDER, "10_Bank.iim", MACRO_INFO_LOGGING);
-    logV2(INFO, "BANK", "Banking " + saldo);
+    if (saldo > 0) {
+        logV2(INFO, "BANK", "Banking " + saldo);
+    }
 }
 function getSaldo(){
     var retCode = playMacro(COMMON_FOLDER, "11_GetSaldo.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
         var saldoInfo = getLastExtract(1, "Saldo", "$500");
-        logV2(INFO, "BANK", "saldoInfo = " + saldoInfo);
+        logV2(DEBUG, "BANK", "saldoInfo = " + saldoInfo);
         if (!isNullOrBlank(saldoInfo)) {
             saldoInfo = removeComma(saldoInfo);
             var saldo = parseInt(saldoInfo.replace("$", ""));
@@ -206,18 +209,6 @@ function makeMRScreenshot(file){
     makeScreenShot(file);
 }
 
-function extractExperience(text){
-    text = text.toUpperCase().replace(/,/g, "");
-    var regExp = /(?:.*)[0-9]{1,10} \((.*) TO LEVEL/; //5,886 (1,264 to level)
-    var matches = text.match(regExp);
-    var exp = 0;
-    if (matches != null && matches.length > 0){
-        exp = parseInt(matches[matches.length-1]);
-    }
-    return exp;
-
-}
-
 function getExperience(){
     logV2(INFO, "EXP", "Get Experience");
     ret = playMacro(COMMON_FOLDER, "13_GetExperience.iim", MACRO_INFO_LOGGING);
@@ -256,7 +247,7 @@ function getStaminaObj(){
     playMacro(FIGHT_FOLDER, "52_GetStamina.iim", MACRO_INFO_LOGGING);
     var staminaInfo = getLastExtract(1, "Stamina Left", "300/400");
     var staminaObj = {"leftOver": 0, "total": 0};
-    logV2(INFO, "STAMINA", "stamina = " + staminaInfo);
+    logV2(DEBUG, "STAMINA", "stamina = " + staminaInfo);
     if (!isNullOrBlank(staminaInfo)){
         staminaInfo = staminaInfo.replace(/,/g, '');
         var tmp = staminaInfo.split("/");
@@ -269,7 +260,7 @@ function getStaminaObj(){
 function getEnergy(){
     var ret = playMacro(JOB_FOLDER, "10_GetEnergy.iim", MACRO_INFO_LOGGING);
     var energyInfo = getLastExtract(1, "Energy Left", "500/900");
-    logV2(INFO, "ENERGY", "energy = " + energyInfo);
+    logV2(DEBUG, "ENERGY", "energy = " + energyInfo);
     if (!isNullOrBlank(energyInfo)){
         energyInfo = energyInfo.replace(/,/g, '');
         var tmp = energyInfo.split("/");
@@ -308,4 +299,40 @@ function setTempSetting(profileId, category, property, value){
     var tmpObj = initObject(file);
     tmpObj[category][property] = value;
     writeObject(tmpObj, file);
+}
+
+
+function extractExperienceOld(text){
+    text = text.toUpperCase().replace(/,/g, "");
+    var regExp = /(?:.*)[0-9]{1,10} \((.*) TO LEVEL/; //5,886 (1,264 to level)
+    var matches = text.match(regExp);
+    var exp = 0;
+    if (matches != null && matches.length > 0){
+        exp = parseInt(matches[matches.length-1]);
+    }
+    return exp;
+
+}
+
+function extractExperience(expInfo) {
+    if (!isNullOrBlank(expInfo)) {
+        logV2(DEBUG, "EXPERIENCE", "Exp = " + expInfo);
+        if (!isNullOrBlank(expInfo)) {
+            expInfo = removeComma(expInfo).toUpperCase();
+            var regExp = /(?:.*)[0-9]{1,10} \((.*) TO LEVEL/; //5,886 (1,264 to level)
+            var matches = expInfo.match(regExp);
+            var exp = -1;
+            if (matches != null && matches.length > 0){
+                exp = parseInt(matches[matches.length-1]);
+                return exp;
+            }
+        }
+        else {
+            logV2(WARNING, "EXPERIENCE", "Problem Extracting Exp");
+        }
+    }
+    else {
+        logV2(WARNING, "STAMINA", "Problem Getting Exp");
+    }
+    return -1;
 }
