@@ -23,9 +23,9 @@ var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var profileObj = initObject(MR_PROFILE_FILE);
 var globalSettings = {"kills": 0, "heals": 0, "autoHealWait": false, "expReached": false};
 
-//startScript();
+startScript();
 //setAssassinTempSettting("autoHeal", "autoHeal", true);
-checkMiniHomeFeed(profileObj, globalSettings.profileId, friendObj, fightersToExclude, fighterObj);
+//checkMiniHomeFeed(profileObj, globalSettings.profileId, friendObj, fightersToExclude, fighterObj);
 
 
 function activateTempSettings(){

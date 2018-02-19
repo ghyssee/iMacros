@@ -48,9 +48,9 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                      };
 
 //enableMacroPlaySimulation();
-//start();
-var obj = getResources();
-alert(JSON.stringify(obj));
+start();
+//var obj = getResources();
+//alert(JSON.stringify(obj));
 //test();
 
 function test(){
