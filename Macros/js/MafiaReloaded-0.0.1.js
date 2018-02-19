@@ -73,6 +73,18 @@ function getMRFileById(fileId, profileId){
     return getMRFile(fileId);
 }
 
+function findProfileByFighterIdCallBack(profile) {
+
+    if (profile.fighterId == this){
+        return profile;
+    };
+}
+
+function findProfileByFighterId(profileObj, fighterId){
+    var obj = profileObj.list.find(findProfileByFighterIdCallBack, fighterId);
+    return obj;
+}
+
 function initMRObject(fileId){
     var file = getMRFile(fileId);
     return initObject(file);

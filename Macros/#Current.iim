@@ -1,4 +1,6 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
-VERSION BUILD=8970419 RECORDER=FX
-FRAME NAME="iframe_canvas_fb_https"
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=profile&action=view&id=* EXTRACT=HTM
+TAB T=1
+URL GOTO=https://www.facebook.com/malin.cole/allactivity?log_filter=app_370030509727912
+TAG POS=1 TYPE=SPAN ATTR=CLASS:_-xe&&TXT:
+TAG POS=2 TYPE=SPAN ATTR=TXT:Verwijderen
+TAG POS=1 TYPE=BUTTON FORM=ID:u_1w_1 ATTR=TXT:Bericht<SP>verwijderen

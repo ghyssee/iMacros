@@ -6,7 +6,7 @@ eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.1.js"));
 
 var localConfigObject = null;
 setMRPath("MRAssassin-a-Nator");
@@ -20,30 +20,46 @@ var friendObj = initMRObject(MR.MR_FRIENDS_FILE);
 var fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
 var fightersToExclude = initMRObject(MR.MR_FIGHTERS_EXCLUDE_FILE);
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
+var profileObj = initObject(MR_PROFILE_FILE);
 var globalSettings = {"kills": 0, "heals": 0, "autoHealWait": false, "expReached": false};
 
-startScript();
+//startScript();
+//setAssassinTempSettting("autoHeal", "autoHeal", true);
+checkMiniHomeFeed(profileObj, globalSettings.profileId, friendObj, fightersToExclude, fighterObj);
+
 
 function activateTempSettings(){
     // Profile: Malin - Script: AutoHeal - Enable autoHeal
-    setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", true);
-    setTempSetting(MR_PROFILE_JORIS_ID, "autoHeal", "autoHeal", true);
+    setAssassinTempSettting("autoHeal", "autoHeal", true);
     // Profile: Eric - Script: Fight - Disable HomefeedAttack
-    setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", false);
+    setTempSetting(globalSettings.profileId, "fight", "homefeedAttack", false);
     // Profile: Eric - Script: Fight - Disable homefeed processing
-    setTempSetting(MR_PROFILE_ERIC_ID, "homefeed", "processLines", false);
+    setTempSetting(globalSettings.profileId, "homefeed", "processLines", false);
+    setTempSetting(globalSettings.profileId, "homefeed", "checkMini", false);
     // Profile: Eric - Script: Fight - Disable autoHeal
-    setTempSetting(MR_PROFILE_ERIC_ID, "fight", "fightAutoHeal", false);
+    setTempSetting(globalSettings.profileId, "fight", "fightAutoHeal", false);
 }
 
 function deactivateTempSettings(){
-    setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", false);
-    setTempSetting(MR_PROFILE_JORIS_ID, "autoHeal", "autoHeal", false);
-    setTempSetting(MR_PROFILE_ERIC_ID, "fight", "homefeedAttack", null);
-    setTempSetting(MR_PROFILE_ERIC_ID, "homefeed", "processLines", null);
-    setTempSetting(MR_PROFILE_ERIC_ID, "fight", "fightAutoHeal", null);
+    setAssassinTempSettting("autoHeal", "autoHeal", false);
+    setTempSetting(globalSettings.profileId, "fight", "homefeedAttack", null);
+    setTempSetting(globalSettings.profileId, "homefeed", "processLines", null);
+    setTempSetting(globalSettings.profileId, "homefeed", "checkMini", null);
+    setTempSetting(globalSettings.profileId, "fight", "fightAutoHeal", null);
     setTempSetting(globalSettings.profileId, "assassin-a-nator", "busyFighting", false);
 }
+
+function setAssassinTempSettting(category, sub, value){
+    assassinObj.players.forEach(function (fighter) {
+        if (fighter.hasOwnProperty("active") && fighter.active) {
+            var obj = findProfileByFighterId(profileObj, fighter.id);
+            if (obj){
+                setTempSetting(obj.id, category, sub, value);
+            }
+        }
+    });
+}
+
 function startScript(){
     try {
         startMafiaReloaded();
@@ -152,11 +168,9 @@ function waitTillEnoughStamina(){
     var total = 0;
     var minStamina = configMRObj.fight.minStaminaToHeal;
     logV2(INFO, "TEMP", "Profile: Malin, script AutoHeal - disable autoHeal");
-    setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", false);
-    setTempSetting(MR_PROFILE_JORIS_ID, "autoHeal", "autoHeal", false);
+    setAssassinTempSettting("autoHeal", "autoHeal", false);
     logV2(INFO, "TEMP", "Profile: Malin, script Fight - reset autoHeal");
-    setTempSetting(MR_PROFILE_MALIN_ID, "fight", "autoHeal", null);
-    setTempSetting(MR_PROFILE_JORIS_ID, "fight", "autoHeal", null);
+    setAssassinTempSettting("fight", "autoHeal", null);
     do {
         dummyBank();
         // refreshing stats (health / exp / stamina / energy)
@@ -205,10 +219,8 @@ function waitTillEnoughStamina(){
     }
     while (true);
     logV2(INFO, "WAIT", "Leaving wait");
-    setTempSetting(MR_PROFILE_MALIN_ID, "autoHeal", "autoHeal", true);
-    setTempSetting(MR_PROFILE_MALIN_ID, "fight", "autoHeal", false);
-    setTempSetting(MR_PROFILE_JORIS_ID, "autoHeal", "autoHeal", true);
-    setTempSetting(MR_PROFILE_JORIS_ID, "fight", "autoHeal", false);
+    setAssassinTempSettting("fight", "autoHeal", false);
+    setAssassinTempSettting("autoHeal", "autoHeal", true);
 }
 
 function attack(fighter, fighterType){
@@ -874,7 +886,7 @@ function homeFeedAttack(){
     }
     else {
         if (assassinObj.checkMiniHomeFeed) {
-            checkMiniHomeFeed(friendObj, fightersToExclude, fighterObj);
+            checkMiniHomeFeed(profileObj, globalSettings.profileId, friendObj, fightersToExclude, fighterObj);
         }
         logV2(INFO, "FIGHT", "Start Fight List Using Home Feed");
         var list = [];

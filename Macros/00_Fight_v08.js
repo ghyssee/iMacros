@@ -1377,7 +1377,9 @@ function startNormalAttack(fighters){
 
 function homeFeedAttack(){
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-    if (configMRObj.homefeed.checkMini) {
+    // script assassin-a-nator is the master for checking the attackers of your mini account
+    var checkMini = getOverwrittenSetting(null, "homefeed", "checkMini", configMRObj.homefeed.checkMini);
+    if (checkMini) {
         checkMiniHomeFeed(friendObj, fightersToExclude, fighterObj);
     }
     if (!configMRObj.homefeed.attack){
