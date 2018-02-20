@@ -905,6 +905,10 @@ function attackTillDeath(fighter, fighterType){
 	return statusObj;
 }
 
+function checkForExperienceLimit(){
+    return (configMRObj.global.stopWhenExpBelow > 0);
+}
+
 function performExperienceCheck(){
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
     globalSettings.expReached = false;
