@@ -313,19 +313,6 @@ function setTempSetting(profileId, category, property, value){
     writeObject(tmpObj, file);
 }
 
-
-function extractExperienceOld(text){
-    text = text.toUpperCase().replace(/,/g, "");
-    var regExp = /(?:.*)[0-9]{1,10} \((.*) TO LEVEL/; //5,886 (1,264 to level)
-    var matches = text.match(regExp);
-    var exp = 0;
-    if (matches != null && matches.length > 0){
-        exp = parseInt(matches[matches.length-1]);
-    }
-    return exp;
-
-}
-
 function extractExperience(expInfo) {
     if (!isNullOrBlank(expInfo)) {
         logV2(DEBUG, "EXPERIENCE", "Exp = " + expInfo);

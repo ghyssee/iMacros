@@ -353,7 +353,7 @@ function addHomeFeedKillToList(friendObj, fightersToExclude, fighterObj, list, l
         processed = true;
     }
     else if (isAllyGang(friendObj.gangs, lineObj.gangId)){
-        logV2(INFO, "HOMEFEED", "FRIENDGANG: " + lineObj.fighterId + " / GANG: " + lineObj.gangId);
+        logV2(INFO, "HOMEFEED", "FRIENDLY GANG MEMBER: " + lineObj.fighterId + " / GANG: " + lineObj.gangId);
         processed = true;
     }
     if (!processed){

@@ -1,25 +1,20 @@
 ﻿var ONEDRIVEPATH = getOneDrivePath();
 var MACROS_PATH = getMacrosPath();
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
-eval(readScript(MACROS_PATH + "\\js\\\MyConstants-0.0.3.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 
 var FIGHT_FOLDER = "MR/Fight";
 var COMMON_FOLDER = "MR/Common";
 var JOB_FOLDER = "MR/Jobs";
-alert (test2());
+
+test();
 
 function test() {
-    alert("1");
-    try {
-        alert("1");
-    	var file = IO.getFile("Desktop", "myinfo.txt");
-        alert("2");
-        var stream = IO.newOutputStream(file, "text");
-    } catch (ex) {
-        alert(ex);
-    }
+	var file = "C:\\My Programs\\iMacros\\Datasources\\tmp.csv";
+	var lines = readFile(file);
+    writeFileWrapper(file, "test", true);
 }
 
 function test2() {

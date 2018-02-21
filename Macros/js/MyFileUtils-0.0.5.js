@@ -39,6 +39,31 @@ function save(saveFile, outputText) {
         return true;
 }
 
+function writeFileWrapper(fileName, data, overwrite){
+    var counter = 0;
+    var success = false;
+    do {
+        counter++;
+        try {
+            writeFile(fileName, data, overwrite);
+            success = true;
+        }
+        catch (ex) {
+            if (ex.name == "NS_ERROR_FILE_IS_LOCKED") {
+                logV2(WARNING, "WRITE", "File was locked: " + fileName);
+                logV2(WARNING, "WRITE", "Retries; " + counter);
+                if (counter >= 5) {
+                    throw ("Problem writing to file: " + fileName);
+                }
+                else {
+                    sleep(1000);
+                }
+            }
+        }
+    }
+    while (!success && counter < 5);
+}
+
 function writeFile(fileName, data, overwrite) {
 		// file is nsIFile, data is a string
 	// file is nsIFile, data is a string
@@ -56,7 +81,6 @@ function writeFile(fileName, data, overwrite) {
     else {
         foStream.init(file, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_APPEND, 0666, 0);
     }
-    var charset = "UTF-16";
     var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"]
         .createInstance(Components.interfaces.nsIConverterOutputStream);
 
@@ -213,7 +237,7 @@ function readFileOld(filename){
 
 function writeObject(object, file){
 	var jstr = JSON.stringify(object, null, "   ");
-	writeFile(file.fullPath(), jstr, true);
+    writeFileWrapper(file.fullPath(), jstr, true);
 }
 
 function initObject(obj, arrayOfObjects){

@@ -401,7 +401,12 @@ function strcmp(a, b)
 
 function addValueToProperty(obj, property, add){
     if (obj.hasOwnProperty(property)){
-        obj[property] += add;
+        if (obj[property] == null){
+            obj[property] = add;
+		}
+		else {
+            obj[property] += add;
+        }
     }
     else
     {
@@ -431,4 +436,9 @@ function UUID() {
         randStr.substr(15, 3), "-",
         randStr.substr(18, 12)
     ].join("");
+}
+
+function sleep(milliSeconds){
+    var startTime = new Date().getTime(); // get the current time
+    while (new Date().getTime() < startTime + milliSeconds); // hog cpu
 }

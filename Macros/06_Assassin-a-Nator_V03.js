@@ -24,9 +24,6 @@ var profileObj = initObject(MR_PROFILE_FILE);
 var globalSettings = {"kills": 0, "heals": 0, "autoHealWait": false, "expReached": false};
 
 startScript();
-//setAssassinTempSettting("autoHeal", "autoHeal", true);
-//checkMiniHomeFeed(profileObj, globalSettings.profileId, friendObj, fightersToExclude, fighterObj);
-
 
 function activateTempSettings(){
     // Profile: Malin - Script: AutoHeal - Enable autoHeal
@@ -225,7 +222,6 @@ function waitTillEnoughStamina(){
 
 function attack(fighter, fighterType){
     logV2(INFO, "FIGHT", "Attacking " + fighter.id);
-    // ADD 15/11
     var statusObj = getStatusObject();
     fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
     var retCode = SUCCESS;
@@ -242,7 +238,6 @@ function attack(fighter, fighterType){
         retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS){
             var msg = getLastExtract(1, "Attack Status", "You WON The Fight");
-            //var msg = prompt("FIRST ATTACK","You WON");
             var status = evaluateAttackMessage(msg);
             switch (status){
                 case FIGHTERCONSTANTS.OPPONENT.NOHEALTH:
@@ -254,7 +249,6 @@ function attack(fighter, fighterType){
                     statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.SKIP;
                     break;
                 case FIGHTERCONSTANTS.OPPONENT.WON :
-                    // ADD 15/11
                     fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
                     addValueToProperty(fighter, "alive", 1);
                     var attackStatusObj = attackTillDeath(fighter);
@@ -320,7 +314,6 @@ function getVictimHealth(fighter){
             health = parseInt(healthMsg);
             if (health == 0){
                 waitV2("0.3");
-                // MOD 15/11
                 checkIfIced(fighter);
             }
         }
@@ -362,7 +355,6 @@ function attackTillDeath(fighter){
         if (health > -1){
             if (firstAttack) {
                 originalHealth = health;
-                // MOD 15/11
                 health = getVictimHealth(fighter);
             }
             if (previousHealth < health){
@@ -950,7 +942,6 @@ function performAttack(fighter){
     if (status == FIGHTERCONSTANTS.ATTACKSTATUS.EXP){
         return status;
     }
-    //addMacroSetting("ID", fighter.id);
     logV2(DEBUG, "ATTACK", "ID: " + fighter.id);
     retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack.iim", MACRO_INFO_LOGGING);
     if (retCode != SUCCESS) {

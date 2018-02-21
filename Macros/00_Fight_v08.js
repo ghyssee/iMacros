@@ -1474,7 +1474,7 @@ function profileAttack(array, fighterType){
                         exitLoop = true;
                         break;
                     case FIGHTERCONSTANTS.ATTACKSTATUS.HEALINGDISABLED :
-                        logV2(INFO, "FIGHT", "AutoHeal Disabled. Exit Profile Fighers List");
+                        logV2(INFO, "FIGHT", "AutoHeal Disabled. Exit Profile Fighters List");
                         status = FIGHTERCONSTANTS.ATTACKSTATUS.HEALINGDISABLED;
                         exitLoop = true;
                         break;
