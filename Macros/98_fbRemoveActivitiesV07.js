@@ -1,8 +1,8 @@
 var ONEDRIVEPATH = getOneDrivePath();
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyUtils-0.0.1.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyFileUtils-0.0.2.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyConstants-0.0.2.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.1.js"));
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyFileUtils-0.0.4.js"));
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyConstants-0.0.4.js"));
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.4.js"));
 
 var ENABLED = "1";
 var APPLICATIONS_JSON_FILE = new ConfigFile(CONFIG_DIR, "FaceBookApps.json"); 
