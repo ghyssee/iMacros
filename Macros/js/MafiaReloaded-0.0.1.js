@@ -335,3 +335,11 @@ function extractExperience(expInfo) {
     }
     return -1;
 }
+
+function closePopupByText(text){
+    addMacroSetting("TEXT", text);
+    var retCode = playMacro(COMMON_FOLDER, "03_ClosePopupText.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS){
+        logV2(INFO, "POPUP", "Popup Closed");
+    }
+}

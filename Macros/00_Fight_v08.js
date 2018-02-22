@@ -415,7 +415,7 @@ function attackFightList(){
     var fighters = getFightList();
     if (configMRObj.fight.fightList) {
         var filteredFightersList = filterFightList(fighters);
-        var minFightList = configMRObj.fight.minLengthOfFightList == null ? 0 : configMRObj.fight.minLengthOfFightList;
+        var minFightList = configMRObj.fight.minLengthOfFightList == null ? 2 : configMRObj.fight.minLengthOfFightList;
         logV2(INFO, "FIGHT", "Min Fighters on Fight List: " + minFightList);
         if (filteredFightersList.length >= minFightList) {
             status = processList(filteredFightersList, FIGHTERCONSTANTS.FIGHTERTPE.NORMAL);
@@ -534,7 +534,7 @@ function waitTillEnoughStamina(){
             total = stamina + energy;
             var exp = getExperience();
             if (exp > 0) {
-                var staminaNeeded = exp / (4.3);
+                var staminaNeeded = exp / (4.4);
                 logV2(INFO, "WAIT", "Stamina Needed: " + staminaNeeded);
                 logV2(INFO, "WAIT", "Total (Energy + Stamina available): " + total);
                 logV2(INFO, "WAIT", "Stamina: " + stamina);
