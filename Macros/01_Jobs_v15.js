@@ -1698,7 +1698,7 @@ function collectBonus() {
         addMacroSetting("COLLECT", "gid");
         addMacroSetting("RESOURCE", "0");
         var retCode = playMacro(JOB_FOLDER, "50_CollectBonus.iim", MACRO_INFO_LOGGING);
-        logV2(INFO, "COLLECT", "collectBonus Status: " + retCode);
+        logV2(INFO, "COLLECT", "collectBonus retCode: " + retCode);
         makeScreenShot("MRJobCollectBonus");
         if (retCode == SUCCESS) {
             var resourceObj = getResources();
