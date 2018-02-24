@@ -343,3 +343,31 @@ function closePopupByText(text){
         logV2(INFO, "POPUP", "Popup Closed");
     }
 }
+
+
+function initAndCheckScript(folder, initMacro, initTestMacro, testValue, category, logMessage){
+    var retCode = -1;
+    var counter = 0;
+    do {
+        counter++;
+        retCode = playMacro(folder, initMacro, MACRO_INFO_LOGGING);
+        if (retCode == SUCCESS) {
+            // check if Init Screen is realy selected
+            retCode = playMacro(folder, initTestMacro, MACRO_INFO_LOGGING);
+            var _value = getLastExtract(1, "Test Value", "Test Value");
+            if (isNullOrBlank(_value)){
+                logV2(WARNING, category, "Problem with " + logMessage + ". Value is empty");
+                retCode = -1;
+            }
+            else if (_value.toLowerCase() != testValue.toLowerCase()){
+                logV2(WARNING, category, "Problem with " + logMessage + ". Value is: " + _value);
+                retCode = -1;
+            }
+        }
+        if (retCode != SUCCESS){
+            logV2(WARNING, category, "Retries: " + counter);
+        }
+    }
+    while (retCode != SUCCESS && counter < 10);
+    return retCode;
+}

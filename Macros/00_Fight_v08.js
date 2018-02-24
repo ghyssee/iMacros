@@ -84,6 +84,7 @@ function startScript(){
                     }
                     else {
                         logV2(INFO, "FIGHT", "AutoHeal was disabled. Possible Reasons: Configuration, Killed, Temporary disabled (other script is doing the healing)");
+                        waitV2("70");
                     }
                 }
                 if (status == FIGHTERCONSTANTS.ATTACKSTATUS.HEALINGDISABLED){
@@ -137,8 +138,10 @@ function startFightBoss(){
 
 }
 
+
 function fightBoss(){
-    var retCode = playMacro(FIGHT_FOLDER, "70_Boss_Start.iim", MACRO_INFO_LOGGING);
+    var retCode = initAndCheckScript(FIGHT_FOLDER, "70_Boss_Start.iim", "84_Boss_Start_Test.iim", "boss fights", "INITBOSS", "Init Boss");
+    var bossObj = getBossObj();
     if (retCode == SUCCESS) {
         bossObj = evaluateBossMessage();
         logV2(INFO, "BOSS", "Status: " + bossObj.status);
@@ -239,7 +242,9 @@ function attackBoss(){
     var bossHealth = -1;
     var retCode = 0;
     var AUTOHEAL = true;
-    retCode = playMacro(FIGHT_FOLDER, "73_Boss_StartAttack.iim", MACRO_INFO_LOGGING);
+    retCode = initAndCheckScript(FIGHT_FOLDER, "73_Boss_StartAttack.iim", "77_Boss_StartAttack_Test.iim", "pummel",
+        "INITATTACKBOSS", "Init Attack Boss");
+    //retCode = playMacro(FIGHT_FOLDER, "73_Boss_StartAttack.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
         bossHealth = getBossHealth();
         while(bossHealth > 0 && bossHealth > configMRObj.boss.stopWhenHealthBelow) {
@@ -327,10 +332,14 @@ function getBossHealth(){
     return health;
 }
 
+function getBossObj(){
+    return{"status": FIGHTERCONSTANTS.ATTACKSTATUS.UNKNOWN};
+}
+
 
 function evaluateBossMessage() {
     var retCode = playMacro(FIGHT_FOLDER, "71_Boss_Message.iim", MACRO_INFO_LOGGING);
-    var bossObj = {"status": FIGHTERCONSTANTS.ATTACKSTATUS.UNKNOWN};
+    var bossObj = getBossObj;
     if (retCode == SUCCESS){
         var msg = getLastExtract(1, "Boss Message", "There are no bosses available to fight. Please try coming back in 20 hours, 57 minutes.");
         if (!isNullOrBlank(msg)){
@@ -1047,7 +1056,9 @@ function evaluateAttackMessage(msg){
 // MOD 22/11
 function checkHealth(autoHeal, stamina){
     autoHeal = typeof autoHeal !== 'undefined' ? autoHeal : configMRObj.fight.autoHeal;
+    //logV2(INFO, "FIGHT", "autoHeal 1: " + autoHeal);
     autoHeal = getOverwrittenSetting(null, "fight", "fightAutoHeal", autoHeal);
+    //logV2(INFO, "FIGHT", "autoHeal 2: " + autoHeal);
     iimDisplay("autoHeal: " + autoHeal);
     var tries = 0;
     if (typeof stamina == 'undefined'){
@@ -1056,8 +1067,10 @@ function checkHealth(autoHeal, stamina){
     }
     dummyBank();
     var health = getHealth();
+    //logV2(INFO, "FIGHT", "Before Healing. autoHeal: " + autoHeal + " / Health: " + health);
     // MOD 22/11
     if (autoHeal) {
+        //logV2(INFO, "FIGHT", "Stamina: " + stamina);
         if (stamina >= configMRObj.fight.minStaminaToHeal) {
             while (health < configMRObj.fight.heal) {
                 logV2(INFO, "FIGHT", "Health = " + health);
@@ -1073,12 +1086,14 @@ function checkHealth(autoHeal, stamina){
                         logV2(INFO, "FIGHT", "Killed by another player");
                         //autoHeal = false;
                         var processHomefeedLines = getOverwrittenSetting(null, "homefeed", "processLines", configMRObj.homefeed.processLines);
-                        if (processHomefeed(processHomefeedLines)){
-                            // Went To Home page;
-                            // interrupt Attack / Boss Fight => disable autoHeal switch
-                            // autoHeal = false; (homefeed not disabled : autoHeal set to true ???
-                            autoHeal = false;
-                            globalSettings.autoHealWait = false; // disable to wait 70 seconds to continue fighting again
+                        if (processHomefeedLines) {
+                            if (processHomefeed(processHomefeedLines)) {
+                                // Went To Home page;
+                                // interrupt Attack / Boss Fight => disable autoHeal switch
+                                // autoHeal = false; (homefeed not disabled : autoHeal set to true ???
+                                autoHeal = true;
+                                globalSettings.autoHealWait = false; // disable to wait 70 seconds to continue fighting again
+                            }
                         }
                         var bullied = underAttack(configMRObj, processHomefeedLines);
                         if (!bullied) {
@@ -1109,7 +1124,7 @@ function checkHealth(autoHeal, stamina){
             globalSettings.heals++;
         }
     }
-    logV2(INFO, "AUTOHEAL", "autoHeal: " + autoHeal);
+    logV2(INFO, "AUTOHEAL", "autoHeal: " + autoHeal + " / Health: " + health);
     globalSettings.forceHealing = false;
     return autoHeal;
 }

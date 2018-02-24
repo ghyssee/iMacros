@@ -1,0 +1,5 @@
+﻿VERSION BUILD=8970419 RECORDER=FX
+SET !TIMEOUT_STEP 1
+' Look For Text Boss Fights
+'TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=boss&action=attackview&id=* EXTRACT=TXT
+TAG POS=1 TYPE=H3 ATTR=TXT:Boss<SP>Fights* EXTRACT=TXT

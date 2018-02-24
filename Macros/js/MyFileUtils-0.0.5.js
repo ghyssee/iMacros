@@ -242,7 +242,7 @@ function writeObject(object, file){
 
 function initObject(obj, arrayOfObjects){
 	var fileName = typeof obj === "string" ? obj : obj.fullPath();
-	logV2(INFO, "INIT", "Initializing object from file " + fileName);
+	logV2(DEBUG, "INIT", "Initializing object from file " + fileName);
 	if (fileExists(fileName)){
 		var lines = readFile(fileName);
 		if (lines != null){
