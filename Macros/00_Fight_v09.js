@@ -23,9 +23,10 @@ var settingsObj = initObject(getMRRootFile(MR.MR_SETTINGS_FILE));
 
 var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0,
                       "skippedHealth": 0, "maxHealed": 0, "heals": 0, "stopOnLevelUp": false, "expReached": false,
-                        "forceHealing": false, "autoHealWait": false,
+                        "forceHealing": false,
                       "boss": {"attacks": 0}};
 startScript();
+//alert(initAndCheckScript(FIGHT_FOLDER, "70_Boss_Start.iim", "84_Boss_Start_Test.iim", "boss fights", "INITBOSS", "Init Boss"));
 
 function startScript(){
     try {
@@ -57,10 +58,6 @@ function startScript(){
                     iimdisplay("");
                 }
             }
-            else if (globalSettings.autoHealWait){
-                globalSettings.autoHealWait = false;
-                waitV2("70");
-            }
             else {
                 // if (health is 0, don't check for underAttack, it's already checked
                 var status = performExperienceCheck();
@@ -82,13 +79,6 @@ function startScript(){
                         logV2(INFO, "FIGHT", "Updating statistics");
                         writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
                     }
-                    else {
-                        logV2(INFO, "FIGHT", "AutoHeal was disabled. Possible Reasons: Configuration, Killed, Temporary disabled (other script is doing the healing)");
-                        waitV2("70");
-                    }
-                }
-                if (status == FIGHTERCONSTANTS.ATTACKSTATUS.HEALINGDISABLED){
-                    globalSettings.autoHealWait = true;
                 }
                 setTempSetting(globalSettings.profileId, "fight", "busyFighting", false);
             }
@@ -160,7 +150,7 @@ function fightBoss(){
             default:
                 break;
         }
-    }
+    }//
     else {
         logV2(INFO, "BOSS", "Problem Starting Boss Fight");
         bossObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
@@ -1056,7 +1046,6 @@ function evaluateAttackMessage(msg){
 	}
 }
 
-// MOD 22/11
 function checkHealth(autoHeal, stamina){
     autoHeal = typeof autoHeal !== 'undefined' ? autoHeal : configMRObj.fight.autoHeal;
     //logV2(INFO, "FIGHT", "autoHeal 1: " + autoHeal);
@@ -1095,7 +1084,7 @@ function checkHealth(autoHeal, stamina){
                                 // interrupt Attack / Boss Fight => disable autoHeal switch
                                 // autoHeal = false; (homefeed not disabled : autoHeal set to true ???
                                 //autoHeal = true;
-                                globalSettings.autoHealWait = false; // disable to wait 70 seconds to continue fighting again
+                                //globalSettings.autoHealWait = false; // disable to wait 70 seconds to continue fighting again
                             }
                         }
                         var bullied = underAttack(configMRObj, processHomefeedLines);
@@ -1110,16 +1099,17 @@ function checkHealth(autoHeal, stamina){
         }
         else if (health == 0){
             logV2(INFO, "FIGHT", "Not Enough Stamina To Heal: " + stamina);
-            globalSettings.autoHealWait = true;
+            waitV2("60");
             autoHeal = false;
         }
     }
     else if (health > 0) {
-        globalSettings.autoHealWait = true;
         autoHeal = true;
     }
     else {
         logV2(INFO, "FIGHT", "Auto Heal disabled");
+        // if setting is disabled, just wait 60 seconds and than check again
+        waitV2("60");
     }
     if (autoHeal) {
         health = getHealth();
@@ -1127,9 +1117,11 @@ function checkHealth(autoHeal, stamina){
             globalSettings.heals++;
         }
     }
+    var enoughHealthToFight = (health > 0);
     logV2(INFO, "AUTOHEAL", "autoHeal: " + autoHeal + " / Health: " + health);
+    logV2(INFO, "AUTOHEAL", "enoughHealthToFight: " + enoughHealthToFight);
     globalSettings.forceHealing = false;
-    return autoHeal;
+    return enoughHealthToFight;
 }
 
 function getFightList(){

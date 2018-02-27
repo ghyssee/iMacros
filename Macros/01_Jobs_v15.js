@@ -1,7 +1,7 @@
 ﻿var ONEDRIVEPATH = getOneDrivePath();
 var MACROS_PATH = getMacrosPath();
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
@@ -48,8 +48,6 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
 
 //enableMacroPlaySimulation();
 start();
-//var obj = getResources();
-//alert(JSON.stringify(obj));
 //test();
 
 function test(){
@@ -57,7 +55,7 @@ function test(){
     var collectObj = {"nrOfLevelUpJobsExecuted": 0};
     var listOfJobs = getListOfEnabledJobs(jobsObj.activeJobs);
     var newJobs = initJobs(listOfJobs);
-    doJobsWithoutLevelUp(newJobs, collectObj, exp);
+    //doJobsWithoutLevelUp(newJobs, collectObj, exp);
     doLevelUpJob();
 
 }
@@ -587,7 +585,7 @@ function isRangeDefined(jobItem){
 function isJobCompleted(jobItem){
     var completed = false;
     if (jobItem.type == CONSTANTS.EXECUTE.COMPLETE){
-        if (jobItem.percentCompleted == -1){
+        if (jobItem.percentCompleted == null || jobItem.percentCompleted == -1){
             // state is uncertain, skip the job for now
             completed = true;
         }
@@ -599,16 +597,23 @@ function isJobCompleted(jobItem){
 }
 
 function isValidJob(jobItem, resourceObj){
-    logV2(INFO, "JOB", "Entering isValidJob");
+    var category = "VALIDJOB";
+    logV2(INFO, category, "Entering isValidJob");
     var validJobStatus = CONSTANTS.STATUS.UNKNOWN;
     if (!settingsObj.global.eventEnabled && jobItem.district.event){
-        logV2(INFO, "JOB", "Event is disabled");
+        logV2(INFO, "VALIDJOB", "Event is disabled");
         validJobStatus = CONSTANTS.STATUS.SKIP;
         return validJobStatus;
     }
     if (isRangeDefined(jobItem)){
+        logV2(INFO, category, "Range is defined for this job");
         var resource = getEnergyOrStamina(jobItem.job.type, resourceObj);
-        if (jobItem.minRange >= resource && jobItem.maxRange <= resource){
+        logV2(INFO, category, "Energy/Stamina left: " + resource);
+        logObj(INFO, category, jobItem);
+        if (resource >= jobItem.minRange && resource <= jobItem.maxRange){
+            logV2(INFO, "JOB", "Job is within Range: " + jobItem.minRange + " - " + jobItem.maxRange);
+        }
+        else {
             logV2(INFO, "JOB", "Energy/Stamina are not in the range: " + resource + " / Range: " + jobItem.minRange + " - " + jobItem.maxRange);
             validJobStatus = CONSTANTS.STATUS.SKIP;
             return validJobStatus;
@@ -617,7 +622,7 @@ function isValidJob(jobItem, resourceObj){
     switch (jobItem.type){
         case CONSTANTS.EXECUTE.REPEAT:
             if (jobItem.total > 0 && jobItem.numberOfTimesExecuted >= jobItem.total){
-                logV2(INFO, "JOB", "Nr Of Times Exceeded: " + jobItem.numberOfTimesExecuted + "/" + jobItem.total);
+                logV2(INFO, category, "Nr Of Times Exceeded: " + jobItem.numberOfTimesExecuted + "/" + jobItem.total);
                 validJobStatus = CONSTANTS.STATUS.SKIP;
             }
             else {
@@ -626,7 +631,7 @@ function isValidJob(jobItem, resourceObj){
             break;
         case CONSTANTS.EXECUTE.COMPLETE:
             if (jobItem.percentCompleted != null && jobItem.percentCompleted == 100){
-                logV2(INFO, "JOB", "Job is already completed");
+                logV2(INFO, category, "Job is already completed");
                 validJobStatus = CONSTANTS.STATUS.SKIP;
             }
             else {
@@ -637,7 +642,7 @@ function isValidJob(jobItem, resourceObj){
     if (validJobStatus == CONSTANTS.STATUS.OK) {
         validJobStatus = checkIfEnoughEnerygOrStamina(jobItem, resourceObj);
     }
-    logV2(INFO, "JOB", "Job " + jobItem.jobId + " validJobStatus: " + validJobStatus);
+    logV2(INFO, category, "Job " + jobItem.jobId + " validJobStatus: " + validJobStatus);
     return validJobStatus;
 }
 
@@ -1654,7 +1659,10 @@ function doScheduledJobs(newJobs, collectObj){
         var resourceObj = getResources();
         var status = isValidJob(activeJobObj, resourceObj);
         if (status == CONSTANTS.STATUS.OK){
-           repeatSingleJob(collectObj, activeJobObj);
+           // skip jobs of type complete
+            if (activeJobObj.type != "COMPLETE") {
+                repeatSingleJob(collectObj, activeJobObj);
+            }
         }
     }
 
@@ -1806,6 +1814,9 @@ function performSingleJob(jobItem){
     else {
         logV2(INFO, "COLLECT", "Job Executed");
         globalSettings.money += checkSaldo();
+        if (jobItem.type == "COMPLETE"){
+            jobItem.percentCompleted = getPercentCompleted(jobItem);
+        }
     }
     return status;
 }
@@ -1831,27 +1842,26 @@ function doLevelUpJob(){
     if (jobs.length > 0){
         for (var i=0; i < jobs.length; i++) {
             var jobObj = jobs[i];
-            var status = travel(jobItem);
-            if (status == CONSTANTS.STATUS.OK) {
                 var activeJobObj = getJobTaskObject(jobObj.districtId, jobObj.id, jobObj.type);
                 activeJobObj.enabled = true;
                 activeJobObj.type = "REPEAT";
                 fillDistrictInfo(activeJobObj);
                 var status = checkIfEnoughEnerygOrStamina(activeJobObj, resourceObj);
                 if (status == CONSTANTS.STATUS.OK) {
-                    makeScreenShot("MRJobCollectBeforeLevelUp");
-                    logV2(INFO, "COLLECT", JSON.stringify(activeJobObj));
-                    logJob(activeJobObj);
-                    status = performSingleJob(activeJobObj);
-                    if (status == CONSTANTS.STATUS.OK){
-                        //if (checkIfLevelUp()) {
-                        if (true) {
-                            makeScreenShot("MRJobCollectAfterLevelUp");
-                            break;
-                        }
-                        else {
-                            logV2(INFO, "COLLECT", "Level Up Job Executed but not leveled up. This Should never occur");
-                            resourceObj = getResources();
+                    status = travel(activeJobObj);
+                    if (status == CONSTANTS.STATUS.OK) {
+                        makeScreenShot("MRJobCollectBeforeLevelUp");
+                        logJob(activeJobObj);
+                        status = performSingleJob(activeJobObj);
+                        if (status == CONSTANTS.STATUS.OK) {
+                            if (checkIfLevelUp()) {
+                                makeScreenShot("MRJobCollectAfterLevelUp");
+                                break;
+                            }
+                            else {
+                                logV2(INFO, "COLLECT", "Level Up Job Executed but not leveled up. This Should never occur");
+                                resourceObj = getResources();
+                            }
                         }
                     }
                 }
@@ -1859,7 +1869,6 @@ function doLevelUpJob(){
                     logV2(INFO, "COLLECT", "Leveled Up. This should never occur");
                 }
             }
-        }
     }
     else {
         logV2(WARNING, "COLLECT", "Level Up Job: No Jobs Found");
@@ -1925,7 +1934,6 @@ function extractStamina(staminaInfo) {
 
 function getEnergyOrStamina(jobType, resourceObj){
     var total = 0;
-    logV2(INFO, "TEST", JSON.stringify(resourceObj));
     if (jobType == STAMINA){
         total = resourceObj.staminaObj.left;
     }

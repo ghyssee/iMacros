@@ -316,6 +316,16 @@ function addFighter(fighterObj, fighter){
     }
 }
 
+function addFighterV2(fighterObj, fighter){
+    var foundfighter = getFighter(fighterObj, id);
+    if (foundfighter == null){
+        fighterObj.fighters.push(fighter);
+        writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+        foundFighter = fighter;
+    }
+    return foundFighter;
+}
+
 function getFighterObject(id, name, level){
     return {"id":id, "name":name, "level": level, "skip": false,
         "gangId": null, "gangName": null, "bigHealth": false, "lastAttacked": null, "lastIced": null,

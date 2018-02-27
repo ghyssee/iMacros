@@ -348,6 +348,7 @@ function closePopupByText(text){
 function initAndCheckScript(folder, initMacro, initTestMacro, testValue, category, logMessage){
     var retCode = -1;
     var counter = 0;
+    logV2(INFO, category, "Init: " + logMessage);
     do {
         counter++;
         retCode = playMacro(folder, initMacro, MACRO_INFO_LOGGING);

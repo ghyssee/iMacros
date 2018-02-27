@@ -217,6 +217,35 @@ function readFile(filename){
 	return lines;
 }
 
+
+function readFileWrapper(fileName){
+    var counter = 0;
+    var success = false;
+    var lines = [];
+    do {
+        counter++;
+        try {
+            lines = readFile(fileName);
+            success = true;
+        }
+        catch (ex) {
+            if (ex.name == "NS_ERROR_FILE_IS_LOCKED") {
+                logV2(WARNING, "READ", "File was locked: " + fileName);
+                logV2(WARNING, "READ", "Retries; " + counter);
+                if (counter >= 5) {
+                    throw ("Problem reading file: " + fileName);
+                }
+                else {
+                    sleep(1000);
+                }
+            }
+        }
+    }
+    while (!success && counter < 5);
+    return lines;
+}
+
+
 function readFileOld(filename){
 	// open an input stream from file
 	var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
@@ -244,7 +273,7 @@ function initObject(obj, arrayOfObjects){
 	var fileName = typeof obj === "string" ? obj : obj.fullPath();
 	logV2(DEBUG, "INIT", "Initializing object from file " + fileName);
 	if (fileExists(fileName)){
-		var lines = readFile(fileName);
+		var lines = readFileWrapper(fileName);
 		if (lines != null){
 			if (lines.length == 1 && arrayOfObjects == null){
 				return JSON.parse(lines[0]);
@@ -282,9 +311,10 @@ function displayObj(obj){
 }
 
 
-function logObj(obj){
-	var jstr = JSON.stringify(obj, null, "   ");
-	logV2(DEBUG, "OBJECT", jstr);
+function logObj(logType, category, obj){
+	//var jstr = JSON.stringify(obj, null, "   ");
+    var jstr = JSON.stringify(obj);
+	logV2(logType, category, jstr);
 }
 
 function writeLineToCSV(filename, data, seperator){
