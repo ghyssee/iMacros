@@ -414,6 +414,15 @@ function addValueToProperty(obj, property, add){
     }
 }
 
+function propertyExistAndNotNull(obj, property){
+    if (obj.hasOwnProperty(property)){
+        if (obj[property] != null){
+            return true;
+        }
+    }
+    return false;
+}
+
 function valueNotNullAndGreaterThan(field, value){
     return (field != null && field > value);
 }

@@ -22,7 +22,6 @@ var FIGHTERCONSTANTS = Object.freeze({
         "NOHEALTH": 10
     },
     "FIGHTERTPE" : {
-        "NORMAL" : 0,
         "RIVAL" : 1,
         "PROFILE": 2,
         "NORMALPROFILE": 3,
@@ -82,8 +81,10 @@ function getFighter(list, id){
     });
     return fighter;
 }
+
 function getHealth(){
     var healthObj = getHealthObj();
+    logObj(DEBUG, "HEALTH", healthObj.leftOver);
     return healthObj.leftOver;
 }
 
@@ -230,7 +231,7 @@ function isExcludedPlayer(homefeedObj, fighterId){
 
 function getHomeFeed(configMRObj, homefeedObj){
     logV2(INFO, "HOMEFEED", "Get Home Feed");
-    var retCode = playMacro(COMMON_FOLDER, "30_Home.iim", MACRO_INFO_LOGGING);
+    var retCode = initAndCheckScript(COMMON_FOLDER, "30_Home.iim", "33_Home_Test.iim","feed", "HOMEFEED", "init Homefeed");
     var listOfKills = [];
     var listOfLines = [];
     if (retCode == SUCCESS){
@@ -298,10 +299,15 @@ function getHomeFeed(configMRObj, homefeedObj){
             homefeedObj.lines.push(listOfLines[i]);
         }
         writeMRObject(homefeedObj, MR.MR_HOMEFEED_FILE);
-        retCode = playMacro(COMMON_FOLDER, "32_HomeFeedClear.iim", MACRO_INFO_LOGGING);
-        if (retCode != SUCCESS){
-            logV2(INFO, "FIGHT", "Problem clearing home feed");
+        do {
+            retCode = playMacro(COMMON_FOLDER, "32_HomeFeedClear.iim", MACRO_INFO_LOGGING);
+            if (retCode != SUCCESS) {
+                logV2(INFO, "FIGHT", "Problem clearing home feed");
+                break;
+            }
+            retCode = playMacro(COMMON_FOLDER, "34_HomeFeedClearTest.iim", MACRO_INFO_LOGGING);
         }
+        while (retCode != SUCCESS);
     }
     else {
         logV2(INFO, "FIGHT", "Problem Going To MR Home Page");
@@ -317,11 +323,15 @@ function addFighter(fighterObj, fighter){
 }
 
 function addFighterV2(fighterObj, fighter){
-    var foundfighter = getFighter(fighterObj, id);
-    if (foundfighter == null){
+    var foundFighter = getFighter(fighterObj.fighters, fighter.id);
+    if (foundFighter == null){
         fighterObj.fighters.push(fighter);
         writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
         foundFighter = fighter;
+    }
+    else {
+        foundFighter.gangId = fighter.gangId;
+        foundFighter.gangName = fighter.gangName;
     }
     return foundFighter;
 }
@@ -439,4 +449,45 @@ function checkForStopFighting(category){
         iimdisplay("");
     }
     return stopFighting;
+}
+
+function performAttackInit(fighterType){
+    var msg = null;
+    var counter = 0;
+    var macro = null;
+    switch (fighterType) {
+        case FIGHTERCONSTANTS.FIGHTERTPE.PROFILE:
+            macro = "81_Profile_Attack_Start.iim";
+            break;
+        case FIGHTERCONSTANTS.FIGHTERTPE.RIVAL:
+            macro = "32_AttackRivalMobster_start.iim";
+            break;
+        case FIGHTERCONSTANTS.FIGHTERTPE.NORMALPROFILE:
+            macro = "81_Profile_Attack_Start.iim";
+            break;
+        case FIGHTERCONSTANTS.FIGHTERTPE.ASSASSIN:
+            macro = "81_Profile_Attack_Start.iim";
+            break;
+    }
+    logV2(INFO, "MACRO", macro);
+    var retCode = initAndCheckScript(FIGHT_FOLDER, macro, "34_Attack_Start_Test.iim", "power attack", "INITATTACK", "Init Attack Step 1");
+    if (retCode == SUCCESS) {
+        var counter = 0;
+        do {
+            retCode = initAndCheckScript(FIGHT_FOLDER, "33_Attack_Start_1st.iim", "34_Attack_Start_Test.iim", "power attack", "INITATTACK", "Init Attack Step 2");
+            if (retCode != SUCCESS){
+                break;
+            }
+            retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status", MACRO_INFO_LOGGING);
+            if (retCode == SUCCESS) {
+                msg = getLastExtract(1, "Attack Status", "You WON The Fight");
+                counter++;
+            }
+            if (counter > 1){
+                logV2(INFO, "INITATTACK", "Problem extracting message. Retries: " + counter);
+            }
+        }
+        while (isNullOrBlank(msg) && counter <= 10);
+    }
+    return msg;
 }

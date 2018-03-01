@@ -1,6 +1,0 @@
-﻿VERSION BUILD=8970419 RECORDER=FX
-SET !TIMEOUT_STEP 1
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fight&action=attackview&id={{ID}}*
-WAIT SECONDS=0.5
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:action=*&controller=fight&id={{ID}}&tab=0&amt=1
-WAIT SECONDS=1.0

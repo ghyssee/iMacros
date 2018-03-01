@@ -147,6 +147,14 @@ function closePopup(){
     }
 }
 
+function closePopupByText(text){
+    addMacroSetting("TEXT", text);
+    var retCode = playMacro(COMMON_FOLDER, "03_ClosePopupText.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS){
+        logV2(INFO, "POPUP", "Popup Closed");
+    }
+}
+
 function checkSaldo(){
     logV2(DEBUG, "SALDO", "Get Saldo");
     var saldo = 0;
@@ -336,19 +344,11 @@ function extractExperience(expInfo) {
     return -1;
 }
 
-function closePopupByText(text){
-    addMacroSetting("TEXT", text);
-    var retCode = playMacro(COMMON_FOLDER, "03_ClosePopupText.iim", MACRO_INFO_LOGGING);
-    if (retCode == SUCCESS){
-        logV2(INFO, "POPUP", "Popup Closed");
-    }
-}
-
-
-function initAndCheckScript(folder, initMacro, initTestMacro, testValue, category, logMessage){
+function initAndCheckScript(folder, initMacro, initTestMacro, testValue, category, logMessage, nrOfRetries){
     var retCode = -1;
     var counter = 0;
     logV2(INFO, category, "Init: " + logMessage);
+    nrOfRetries = typeof nrOfRetries !== 'undefined' ? nrOfRetries : 10;
     do {
         counter++;
         retCode = playMacro(folder, initMacro, MACRO_INFO_LOGGING);
@@ -357,11 +357,11 @@ function initAndCheckScript(folder, initMacro, initTestMacro, testValue, categor
             retCode = playMacro(folder, initTestMacro, MACRO_INFO_LOGGING);
             var _value = getLastExtract(1, "Test Value", "Test Value");
             if (isNullOrBlank(_value)){
-                logV2(WARNING, category, "Problem with " + logMessage + ". Value is empty");
+                logV2(WARNING, category, "Problem with " + logMessage + ". Value is empty, but should be " + testValue);
                 retCode = -1;
             }
             else if (_value.toLowerCase() != testValue.toLowerCase()){
-                logV2(WARNING, category, "Problem with " + logMessage + ". Value is: " + _value);
+                logV2(WARNING, category, "Problem with " + logMessage + ". Value is: " + " but should be: " + testValue);
                 retCode = -1;
             }
         }
@@ -369,6 +369,6 @@ function initAndCheckScript(folder, initMacro, initTestMacro, testValue, categor
             logV2(WARNING, category, "Retries: " + counter);
         }
     }
-    while (retCode != SUCCESS && counter < 10);
+    while (retCode != SUCCESS && counter < nrOfRetries);
     return retCode;
 }
