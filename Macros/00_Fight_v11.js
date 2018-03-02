@@ -96,7 +96,7 @@ function startScript(){
             }
             else {
                 // if (health is 0, don't check for underAttack, it's already checked
-                var status = performExperienceCheck();
+                var status = performExperienceCheck(configMRObj, globalSettings);
                 if (status == FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED) {
                     continue;
                 }
@@ -189,6 +189,7 @@ function fightBoss(){
     }
     return bossObj.status;
 }
+
 function evaluateBossResult(){
     var retCode = playMacro(FIGHT_FOLDER, "75_Boss_Attack_Result.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
@@ -250,7 +251,7 @@ function performBossAttack(staminaObj){
         retCode = playMacro(FIGHT_FOLDER, "74_Boss_Attack.iim", MACRO_INFO_LOGGING);
     }
     if (retCode == SUCCESS){
-        status = performExperienceCheck();
+        status = performExperienceCheck(configMRObj, globalSettings);
     }
     else {
         status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
@@ -274,7 +275,7 @@ function attackBoss(){
             if (staminaObj.leftOver >= 5) {
                 var healthObj = performHealthCheck("ATTACKBOSS", AUTOHEAL, staminaObj.leftOver);
                 if (refreshAfterHealing(healthObj)){
-                    status == FIGHTERCONSTANTS.ATTACKSTATUS.REFRESH;
+                    status = FIGHTERCONSTANTS.ATTACKSTATUS.REFRESH;
                     break;
                 }
                 if (continueFightingAfterHealthCheck(healthObj)) {
@@ -554,7 +555,7 @@ function waitTillEnoughStamina(){
     var minStamina = configMRObj.fight.minStaminaToHeal;
     do {
 	    // refreshing stats (health / exp / stamina / energy)
-		playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
+        dummyBank();
 		var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
 		stamina = staminaObj.leftOver;
 		if (stamina == -1){
@@ -603,20 +604,27 @@ function waitTillEnoughStamina(){
 }
 
 function extractRivalMobster(){
-	//Rival mobsters alive: 18 / 20
 	logV2(INFO, "FIGHT", "Rival Mobsters");
+    var mob = 0;
 	var retCode = 0;
-	retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
-	retCode = playMacro(FIGHT_FOLDER, "22_Extract_Rival.iim", MACRO_INFO_LOGGING);
-	var mob = 0;
-	if (retCode == SUCCESS){
-		var msg = getLastExtract(1, "Rival", "20 / 20");
-		logV2(INFO, "FIGHT", "MSG: " + msg);
-		msg = msg.toUpperCase().replace("RIVAL MOBSTERS ALIVE: ","");
-		msg = msg.replace("/ 20", "").trim();
-		logV2(INFO, "FIGHT", "MSG PROCESSED: " + msg);
-		mob = parseInt(msg);
-	}
+	var retCode = goToFightPage();
+	if (retCode == SUCCESS) {
+        retCode = playMacro(FIGHT_FOLDER, "22_Extract_Rival.iim", MACRO_INFO_LOGGING);
+        if (retCode == SUCCESS) {
+            var msg = getLastExtract(1, "Rival", "20 / 20");
+            logV2(INFO, "FIGHT", "MSG: " + msg);
+            msg = msg.toUpperCase().replace("RIVAL MOBSTERS ALIVE: ", "");
+            msg = msg.replace("/ 20", "").trim();
+            logV2(INFO, "FIGHT", "MSG PROCESSED: " + msg);
+            mob = parseInt(msg);
+        }
+        else {
+            logV2(WARNING, "FIGHT", "Problem extracting rival mobster info");
+        }
+    }
+    else {
+        logV2(WARNING, "FIGHT", "Problem going to fight page");
+    }
 	return mob;
 }
 
@@ -737,42 +745,6 @@ function attack(fighter, fighterType){
 			statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
 		}
 	return statusObj;
-}
-
-// MOD 15/11
-function getVictimHealth(fighter){
-	var health = -1;
-	retCode = playMacro(FIGHT_FOLDER, "40_Victim_Health", MACRO_INFO_LOGGING);
-	if (retCode == SUCCESS) {
-		var healthMsg = getLastExtract(1, "Victim Health", "50%");
-		if (!isNullOrBlank(healthMsg)) {
-			healthMsg = healthMsg.replace("%", "");
-			logV2(INFO, "ATTACK", "Victim Health: " + healthMsg);
-            health = parseInt(healthMsg);
-            if (health == 0){
-                waitV2("0.3");
-                // MOD 15/11
-                checkIfIced(fighter);
-            }
-		}
-		else {
-            logV2(INFO, "ATTACK", "Problem extracting Victim Health (Empty))");
-        }
-	}
-	return health;
-
-}
-
-function checkForAttackButton(){
-    var btnAvailable = false;
-	var retCode = playMacro(FIGHT_FOLDER, "43_Check_Attack_Button.iim", MACRO_INFO_LOGGING);
-    var btn = getLastExtract(1, "ATTACK BUTTON", "Power Attack");
-    if (retCode == SUCCESS && !isNullOrBlank(btn)){
-        btnAvailable = true;
-    }
-    logV2(INFO, "ATTACK", "Check Attack Button: " + btnAvailable);
-    return btnAvailable;
-
 }
 
 function attackTillDeath(fighter, fighterType){
@@ -923,60 +895,6 @@ function attackTillDeath(fighter, fighterType){
 	return statusObj;
 }
 
-function checkForExperienceLimit(){
-    return (configMRObj.global.stopWhenExpBelow > 0);
-}
-
-function performExperienceCheck(){
-    var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-    globalSettings.expReached = false;
-    if (configMRObj.global.stopWhenExpBelow > 0){
-        var exp = getExperience();
-        if (exp == 0){
-            logV2(WARNING, "EXPERIENCECHECK", "Problem getting experience");
-            status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
-        }
-        else {
-            if (exp <= configMRObj.global.stopWhenExpBelow) {
-                status = FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED;
-                globalSettings.expReached = true;
-            }
-            else {
-                status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-            }
-        }
-    }
-    return status;
-}
-
-function performAttack(victimHealth, fighterType, fighter){
-    var retCode = -1;
-    var status = performExperienceCheck();
-    if (status == FIGHTERCONSTANTS.ATTACKSTATUS.EXP){
-        return status;
-    }
-    if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.RIVAL){
-       retCode = playMacro(FIGHT_FOLDER, "42_VictimRivalMobster_Attack.iim", MACRO_INFO_LOGGING);
-    }
-    else {
-        //addMacroSetting("ID", fighter.id);
-        logV2(DEBUG, "ATTACK", "ID: " + fighter.id);
-        if (victimHealth <= configMRObj.fight.attackTillDiedHealth){
-            retCode = playMacro(FIGHT_FOLDER, "44_Victim_SpeedAttack.iim", MACRO_INFO_LOGGING);
-        }
-        else {
-            retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack.iim", MACRO_INFO_LOGGING);
-        }
-    }
-    if (retCode != SUCCESS) {
-        status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
-    }
-    else {
-         status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-    }
-    return status;
-}
-
 function checkIfLevelUp(){
 	var level = getLevel();
 	var levelUp = false;
@@ -1083,7 +1001,7 @@ function isAlreadyKilledToday(player){
     var strDate = getDateYYYYMMDD();
     if (propertyExistAndNotNull(player, "lastIced")){
         if (player.lastIced.substr(0, 8) == strDate) {
-            if (valueNotNullAndGreaterThan(player.icesOfTheDay, 2)) {
+            if (valueNotNullAndGreaterThan(player.icesOfTheDay, configMRObj.fight.maxKillsDay-1)) {
                 logV2(INFO, "CHECK", "Fighter already killed today: " + player.id + " / " + player.icesOfTheDay);
                 killedToday = true;
             }
@@ -1428,7 +1346,6 @@ function randomIntFromInterval(min,max)
     return Math.floor(Math.random()*(max-min+1)+min);
 }
 
-
 function performHealthCheck(message, autoHeal, stamina){
 
     var healthObj = {"refresh": false, "continueFighting": false, "message": message, autoHeal: false, "health": -1};
@@ -1462,7 +1379,8 @@ function performHealthCheck(message, autoHeal, stamina){
             }
             tries++;
             if (tries > 2){
-                waitV2("1");
+                logV2(INFO, "HEAL", "Retries: " + tries);
+                waitV2("0.5");
             }
             health = getHealth();
         }
@@ -1493,7 +1411,7 @@ function performHealthCheck(message, autoHeal, stamina){
     }
     globalSettings.forceHealing = false;
     healthObj.health = health;
-    logObj(DEBUG, "HEALTH", healthObj);
+    logObj(INFO, "HEALTH", healthObj);
     return healthObj;
 }
 
@@ -1509,15 +1427,7 @@ function homefeedCheck(){
         waitV2("60");
     }
     logV2(INFO, "HOMEFEEDCHECK", "checked: " + checked);
-}
-
-function continueFightingAfterHealthCheck(healthObj){
-    return healthObj.continueFighting;
-}
-
-function refreshAfterHealing(healthObj){
-    var refresh = healthObj.refresh;
-    return refresh;
+    return checked;
 }
 
 function updateIces(fighter){
@@ -1586,4 +1496,9 @@ function checkIfIced(fighter){
         updateIces(fighter);
     }
     return iced;
+}
+
+function goToFightPage(){
+    var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
+    return retCode;
 }

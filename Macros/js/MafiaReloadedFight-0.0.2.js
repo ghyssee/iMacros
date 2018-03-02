@@ -491,3 +491,102 @@ function performAttackInit(fighterType){
     }
     return msg;
 }
+
+function continueFightingAfterHealthCheck(healthObj){
+    return healthObj.continueFighting;
+}
+
+function refreshAfterHealing(healthObj){
+    var refresh = healthObj.refresh;
+    return refresh;
+}
+
+function getVictimHealth(fighter){
+    var health = -1;
+    retCode = playMacro(FIGHT_FOLDER, "40_Victim_Health", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS) {
+        var healthMsg = getLastExtract(1, "Victim Health", "50%");
+        if (!isNullOrBlank(healthMsg)) {
+            healthMsg = healthMsg.replace("%", "");
+            logV2(INFO, "ATTACK", "Victim Health: " + healthMsg);
+            health = parseInt(healthMsg);
+            if (health == 0){
+                waitV2("0.3");
+                // MOD 15/11
+                checkIfIced(fighter);
+            }
+        }
+        else {
+            logV2(INFO, "ATTACK", "Problem extracting Victim Health (Empty))");
+        }
+    }
+    return health;
+
+}
+
+function checkForAttackButton(){
+    var btnAvailable = false;
+    var retCode = playMacro(FIGHT_FOLDER, "43_Check_Attack_Button.iim", MACRO_INFO_LOGGING);
+    var btn = getLastExtract(1, "ATTACK BUTTON", "Power Attack");
+    if (retCode == SUCCESS && !isNullOrBlank(btn)){
+        btnAvailable = true;
+    }
+    logV2(INFO, "ATTACK", "Check Attack Button: " + btnAvailable);
+    return btnAvailable;
+
+}
+
+function performAttack(victimHealth, fighterType, fighter){
+    var retCode = -1;
+    var status = performExperienceCheck(configMRObj, globalSettings);
+    if (status == FIGHTERCONSTANTS.ATTACKSTATUS.EXP){
+        return status;
+    }
+    if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.RIVAL){
+        retCode = playMacro(FIGHT_FOLDER, "42_VictimRivalMobster_Attack.iim", MACRO_INFO_LOGGING);
+    }
+    else {
+        //addMacroSetting("ID", fighter.id);
+        logV2(DEBUG, "ATTACK", "ID: " + fighter.id);
+        if (victimHealth <= configMRObj.fight.attackTillDiedHealth){
+            retCode = playMacro(FIGHT_FOLDER, "44_Victim_SpeedAttack.iim", MACRO_INFO_LOGGING);
+        }
+        else {
+            retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack.iim", MACRO_INFO_LOGGING);
+        }
+    }
+    if (retCode != SUCCESS) {
+        status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
+    }
+    else {
+        status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
+    }
+    return status;
+}
+
+
+function checkForExperienceLimit(){
+    return (configMRObj.global.stopWhenExpBelow > 0);
+}
+
+function performExperienceCheck(configMRObj, globalSettings){
+    var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
+    globalSettings.expReached = false;
+    if (configMRObj.global.stopWhenExpBelow > 0){
+        var exp = getExperience();
+        if (exp == 0){
+            logV2(WARNING, "EXPERIENCECHECK", "Problem getting experience");
+            status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
+        }
+        else {
+            if (exp <= configMRObj.global.stopWhenExpBelow) {
+                status = FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED;
+                globalSettings.expReached = true;
+            }
+            else {
+                status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
+            }
+        }
+    }
+    return status;
+}
