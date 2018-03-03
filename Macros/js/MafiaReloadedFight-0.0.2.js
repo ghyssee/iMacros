@@ -88,6 +88,29 @@ function getHealth(){
     return healthObj.leftOver;
 }
 
+function getHealthV2(globalSettings){
+    // it is possible that health is the same when attack button was pressed, but not registered
+    var health = -1;
+    var oldHealth = globalSettings.oldHealth;
+    var counter = 0;
+    do {
+        var healthObj = getHealthObj();
+        health = healthObj.leftOver;
+        counter++;
+        if (health == 0){
+            break;
+        }
+        if (counter > 1){
+            logV2(INFO, "HEALTH", "Health Retries: " + counter);
+            dummyBank();
+        }
+    }
+    while (counter <= 10 && (health == -1 || health == oldHealth));
+    logV2(INFO, "HEALTH", "oldHealth:" + oldHealth);
+    globalSettings.oldHealth = health;
+    return health;
+}
+
 
 function getHealthObj(){
     playMacro(FIGHT_FOLDER, "11_GetHealth.iim", MACRO_INFO_LOGGING);

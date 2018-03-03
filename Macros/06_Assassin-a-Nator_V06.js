@@ -1,12 +1,12 @@
 var ONEDRIVEPATH = getOneDrivePath();
 var MACROS_PATH = getMacrosPath();
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.1.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.2.js"));
 
 var localConfigObject = null;
 setMRPath("MRAssassin-a-Nator");
@@ -21,9 +21,17 @@ var fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
 var fightersToExclude = initMRObject(MR.MR_FIGHTERS_EXCLUDE_FILE);
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var profileObj = initObject(MR_PROFILE_FILE);
-var globalSettings = {"kills": 0, "heals": 0, "autoHealWait": false, "expReached": false};
+var globalSettings = {"kills": 0, "heals": 0, "autoHealWait": false, "expReached": false, "oldHealth": -1};
 
-startScript();
+//startScript();
+dummyBank();
+alert(getHealthV2(globalSettings));
+waitV2("1");
+dummyBank();
+alert(getHealthV2(globalSettings));
+waitV2("1");
+dummyBank();
+alert(getHealthV2(globalSettings));
 
 function activateTempSettings(){
     // Profile: Malin - Script: AutoHeal - Enable autoHeal
@@ -92,7 +100,7 @@ function startScript(){
                 }
             }
             else {
-                var status = performExperienceCheck();
+                var status = performExperienceCheck(configMRObj, globalSettings);
                 if (status == FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED) {
                     continue;
                 }
@@ -101,7 +109,8 @@ function startScript(){
                 // if (health is 0, don't check for underAttack, it's already checked
                 globalSettings.forceHealing = true;
                 configMRObj = initMRObject(MR.MR_CONFIG_FILE);
-                if (checkHealth(configMRObj.fight.autoHeal)) {
+                var healthObj = performHealthCheck("START", configMRObj.fight.autoHeal);
+                if (continueFightingAfterHealthCheck(healthObj)) {
                     fight();
                     logV2(INFO, "FIGHT", "Updating statistics");
                     //writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
@@ -171,7 +180,6 @@ function waitTillEnoughStamina(){
     do {
         dummyBank();
         // refreshing stats (health / exp / stamina / energy)
-        playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
         var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
         stamina = staminaObj.leftOver;
         if (stamina == -1){
@@ -225,116 +233,84 @@ function attack(fighter, fighterType){
     var statusObj = getStatusObject();
     fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
     var retCode = SUCCESS;
-    if (!checkHealth(configMRObj.fight.autoHeal)){
-        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.HEALINGDISABLED;
+    var healthObj = performHealthCheck("ATTACK", configMRObj.fight.autoHeal);
+    if (!continueFightingAfterHealthCheck(healthObj)){
+        logV2(INFO, "ATTACK", "Not enough health to fight");
+        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.NOHEALTH;
         return statusObj;
     }
-    retCode = playMacro(FIGHT_FOLDER, "81_Profile_Attack_Start.iim", MACRO_INFO_LOGGING);
+    else if (refreshAfterHealing(healthObj)){
+        logV2(INFO, "ATTACK", "Refresh After Healing");
+        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.REFRESH;
+        return statusObj;
+    }
     statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
     if (checkIfLevelUp() && configMRObj.fight.stopOnLevelUp){
         statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STOPONLEVELUP;
     }
-    else if (retCode == SUCCESS){
-        retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status", MACRO_INFO_LOGGING);
-        if (retCode == SUCCESS){
-            var msg = getLastExtract(1, "Attack Status", "You WON The Fight");
-            var status = evaluateAttackMessage(msg);
-            switch (status){
-                case FIGHTERCONSTANTS.OPPONENT.NOHEALTH:
-                    checkHealth(configMRObj.fight.autoHeal);
-                    break;
-                case FIGHTERCONSTANTS.OPPONENT.FRIEND :
-                    removeItemFromArray(MR.MR_FIGHTERS_FILE, fighterObj, fighter.id);
-                    addFriend(fighter);
-                    statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.SKIP;
-                    break;
-                case FIGHTERCONSTANTS.OPPONENT.WON :
-                    fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
-                    addValueToProperty(fighter, "alive", 1);
-                    var attackStatusObj = attackTillDeath(fighter);
-                    if (checkIfLevelUp() && configMRObj.fight.stopOnLevelUp){
-                        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STOPONLEVELUP;
-                    }
-                    else if (attackStatusObj.status == FIGHTERCONSTANTS.ATTACKSTATUS.NOSTAMINA){
-                        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.NOSTAMINA;
-                    }
-                    else if (attackStatusObj.status == FIGHTERCONSTANTS.ATTACKSTATUS.HEALINGDISABLED){
-                        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.HEALINGDISABLED;
-                    }
-                    else if (attackStatusObj.status == FIGHTERCONSTANTS.ATTACKSTATUS.STAMINALIMIT){
-                        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STAMINALIMIT;
-                    }
-                    else {
-                        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-                    }
-                    updateStatistics(fighter, fighterType);
-                    break;
-                case FIGHTERCONSTANTS.OPPONENT.DEAD :
-                    addValueToProperty(fighter, "dead", 1);
-                    logV2(INFO, "FIGHT", "Opponent is dead. Move on to the next one");
+    msg = performAttackInit(fighterType);
+    statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
+    if (checkIfLevelUp() && configMRObj.fight.stopOnLevelUp){
+        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STOPONLEVELUP;
+    }
+    else if (!isNullOrBlank(msg)) {
+        var status = evaluateAttackMessage(msg);
+        switch (status) {
+            case FIGHTERCONSTANTS.OPPONENT.NOHEALTH:
+                break;
+            case FIGHTERCONSTANTS.OPPONENT.FRIEND :
+                removeItemFromArray(MR.MR_FIGHTERS_FILE, fighterObj, fighter.id);
+                addFriend(fighter);
+                statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.SKIP;
+                break;
+            case FIGHTERCONSTANTS.OPPONENT.WON :
+                fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
+                addValueToProperty(fighter, "alive", 1);
+                var attackStatusObj = attackTillDeath(fighter);
+                if (checkIfLevelUp() && configMRObj.fight.stopOnLevelUp) {
+                    statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STOPONLEVELUP;
+                }
+                else if (attackStatusObj.status == FIGHTERCONSTANTS.ATTACKSTATUS.NOSTAMINA) {
+                    statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.NOSTAMINA;
+                }
+                else if (attackStatusObj.status == FIGHTERCONSTANTS.ATTACKSTATUS.HEALINGDISABLED) {
+                    statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.HEALINGDISABLED;
+                }
+                else if (attackStatusObj.status == FIGHTERCONSTANTS.ATTACKSTATUS.STAMINALIMIT) {
+                    statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STAMINALIMIT;
+                }
+                else {
                     statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-                    globalSettings.stolenIces++;
-                    fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
-                    updateStatistics(fighter, fighterType);
-                    break;
-                case FIGHTERCONSTANTS.OPPONENT.LOST :
-                    getVictimHealth(fighter);
-                    logV2(INFO, "FIGHT", "Add Stronger Opponent: " + fighter.id);
-                    removeItemFromArray(MR.MR_FIGHTERS_FILE, fighterObj, fighter.id);
-                    addStrongerOpponent(fighter);
-                    fighter.skip = true;
-                    statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-                    break;
-                default :
-                    statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
-                    logV2(INFO, "FIGHT", "Attack First Time Problem");
-                    break;
-            }
-        }
-        else {
-            logV2(INFO, "FIGHT", "Problem getting status for Fighter: " + fighter.id);
-            statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
+                }
+                updateStatistics(fighter, fighterType);
+                break;
+            case FIGHTERCONSTANTS.OPPONENT.DEAD :
+                addValueToProperty(fighter, "dead", 1);
+                logV2(INFO, "FIGHT", "Opponent is dead. Move on to the next one");
+                statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
+                globalSettings.stolenIces++;
+                fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
+                updateStatistics(fighter, fighterType);
+                break;
+            case FIGHTERCONSTANTS.OPPONENT.LOST :
+                getVictimHealth(fighter);
+                logV2(INFO, "FIGHT", "Add Stronger Opponent: " + fighter.id);
+                removeItemFromArray(MR.MR_FIGHTERS_FILE, fighterObj, fighter.id);
+                addStrongerOpponent(fighter);
+                fighter.skip = true;
+                statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
+                break;
+            default :
+                statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
+                logV2(INFO, "FIGHT", "Attack First Time Problem");
+                break;
         }
     }
     else {
-        logV2(INFO, "FIGHT", "Fighter Not Found: " + fighter.id + " / Profile Problem ???" );
-        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
-    }
+            logV2(INFO, "FIGHT", "Problem getting status for Fighter: " + fighter.id);
+            statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
+        }
     return statusObj;
-}
-
-function getVictimHealth(fighter){
-    var health = -1;
-    retCode = playMacro(FIGHT_FOLDER, "40_Victim_Health", MACRO_INFO_LOGGING);
-    if (retCode == SUCCESS) {
-        var healthMsg = getLastExtract(1, "Victim Health", "50%");
-        if (!isNullOrBlank(healthMsg)) {
-            healthMsg = healthMsg.replace("%", "");
-            logV2(INFO, "ATTACK", "Victim Health: " + healthMsg);
-            health = parseInt(healthMsg);
-            if (health == 0){
-                waitV2("0.3");
-                checkIfIced(fighter);
-            }
-        }
-        else {
-            logV2(INFO, "ATTACK", "Problem extracting Victim Health (Empty))");
-        }
-    }
-    return health;
-
-}
-
-function checkForAttackButton(){
-    var btnAvailable = false;
-    var retCode = playMacro(FIGHT_FOLDER, "43_Check_Attack_Button.iim", MACRO_INFO_LOGGING);
-    var btn = getLastExtract(1, "ATTACK BUTTON", "Power Attack");
-    if (retCode == SUCCESS && !isNullOrBlank(btn)){
-        btnAvailable = true;
-    }
-    logV2(INFO, "ATTACK", "Check Attack Button: " + btnAvailable);
-    return btnAvailable;
-
 }
 
 function attackTillDeath(fighter){
@@ -350,6 +326,8 @@ function attackTillDeath(fighter){
     var health = 0;
     var victimHealed;
     var bigHealthAttacks = 0;
+    var oldStaminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
+    globalSettings.oldHealth = -1; // resetting old health;
     do {
         victimHealed = false;
         if (health > -1){
@@ -414,46 +392,55 @@ function attackTillDeath(fighter){
                     break;
                 }
                 else {
+                    var healthObj = performHealthCheck("ATTACKTILLDEATH", configMRObj.fight.autoHeal, stamina);
+                    if (!continueFightingAfterHealthCheck(healthObj)) {
+                        logV2(INFO, "ATTACK", "No health to fight");
+                        continue;
+                    }
+                    else if (refreshAfterHealing(healthObj)) {
+                        logV2(INFO, "ATTACK", "Refresh After Healing");
+                        alive = false;
+                        break;
+                    }
+                    var attackStatus = performAttack(health, FIGHTERCONSTANTS.FIGHTERTPE.ASSASSIN, fighter);
                     var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
-                    stamina = staminaObj.leftOver;
+                    var stamina = staminaObj.leftOver;
                     if (stamina == -1) {
                         statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STAMINALIMIT;
                         logV2(INFO, "ATTACK", "Stamina Limit Reached");
-                        break;
-                    }
-                    else if (!checkHealth(configMRObj.fight.autoHeal, stamina)) {
-                        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.HEALINGDISABLED;
-                        logV2(INFO, "ATTACK", "Healing Disabled");
-                        alive = false;
                         break;
                     }
                     else if (stamina < 5) {
                         statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.NOSTAMINA;
                         break;
                     }
-                    var attackStatus = performAttack(fighter);
-                    firstAttack = false;
-                    statusObj.totalStamina += 5;
-                    nrOfAttacks++;
-                    bigHealthAttacks++;
-                    globalSettings.money += checkSaldo();
-                    // MOD 15/11
-                    health = getVictimHealth(fighter);
-                    var exitAttack = false;
-                    switch (attackStatus) {
-                        case FIGHTERCONSTANTS.ATTACKSTATUS.OK:
-                            break;
-                        case FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED:
-                            statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED;
-                            exitAttack = true;
-                            break;
-                        case FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM:
-                            statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
-                            exitAttack = true;
-                            break;
+                    else if (stamina == oldStaminaObj.leftOver){
+                        logV2(WARNING, "FIGHT", "ATTACK Button not registered");
                     }
-                    if (exitAttack) {
-                        break;
+                    else {
+                        firstAttack = false;
+                        statusObj.totalStamina += 5;
+                        nrOfAttacks++;
+                        bigHealthAttacks++;
+                        globalSettings.money += checkSaldo();
+                        // MOD 15/11
+                        health = getVictimHealth(fighter);
+                        var exitAttack = false;
+                        switch (attackStatus) {
+                            case FIGHTERCONSTANTS.ATTACKSTATUS.OK:
+                                break;
+                            case FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED:
+                                statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED;
+                                exitAttack = true;
+                                break;
+                            case FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM:
+                                statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
+                                exitAttack = true;
+                                break;
+                        }
+                        if (exitAttack) {
+                            break;
+                        }
                     }
                 }
 
@@ -564,71 +551,6 @@ function evaluateAttackMessage(msg){
     else {
         return FIGHTERCONSTANTS.OPPONENT.UNKNOWN;
     }
-}
-
-// MOD 22/11
-function checkHealth(autoHeal, stamina){
-    autoHeal = typeof autoHeal !== 'undefined' ? autoHeal : configMRObj.fight.autoHeal;
-    var tries = 0;
-    if (typeof stamina == 'undefined'){
-        stamina = getStamina();
-    }
-    logV2(DEBUG, "FIGHT", "Checking Health");
-    var health = getHealth();
-    // MOD 22/11
-    if (autoHeal) {
-        if (stamina >= configMRObj.fight.minStaminaToHeal) {
-            while (health < configMRObj.fight.heal) {
-                logV2(INFO, "FIGHT", "Health = " + health);
-                tries++;
-                if (!globalSettings.forceHealing) {
-                    if (tries > 1 || health < 300) {
-                        logV2(INFO, "FIGHT", tries + " attempt(s) to heal. Possible under attack");
-                        dummyBank();
-                        health = getHealth();
-                        logV2(INFO, "FIGHT", "Health = " + health);
-                    }
-                    if (health == 0) {
-                        logV2(INFO, "FIGHT", "Killed by another player");
-                        if (processHomefeed(assassinObj.processHomefeedLines)){
-                            // Went To Home page;
-                            // interrupt Attack / Boss Fight => disable autoHeal switch
-                            // autoHeal = false; (homefeed not disabled : autoHeal set to true ???
-                            autoHeal = false;
-                            globalSettings.autoHealWait = false; // disable to wait 70 seconds to continue fighting again
-                        }
-                        var bullied = underAttack(configMRObj, assassinObj.processHomefeedLines);
-                        if (!bullied) {
-                            waitV2("60");
-                        }
-                    }
-                }
-                heal();
-                health = getHealth();
-            }
-        }
-        else if (health == 0){
-            logV2(INFO, "FIGHT", "Not Enough Stamina To Heal: " + stamina);
-            globalSettings.autoHealWait = true;
-            autoHeal = false;
-        }
-    }
-    else if (health > 0) {
-        autoHeal = true;
-    }
-    else {
-        globalSettings.autoHealWait = true;
-        logV2(INFO, "FIGHT", "Auto Heal disabled");
-    }
-    if (autoHeal) {
-        health = getHealth();
-        if (health > configMRObj.fight.heal) {
-            globalSettings.heals++;
-        }
-    }
-    globalSettings.forceHealing = false;
-    logV2(INFO, "FIGHT", "Check Health Exit: " + autoHeal);
-    return autoHeal;
 }
 
 function getStatusObject(){
@@ -910,46 +832,78 @@ function homeFeedAttack(){
     return status;
 }
 
-function checkForExperienceLimit(){
-    return (configMRObj.global.stopWhenExpBelow > 0);
-}
+function performHealthCheck(message, autoHeal, stamina){
 
-function performExperienceCheck(){
-    var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-    globalSettings.expReached = false;
-    if (configMRObj.global.stopWhenExpBelow > 0){
-        var exp = getExperience();
-        if (exp == 0){
-            logV2(WARNING, "EXPERIENCECHECK", "Problem getting experience");
-            status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
-        }
-        else {
-            if (exp <= configMRObj.global.stopWhenExpBelow) {
-                status = FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED;
-                globalSettings.expReached = true;
+    if (typeof stamina == 'undefined'){
+        var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
+        stamina = staminaObj.leftOver;
+    }
+    var HEAL_CAT = "HEAL_" + message;
+    var tries = 0;
+    dummyBank();
+    var health = getHealthV2(globalSettings);
+    var healthObj = {"refresh": false, "continueFighting": false, "message": message, autoHeal: false, "health": -1};
+    healthObj.autoHeal = autoHeal;
+    if (autoHeal) {
+        while (health < configMRObj.fight.heal) {
+            if (!globalSettings.forceHealing) {
+                if (health == 0) {
+                    if (homefeedCheck()){
+                        logV2(INFO, HEAL_CAT, "Refresh After Homefeed check");
+                        healthObj.refresh = true;
+                    }
+                }
+            }
+            if (stamina >= configMRObj.fight.minStaminaToHeal) {
+                logV2(INFO, HEAL_CAT, "health: " + health);
+                heal();
             }
             else {
-                status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
+                logV2(INFO, HEAL_CAT, "Not Enough Stamina To Heal");
+                break;
+            }
+            tries++;
+            if (tries > 2){
+                logV2(INFO, HEAL_CAT, "Retries: " + tries);
+                waitV2("0.5");
+            }
+            health = getHealthV2(globalSettings);
+        }
+        if (health > configMRObj.fight.heal){
+            globalSettings.heals++;
+        }
+    }
+    else {
+        if (health == 0) {
+            if (homefeedCheck()){
+                healthObj.refresh = true;
+                logV2(INFO, HEAL_CAT, "Refresh After Homefeed check");
+            }
+            else {
+                logV2(INFO, HEAL_CAT, "No health and AutoHeal Disabled. Waiting 20 seconds");
+                waitV2("20");
             }
         }
     }
-    return status;
+    if (health > 0){
+        healthObj.continueFighting = true;
+    }
+    globalSettings.forceHealing = false;
+    healthObj.health = health;
+    logObj(INFO, HEAL_CAT, healthObj);
+    return healthObj;
 }
 
-function performAttack(fighter){
-    var retCode = -1;
-    var status = performExperienceCheck();
-    if (status == FIGHTERCONSTANTS.ATTACKSTATUS.EXP){
-        return status;
+function homefeedCheck(){
+    var checked = false;
+    var processHomefeedLines = assassinObj.processHomefeedLines;
+    if (processHomefeed(processHomefeedLines)){
+        checked = true;
     }
-    logV2(DEBUG, "ATTACK", "ID: " + fighter.id);
-    retCode = playMacro(FIGHT_FOLDER, "41_Victim_Attack.iim", MACRO_INFO_LOGGING);
-    if (retCode != SUCCESS) {
-        status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
+    var bullied = underAttack(configMRObj, processHomefeedLines);
+    if (!bullied) {
+        waitV2("60");
     }
-    else {
-        status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-    }
-    return status;
+    logV2(INFO, "HOMEFEEDCHECK", "checked: " + checked);
+    return checked;
 }
-
