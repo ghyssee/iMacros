@@ -23,15 +23,7 @@ var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var profileObj = initObject(MR_PROFILE_FILE);
 var globalSettings = {"kills": 0, "heals": 0, "autoHealWait": false, "expReached": false, "oldHealth": -1};
 
-//startScript();
-dummyBank();
-alert(getHealthV2(globalSettings));
-waitV2("1");
-dummyBank();
-alert(getHealthV2(globalSettings));
-waitV2("1");
-dummyBank();
-alert(getHealthV2(globalSettings));
+startScript();
 
 function activateTempSettings(){
     // Profile: Malin - Script: AutoHeal - Enable autoHeal
@@ -327,7 +319,9 @@ function attackTillDeath(fighter){
     var victimHealed;
     var bigHealthAttacks = 0;
     var oldStaminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
+    var staminaObj = oldStaminaObj;
     globalSettings.oldHealth = -1; // resetting old health;
+
     do {
         victimHealed = false;
         if (health > -1){
@@ -402,8 +396,6 @@ function attackTillDeath(fighter){
                         alive = false;
                         break;
                     }
-                    var attackStatus = performAttack(health, FIGHTERCONSTANTS.FIGHTERTPE.ASSASSIN, fighter);
-                    var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
                     var stamina = staminaObj.leftOver;
                     if (stamina == -1) {
                         statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STAMINALIMIT;
@@ -414,7 +406,9 @@ function attackTillDeath(fighter){
                         statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.NOSTAMINA;
                         break;
                     }
-                    else if (stamina == oldStaminaObj.leftOver){
+                    var attackStatus = performAttack(health, FIGHTERCONSTANTS.FIGHTERTPE.ASSASSIN, fighter);
+                    staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
+                    if (stamina >= oldStaminaObj.leftOver){
                         logV2(WARNING, "FIGHT", "ATTACK Button not registered");
                     }
                     else {
@@ -841,7 +835,8 @@ function performHealthCheck(message, autoHeal, stamina){
     var HEAL_CAT = "HEAL_" + message;
     var tries = 0;
     dummyBank();
-    var health = getHealthV2(globalSettings);
+    //var health = getHealthV2(globalSettings);
+    var health = getHealth();
     var healthObj = {"refresh": false, "continueFighting": false, "message": message, autoHeal: false, "health": -1};
     healthObj.autoHeal = autoHeal;
     if (autoHeal) {
@@ -867,7 +862,7 @@ function performHealthCheck(message, autoHeal, stamina){
                 logV2(INFO, HEAL_CAT, "Retries: " + tries);
                 waitV2("0.5");
             }
-            health = getHealthV2(globalSettings);
+            health = getHealth();
         }
         if (health > configMRObj.fight.heal){
             globalSettings.heals++;

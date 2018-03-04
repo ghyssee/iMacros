@@ -974,7 +974,7 @@ function getFightList(){
 				                                      "GANG");
                 object.gangId = gangObj.id;
                 object.gangName = gangObj.name;
-                if (isAllyGang(isAllyGang(friendObj.gangs, object.gangId))) {
+                if (isAllyGang(friendObj.gangs, object.gangId)) {
                     logV2(INFO, "FIGHT", "Prefiltered: Is Ally Gang");
                     logObj(INFO, "FIGHT", object);
                 }

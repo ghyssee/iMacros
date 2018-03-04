@@ -184,6 +184,8 @@ function startList() {
                 if (retCode == SUCCESS) {
                     addMacroSetting("DISTRICT", districtId);
                     addMacroSetting("CHAPTER", chapter);
+                    logV2(INFO, "DIS: " + districtId);
+                    logV2(INFO, "CHAPT: " + chapter);
                     retCode = playMacro(JOB_FOLDER, "05_Job_Chapter.iim", MACRO_INFO_LOGGING);
                     if (retCode == SUCCESS){
                         var chapterObj = getChapterInfo(districtId, chapter);
@@ -192,7 +194,7 @@ function startList() {
                         extractJobs(districtId, chapter);
                     }
                     else {
-                        logV2(INFO, "JOBLIST", "Problem selecting chapter: " + chapter);
+                        logV2(INFO, "JOBLIST", "Problem selecting district / chapter: " + districtId + "/" + chapter);
                     }
                 }
                 else {

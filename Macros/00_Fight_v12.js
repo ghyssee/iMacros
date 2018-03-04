@@ -27,13 +27,8 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
                         "forceHealing": false,
                       "boss": {"attacks": 0}};
 startScript();
-//alert(performAttackInit(FIGHTERCONSTANTS.FIGHTERTPE.RIVAL));
-//testIces();
-//testFightList();
-//testUppdate();
-//var retCode = initAndCheckScript(FIGHT_FOLDER, "81_Profile_Attack_Start.iim", "34_Attack_Start_Test.iim", "power attack", "INITATTACK", "Init Attack Step 1");
+//var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 //alert(retCode);
-//alert(performAttackInit(FIGHTERCONSTANTS.FIGHTERTPE.RIVAL));
 
 function testFightList(){
     var array = [];
@@ -974,7 +969,7 @@ function getFightList(){
 				                                      "GANG");
                 object.gangId = gangObj.id;
                 object.gangName = gangObj.name;
-                if (isAllyGang(isAllyGang(friendObj.gangs, object.gangId))) {
+                if (isAllyGang(friendObj.gangs, object.gangId)) {
                     logV2(INFO, "FIGHT", "Prefiltered: Is Ally Gang");
                     logObj(INFO, "FIGHT", object);
                 }

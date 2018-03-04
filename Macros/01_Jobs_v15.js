@@ -1455,7 +1455,7 @@ function checkDailyLink(){
     if (lastTimeExecuted == null || lastTimeExecuted < strDate){
 
         var settingsObj = initObject(MR_SETTINGS_FILE);
-        if (lastTimeExecuted == null || settingsObj.dailyLink.date > lastTimeExecuted) {
+        if (lastTimeExecuted == null || settingsObj.dailyLink.date > lastTimeExecuted || settingsObj.dailyLink.link != configMRObj.dailyLink.link) {
             logV2(INFO, "DAILYLINK", "Start Dailylink");
             addMacroSetting("URL", settingsObj.dailyLink.link);
             var retCode = playMacro(MACRO_COMMON_FOLDER, "01_GoTo.iim", MACRO_INFO_LOGGING);
@@ -1484,7 +1484,7 @@ function repeatMoneyJob(jobObj, resourceObj){
         var status = processJob(jobObj, resourceObj);
         resourceObj = getResources();
         logV2(INFO, "MONEYJOB", "MoneyJob Status: " + status);
-        if (checkIfLevelUp()){
+        if (checkIfLevelUp() || status == CONSTANTS.STATUS.LEVELUP){
             levelUp = true;
             break;
         }
