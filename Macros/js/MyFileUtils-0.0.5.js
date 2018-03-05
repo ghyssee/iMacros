@@ -464,3 +464,14 @@ function logError(ex){
     logV2(INFO, "ERROR", "Message    : " + ex.message);
     //logV2(INFO, "ERROR", "Stack    : " + ex.stack);
 }
+
+function getParent(path){
+	var parentPath = "";
+	if (path != null) {
+        var splitPath = path.split("\\");
+        for (var i = 0; i < splitPath.length - 1; i++) {
+            parentPath += splitPath[i] + "\\";
+        }
+    }
+    return parentPath;
+}

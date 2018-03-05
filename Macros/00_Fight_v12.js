@@ -24,7 +24,7 @@ var profileObj = initObject(MR_PROFILE_FILE);
 
 var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0,
                       "skippedHealth": 0, "maxHealed": 0, "heals": 0, "stopOnLevelUp": false, "expReached": false,
-                        "forceHealing": false,
+                        "forceHealing": false, "profileId": getProfile(),
                       "boss": {"attacks": 0}};
 startScript();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
@@ -1282,7 +1282,6 @@ function profileAttack(array, fighterType){
     for (var i=0; i < array.length; i++){
         var item = array[i];
         if (isAlreadyKilledToday(item))   {
-
         }
         else {
             filteredArray.push(item);

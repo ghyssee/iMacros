@@ -43,7 +43,7 @@ var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var settingsObj = initObject(getMRRootFile(MR.MR_SETTINGS_FILE));
 var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                       "lastDistrict": null, "lastChapter": null, "lowestEnergy": null, "lowestStamina": null,
-                      "resources": null
+                      "resources": null, "profileId": getProfile()
                      };
 
 //enableMacroPlaySimulation();

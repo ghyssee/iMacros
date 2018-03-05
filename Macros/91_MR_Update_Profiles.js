@@ -1,13 +1,12 @@
 ﻿var ONEDRIVEPATH = getOneDrivePath();
 var MACROS_PATH = getMacrosPath();
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
-eval(readScript(MACROS_PATH + "\\js\\\MyConstants-0.0.3.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 
 var localConfigObject = null;
-var NODE_ID = "";
 var SUCCESS = 1;
 LOG_FILE = new LogFile(LOG_DIR, "MRUpdateProfiles");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
@@ -15,6 +14,7 @@ var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 init();
 var FIGHT_FOLDER = "MR/Fight";
 var COMMON_FOLDER = "MR/Common";
+var UPDATE_DATE = "20180305";
 
 var tmp = "<a href=\"#\" class=\"ajax_request tag\" data-params=\"controller=gang&amp;action=view&amp;id=7107146\" style=\"outline: 1px solid blue;\">HHH</a>";
 startScript();
@@ -136,12 +136,18 @@ function getFirefoxSetting(branch, key){
 
 function startProfileUpdate(){
     logV2(INFO, "FIGHT", "Update Profiles");
-    var fighterObj = initObject(MR_FIGHTERS_FILE);
+    var fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
     var length = fighterObj.fighters.length;
     var save = false;
     var cnt=0;
+    var currDate = getDateYYYYMMDD();
     fighterObj.fighters.forEach(function (fighter)
     {
+        if (propertyExistAndNotNull(fighter, "lastUpdatedOn")){
+            if (fighter.lastUpdatedOn >= UPDATE_DATE){
+                return; // skip this element
+            }
+        }
         cnt++;
         logV2(INFO, "PROFILE", cnt + "/" + length);
         if (fighter.gangId == null) {
@@ -157,6 +163,7 @@ function startProfileUpdate(){
                     }
                     else {
                         var msg = getLastExtract(2);
+                        fighter.lastUpdatedOn = currDate;
                         fighter.gangId = extractGangIdFromString(msg);
                         fighter.gangName = gangName;
                         logV2(INFO, "PROFILE", "Gang: " + fighter.gangId + "/" + fighter.gangName);
