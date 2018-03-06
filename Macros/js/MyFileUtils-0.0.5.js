@@ -395,14 +395,14 @@ function logV2(type, id, outputText, logFile){
 			log(currentTime + " " + "ERROR: " + outputText, ERROR_LOG);
 			break;
 		case WARNING:
-			log(currentTime + " " + "WARN: Profile: " + id + " - " + outputText, logFile);
+			log(currentTime + " " + "WARN: " + id + " - " + outputText, logFile);
 			break;
 		case INFO:
-			log(currentTime + " " + "INFO: Profile: " + id + " - " + outputText, logFile);
+			log(currentTime + " " + "INFO: " + id + " - " + outputText, logFile);
 			break;
 		case DEBUG:
 			if (LOG_DEBUG){
-				log(currentTime + " " + "DEBUG: Profile: " + id + " - " + outputText, logFile);
+				log(currentTime + " " + "DEBUG: " + id + " - " + outputText, logFile);
 			}
 			break;
 		default:

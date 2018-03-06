@@ -142,7 +142,7 @@ function isAllyGang(list, gangId){
     if (gangId != null) {
         for (var i = 0; i < list.length; i++) {
             var gangObj = list[i];
-            if (gangObj.id == gangId) {
+            if (gangObj.active && gangObj.id == gangId) {
                 found = true;
                 break;
             }

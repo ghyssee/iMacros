@@ -396,7 +396,7 @@ function isChapterSelected(jobItem){
         if (!isNullOrBlank(selectInfo)) {
             selectInfo = selectInfo.toLowerCase();
             if (contains(selectInfo, "tab_button selected")) {
-                logV2(INFO, "JOB", "WRight Chapter Selected: " + districtId + "/" + chapter);
+                logV2(INFO, "JOB", "Wright Chapter Selected: " + districtId + "/" + chapter);
                 return true;
             }
         }
