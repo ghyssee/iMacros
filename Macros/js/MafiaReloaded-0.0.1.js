@@ -2,6 +2,7 @@ var ORIG_MR_DIR =  ONEDRIVE_DIR + "Config\\MR\\";
 var MR_DIR =  ONEDRIVE_DIR + "Config\\MR\\";
 var MR_BRANCH = "mafiareloaded.";
 var MR_PROFILE_KEY = "profile";
+var MR_ASSASSIN_PROFILE_KEY = "assassinProfile";
 var MR_PROFILE_FILE = MR_DIR + "profile.json";
 var MR_FIGHTERS_EXCLUDE_FILE = new ConfigFile(MR_DIR, "FightersToExclude.json");
 var MR_FRIENDS_FILE = new ConfigFile(MR_DIR, "Friends.json");

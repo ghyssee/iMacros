@@ -12,6 +12,7 @@ LOG_FILE = new LogFile(LOG_DIR, "MRInit");
 
 init();
 setProfile();
+setAssassinProfile();
 checkMRProperties(MR.MR_CONFIG_FILE);
 checkMRProperties(MR.MR_TEMP_SETTINGS_FILE);
 
@@ -87,6 +88,23 @@ function hasProperties(obj){
         return tmp.length > 0;
     }
     return false;
+}
+
+function setAssassinProfile(){
+    logV2(INFO, "INIT", "Mafia Reloaded Set Assassin Profile");
+    var profile = getFirefoxSetting(MR_BRANCH,  MR_ASSASSIN_PROFILE_KEY);
+    if (isNullOrBlank(profile)){
+        profile = "";
+    }
+    var inputTxt = prompt("Set Assassin Profile ID", profile);
+    if (inputTxt == null) {
+        // cancel pressed
+    }
+    else {
+        profile = inputTxt;
+        changeFirefoxSetting(MR_BRANCH, MR_ASSASSIN_PROFILE_KEY, profile);
+        logV2(INFO, "INIT", "Set Assassin Profile to " + profile);
+    }
 }
 
 function setProfile(){

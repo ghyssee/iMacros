@@ -423,6 +423,15 @@ function propertyExistAndNotNull(obj, property){
     return false;
 }
 
+function propertyExistAndEqualTo(obj, property, val){
+    if (obj.hasOwnProperty(property)){
+        if (obj[property] == val){
+            return true;
+        }
+    }
+    return false;
+}
+
 function valueNotNullAndGreaterThan(field, value){
     return (field != null && field > value);
 }

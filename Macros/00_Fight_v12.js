@@ -1430,29 +1430,6 @@ function homefeedCheck(){
     return checked;
 }
 
-function updateIces(fighter){
-    var newIceDate = getDateYYYYMMDD();
-    var oldIceDate = fighter.lastIced;
-    if (oldIceDate == null){
-        oldIceDate =  newIceDate;
-    }
-    if (oldIceDate != null) {
-        var iceDate = oldIceDate.substr(0,8);
-        if (iceDate == newIceDate){
-            addValueToProperty(fighter, "icesOfTheDay", 1);
-            logV2(INFO, "FIGHT", "Add Ice (New): " + fighter.icesOfTheDay);
-        }
-        else {
-            fighter.icesOfTheDay = 1;
-            logV2(INFO, "FIGHT", "New Ice: " + fighter.icesOfTheDay);
-        }
-    }
-    fighter.iced++;
-    fighter.lastIced = formatDateToYYYYMMDDHHMISS(new Date());
-    logV2(INFO, "FIGHT", JSON.stringify(fighter));
-
-}
-
 function updateStatistics2(fighter, fighterType){
     if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.RIVAL){
         // no stats for rival mobsters
@@ -1473,29 +1450,6 @@ function updateFighter(player){
             break;
         }
     }
-}
-
-function checkIfIced(fighter){
-    iced = false;
-    var retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status.iim", MACRO_INFO_LOGGING);
-    if (retCode == SUCCESS){
-        var msg = getLastExtract(1, "Ice Status", "Riki just Killed blabla. Your Kill Count is now 777").toUpperCase();
-        logV2(INFO, "FIGHT", "Check For Iced: " + msg);
-        if (msg.indexOf("YOUR KILL COUNT") !== -1){
-            iced = true;
-        }
-        else if (msg.indexOf("JUST KILLED") !== -1){
-            iced = true;
-        }
-    }
-    else {
-        logV2(INFO, "FIGHT", "Problem getting fight status: " + retCode);
-    }
-    if (iced){
-        logV2(INFO, "FIGHT", "Total Ices: " + ++globalSettings.iced);
-        updateIces(fighter);
-    }
-    return iced;
 }
 
 function goToFightPage(){

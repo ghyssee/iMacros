@@ -27,6 +27,12 @@ var FIGHTERCONSTANTS = Object.freeze({
         "NORMALPROFILE": 3,
         "ASSASSIN" : 4,
         "HOMEFEED" : 5
+    },
+    "FIGHTERSTATUS": {
+        "UNKNOWN": "UNKNOWN",
+        "ATTACK": "ATTACK",
+        "FRIEND": "FRIEND",
+        "STRONGER": "STRONGER"
     }
 });
 
@@ -353,10 +359,15 @@ function addFighterV2(fighterObj, fighter){
         foundFighter = fighter;
     }
     else {
-        foundFighter.gangId = fighter.gangId;
-        foundFighter.gangName = fighter.gangName;
+        updateFighterInfo(foundFighter, fighter);
     }
     return foundFighter;
+}
+
+function updateFighterInfo(fighterToUpdate, fighter){
+    fighterToUpdate.gangId = fighter.gangId;
+    fighterToUpdate.gangName = fighter.gangName;
+    fighterToUpdate.level = fighter.level;
 }
 
 function getFighterObject(id, name, level){
@@ -491,6 +502,9 @@ function performAttackInit(fighterType){
         case FIGHTERCONSTANTS.FIGHTERTPE.ASSASSIN:
             macro = "81_Profile_Attack_Start.iim";
             break;
+        default:
+            macro = "81_Profile_Attack_Start.iim";
+            break;
     }
     logV2(INFO, "MACRO", macro);
     var retCode = initAndCheckScript(FIGHT_FOLDER, macro, "34_Attack_Start_Test.iim", "power attack", "INITATTACK", "Init Attack Step 1");
@@ -612,4 +626,50 @@ function performExperienceCheck(configMRObj, globalSettings){
         }
     }
     return status;
+}
+
+function updateIces(fighter){
+    var newIceDate = getDateYYYYMMDD();
+    var oldIceDate = fighter.lastIced;
+    if (oldIceDate == null){
+        oldIceDate =  newIceDate;
+    }
+    if (oldIceDate != null) {
+        var iceDate = oldIceDate.substr(0,8);
+        if (iceDate == newIceDate){
+            addValueToProperty(fighter, "icesOfTheDay", 1);
+            logV2(INFO, "FIGHT", "Add Ice (New): " + fighter.icesOfTheDay);
+        }
+        else {
+            fighter.icesOfTheDay = 1;
+            logV2(INFO, "FIGHT", "New Ice: " + fighter.icesOfTheDay);
+        }
+    }
+    fighter.iced++;
+    fighter.lastIced = formatDateToYYYYMMDDHHMISS(new Date());
+    logV2(INFO, "FIGHT", JSON.stringify(fighter));
+
+}
+
+function checkIfIced(fighter){
+    iced = false;
+    var retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS){
+        var msg = getLastExtract(1, "Ice Status", "Riki just Killed blabla. Your Kill Count is now 777").toUpperCase();
+        logV2(INFO, "FIGHT", "Check For Iced: " + msg);
+        if (msg.indexOf("YOUR KILL COUNT") !== -1){
+            iced = true;
+        }
+        else if (msg.indexOf("JUST KILLED") !== -1){
+            iced = true;
+        }
+    }
+    else {
+        logV2(INFO, "FIGHT", "Problem getting fight status: " + retCode);
+    }
+    if (iced){
+        logV2(INFO, "FIGHT", "Total Ices: " + ++globalSettings.iced);
+        updateIces(fighter);
+    }
+    return iced;
 }
