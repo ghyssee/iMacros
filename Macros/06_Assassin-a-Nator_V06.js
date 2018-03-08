@@ -172,7 +172,7 @@ function waitTillEnoughStamina(){
     do {
         dummyBank();
         // refreshing stats (health / exp / stamina / energy)
-        var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
+        var staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, !STOP_SCRIPT);
         stamina = staminaObj.leftOver;
         if (stamina == -1){
         }
@@ -318,7 +318,7 @@ function attackTillDeath(fighter){
     var health = 0;
     var victimHealed;
     var bigHealthAttacks = 0;
-    var oldStaminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
+    var oldStaminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, !STOP_SCRIPT);
     var staminaObj = oldStaminaObj;
     globalSettings.oldHealth = -1; // resetting old health;
 
@@ -407,7 +407,7 @@ function attackTillDeath(fighter){
                         break;
                     }
                     var attackStatus = performAttack(health, FIGHTERCONSTANTS.FIGHTERTPE.ASSASSIN, fighter);
-                    staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
+                    staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, !STOP_SCRIPT);
                     if (stamina >= oldStaminaObj.leftOver){
                         logV2(WARNING, "FIGHT", "ATTACK Button not registered");
                     }
@@ -829,7 +829,7 @@ function homeFeedAttack(){
 function performHealthCheck(message, autoHeal, stamina){
 
     if (typeof stamina == 'undefined'){
-        var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
+        var staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, !STOP_SCRIPT);
         stamina = staminaObj.leftOver;
     }
     var HEAL_CAT = "HEAL_" + message;

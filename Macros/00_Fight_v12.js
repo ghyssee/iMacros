@@ -266,7 +266,7 @@ function attackBoss(){
     if (retCode == SUCCESS) {
         bossHealth = getBossHealth();
         while(bossHealth > 0 && bossHealth > configMRObj.boss.stopWhenHealthBelow) {
-            var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
+            var staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, !STOP_SCRIPT);
             if (staminaObj.leftOver >= 5) {
                 var healthObj = performHealthCheck("ATTACKBOSS", AUTOHEAL, staminaObj.leftOver);
                 if (refreshAfterHealing(healthObj)){
@@ -551,7 +551,7 @@ function waitTillEnoughStamina(){
     do {
 	    // refreshing stats (health / exp / stamina / energy)
         dummyBank();
-		var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
+		var staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, !STOP_SCRIPT);
 		stamina = staminaObj.leftOver;
 		if (stamina == -1){
 		    // Stamina Below specified value
@@ -827,7 +827,7 @@ function attackTillDeath(fighter, fighterType){
 				}
 				else {
 					// MOD 15/11
-                    var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, STOP_SCRIPT);
+                    var staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, STOP_SCRIPT);
                     var stamina = staminaObj.leftOver;
                     if (stamina == -1){
                         statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STAMINALIMIT;
@@ -1353,7 +1353,7 @@ function performHealthCheck(message, autoHeal, stamina){
     autoHeal = getOverwrittenSetting(null, "fight", "fightAutoHeal", autoHeal);
     iimDisplay("autoHeal: " + autoHeal);
     if (typeof stamina == 'undefined'){
-        var staminaObj = getStaminaForFighting(configMRObj.fight.stopWhenStaminaBelow, !STOP_SCRIPT);
+        var staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, !STOP_SCRIPT);
         stamina = staminaObj.leftOver;
     }
     var tries = 0;
