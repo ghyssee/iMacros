@@ -137,8 +137,7 @@ function heal(){
     logV2(INFO, "HEAL", "Healing...");
     var healed = false;
     if (retCode == SUCCESS) {
-        healed = true;
-        closePopup();
+        healed = closePopup();
     }
     return healed;
 }

@@ -146,6 +146,7 @@ function closePopup(){
     if (retCode == SUCCESS){
         logV2(INFO, "POPUP", "Popup Closed");
     }
+    return (retCode == SUCCESS);
 }
 
 function closePopupByText(text){
@@ -154,6 +155,7 @@ function closePopupByText(text){
     if (retCode == SUCCESS){
         logV2(INFO, "POPUP", "Popup Closed");
     }
+    return (retCode == SUCCESS);
 }
 
 function checkSaldo(){

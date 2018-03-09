@@ -67,7 +67,7 @@ function getAssassinProfile(){
 }
 
 function setAssassinTempSettting(category, sub, value){
-    assassinObj[ASSASSIN_PROFILE].forEach(function (fighter) {
+    globalSettings.assassinProfile.players.forEach(function (fighter) {
         if (fighter.hasOwnProperty("active") && fighter.active) {
             var obj = findProfileByFighterId(profileObj, fighter.id);
             if (obj){
@@ -167,7 +167,7 @@ function fight(){
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
     do {
         configMRObj = initMRObject(MR.MR_CONFIG_FILE);
-        status = profileAttack(globalSettings.assassinProfile, FIGHTERCONSTANTS.FIGHTERTPE.ASSASSIN);
+        status = profileAttack(globalSettings.assassinProfile.players, FIGHTERCONSTANTS.FIGHTERTPE.ASSASSIN);
         if (continueFighting(status)) {
             status = homeFeedAttack();
         }
@@ -1005,7 +1005,7 @@ function performHealthCheck(message, autoHeal, stamina){
             tries++;
             if (tries > 2){
                 logV2(INFO, HEAL_CAT, "Retries: " + tries);
-                waitV2("0.5");
+                waitV2("1");
             }
             health = getHealth();
         }
