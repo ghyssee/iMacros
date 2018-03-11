@@ -367,7 +367,7 @@ function evaluateBossMessage() {
             msg = msg.toUpperCase();
             logV2(DEBUG, "BOSS", "Boss Message: " + msg);
             if (msg.indexOf("THERE ARE NO BOSSES AVAILABLE") !== -1){
-                var regExp = /BACK IN ([0-9]{1,2}) HOURS, ([0-9]{1,2}) MINUTES/;
+                var regExp = /BACK IN ([0-9]{1,2}) HOURS?, ([0-9]{1,2}) MINUTES?/;
                 var matches = msg.match(regExp);
                 if (matches != null && matches.length > 1){
                     var minutes = matches[2];

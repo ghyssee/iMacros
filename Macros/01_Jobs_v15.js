@@ -771,7 +771,7 @@ function collectCrimeEvent(crimeObj){
     var retCode = playMacro(JOB_FOLDER, "35_CrimeEvent_Collect.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS){
         makeScreenShot("MRCollectCrimeEvent");
-        closePopupByText("Crime Complete");
+        closePopupByTextV2(settingsObj.crimeJobPopup);
         globalSettings.money += checkSaldo();
         crimeObj.collected = true;
         logV2(INFO, "JOB", "Crime Event Collected");
@@ -825,7 +825,8 @@ function selectCrimeEvent(activeJob){
     var started = false;
     if (configMRObj.crimeEvent.startNewCrime) {
         addMacroSetting("POSITION", (activeJob.position - 1).toString());
-        retCode = playMacro(JOB_FOLDER, "31_CrimeEvent_SelectJob.iim", MACRO_INFO_LOGGING);
+        var retCode = initAndCheckScript(JOB_FOLDER, "31_CrimeEvent_SelectJob.iim", "27_CrimeEvent_SelectJob_Test.iim",
+            "0% complete", "CRIMES", "Crime Event Select Crime Init");
         if (retCode == SUCCESS) {
             logV2(INFO, "JOB", "Crime Job Selected: " + activeJob.position);
             started = true;
@@ -985,6 +986,8 @@ function startHelpCrimeEvent(pos){
 function helpCrimeEvent(){
     logV2(INFO, "JOB", "Help Crime Event");
     var retCode = playMacro(JOB_FOLDER, "37_CrimeEvent_Help_Init.iim", MACRO_INFO_LOGGING);
+    var retCode = initAndCheckScript(JOB_FOLDER, "37_CrimeEvent_Help_Init.iim", "28_CrimeEvent_Help_Init_Test.iim",
+        "crimes joined", "CRIMES", "Crime Event Help Init");
     var exit = true;
     var pos = 1;
     if (retCode == SUCCESS) {
@@ -1047,7 +1050,9 @@ function startCrimeEvent(){
         var energy = getEnergyOrStamina(activeJob.type, resourceObj);
         var energyNeeded = activeJob.energyOrStamina;
         if (energyNeeded <= energy) {
-            var retCode = playMacro(JOB_FOLDER, "30_CrimeEvent_Init.iim", MACRO_INFO_LOGGING);
+            //var retCode = playMacro(JOB_FOLDER, "30_CrimeEvent_Init.iim", MACRO_INFO_LOGGING);
+            var retCode = initAndCheckScript(JOB_FOLDER, "30_CrimeEvent_Init.iim", "29_CrimeEvent_Init_Test.iim",
+                                             "your crimes", "CRIMES", "Crime Event Init");
             if (retCode == SUCCESS) {
                 crimeObj = evaluateCrimeEvent(1, activeJob, false);
                 if (crimeObj.started) {

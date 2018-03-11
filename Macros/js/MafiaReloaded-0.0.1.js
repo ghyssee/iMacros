@@ -158,6 +158,14 @@ function closePopupByText(text){
     return (retCode == SUCCESS);
 }
 
+function closePopupByTextV2(text){
+    addMacroSetting("TEXT", text);
+    var retCode = playMacro(COMMON_FOLDER, "04_ClosePopupTextV2.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS){
+        logV2(INFO, "POPUP", "Popup Closed");
+    }
+    return (retCode == SUCCESS);
+}
 function checkSaldo(){
     logV2(DEBUG, "SALDO", "Get Saldo");
     var saldo = 0;

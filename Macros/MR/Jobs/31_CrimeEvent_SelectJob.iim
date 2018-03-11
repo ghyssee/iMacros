@@ -1,4 +1,5 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
 SET !TIMEOUT_STEP 1
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=crime*&action=start&task={{POSITION}}
+'TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=crime*&action=start&task={{POSITION}}
+TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=crime*&action=start&task=3
 WAIT SECONDS=0.5

@@ -792,7 +792,8 @@ function collectCrimeEvent(crimeObj){
     var retCode = playMacro(JOB_FOLDER, "35_CrimeEvent_Collect.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS){
         makeScreenShot("MRCollectCrimeEvent");
-        closePopupByText("Crime Complete");
+        closePopupByTextV2(settingsObj.crimeJobPopup);
+        //closePopup();
         globalSettings.money += checkSaldo();
         crimeObj.collected = true;
         logV2(INFO, "JOB", "Crime Event Collected");
@@ -1477,15 +1478,6 @@ function assignSkillTokens(tokens){
         logV2(WARNING, "JOB", "Problem Going To Profile Page");
     }
 
-}
-
-
-function closePopupByText(text){
-    addMacroSetting("TEXT", text);
-    var retCode = playMacro(COMMON_FOLDER, "03_ClosePopupText.iim", MACRO_INFO_LOGGING);
-    if (retCode == SUCCESS){
-        logV2(INFO, "POPUP", "Popup Closed");
-    }
 }
 
 function checkDailyLink(){
