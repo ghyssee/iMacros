@@ -224,10 +224,7 @@ function performBossAttack(staminaObj, bossHealth){
                     logV2(INFO, "PUMMEL", "expRequired: " + expRequired);
                     logV2(INFO, "PUMMEL", "Calculated exp Left: " + exp);
                     pummel = (exp >= configMRObj.global.stopWhenExpBelow);
-                    if (configMRObj.boss.stopWhenHealthBelow > 0 && bossHealth < 50000){
-                        logV2(INFO, "PUMMEL", "Pummel disabled. stopWhenHealthBelow enabled and BossHealth is low");
-                        pummel = false;
-                    }
+
                 }
                 else {
                     pummel = true;
@@ -242,6 +239,14 @@ function performBossAttack(staminaObj, bossHealth){
         }
     }
     var retCode = SUCCESS;
+    // disable pummel if stopWhenHealthBelow is on and bossHelath is low
+    if (pummel) {
+        logV2(INFO, "PUMMEL", "BossHealth: " + configMRObj.boss.stopWhenHealthBelow + "/" + bossHealth);
+        if (configMRObj.boss.stopWhenHealthBelow > 0 && bossHealth < 100000) {
+            logV2(INFO, "PUMMEL", "Pummel disabled. stopWhenHealthBelow enabled and BossHealth is low");
+            pummel = false;
+        }
+    }
     if (pummel) {
         logV2(INFO, "PUMMEL", "Pummel Attack activated");
         retCode = playMacro(FIGHT_FOLDER, "76_Boss_Pummel.iim", MACRO_INFO_LOGGING);
@@ -335,7 +340,7 @@ function getBossHealth(){
     var health = -1;
     retCode = playMacro(FIGHT_FOLDER, "72_Boss_Health", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
-        var healthMsg = getLastExtract(1, "Boss Health", "27,356/34,775");get
+        var healthMsg = getLastExtract(1, "Boss Health", "27,356/34,775");
         if (!isNullOrBlank(healthMsg)) {
 			healthMsg = healthMsg.replace(/,/g, '');
 			var list = healthMsg.split('/');

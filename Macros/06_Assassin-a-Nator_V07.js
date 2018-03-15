@@ -299,6 +299,9 @@ function attack(fighter, fighterType){
                 else if (attackStatusObj.status == FIGHTERCONSTANTS.ATTACKSTATUS.STAMINALIMIT) {
                     statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STAMINALIMIT;
                 }
+                else if (attackStatusObj.status == FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM) {
+                    statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
+                }
                 else {
                     statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
                 }
