@@ -437,29 +437,6 @@ function getFirefoxSetting(branch, key){
     return value;
 }
 
-function convertFighterObj(){
-    var fightObj = initMRObject(MR.MR_FIGHTERS_FILE);
-    newFighters = [];
-    fightObj.fighters.forEach( function (fighter) {
-        var newObj = getFighterObject();
-        for (var key in fighter) {
-            var value = fighter[key];
-            newObj[key] = value;
-        }
-        newFighters.push(newObj);
-    });
-    fightObj.fighters = newFighters;
-    MR_FIGHTERS_FILE.file += ".NEW";
-    writeMRObject(fightObj, MR.MR_FIGHTERS_FILE);
-}
-
-function getFighterObject(){
-    return {"id":null, "name":null, "level": null, "skip": false,
-        "gangId": null, "gangName": null, "bigHealth": false, "lastAttacked": null, "lastIced": null,
-        "iced": 0
-    };
-}
-
 function findChapter(jobObj, jobId){
     for (var i=0; i < jobObj.districts.length; i++){
         var district = jobObj.districts[i];

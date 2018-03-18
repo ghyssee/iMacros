@@ -30,6 +30,7 @@ startScript();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 //alert(retCode);
 
+
 function testFightList(){
     var array = [];
     var object = getFighterObject("10211065573218554", "Walter White", 100);
@@ -651,7 +652,7 @@ function attack(fighter, fighterType){
 	logV2(INFO, "FIGHT", "Attacking " + fighter.id);
 	// ADD 15/11
     var statusObj = getStatusObject();
-	fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
+	//fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
 	var retCode = SUCCESS;
 	if (fighterType != FIGHTERCONSTANTS.FIGHTERTPE.PROFILE && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.NORMALPROFILE
         && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.RIVAL) {
@@ -726,7 +727,7 @@ function attack(fighter, fighterType){
 					logV2(INFO, "FIGHT", "Opponent is dead. Move on to the next one");
 					statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
 					globalSettings.stolenIces++;
-                    fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
+                    //fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
                     // ADD 15/11
                     updateStatistics2(fighter, fighterType);
 					break;
@@ -734,6 +735,7 @@ function attack(fighter, fighterType){
                     // MOD 15/11
 				    getVictimHealth(fighter);
 					logV2(INFO, "FIGHT", "Add Stronger Opponent: " + fighter.id);
+                    fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
 					addStrongerOpponent(fighter);
                     if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.PROFILE){
                         removeItemFromArray(MR.MR_FIGHTERS_FILE, fighter.id);
@@ -1016,11 +1018,23 @@ function isAlreadyKilledToday(player){
     if (propertyExistAndNotNull(player, "lastIced")){
         if (player.lastIced.substr(0, 8) == strDate) {
             if (valueNotNullAndGreaterThan(player.icesOfTheDay, configMRObj.fight.maxKillsDay-1)) {
-                logV2(INFO, "CHECK", "Fighter already killed today: " + player.id + " / " + player.icesOfTheDay);
+                logV2(INFO, "CHECK", "Player already killed today: " + player.id + " / " + player.icesOfTheDay);
                 killedToday = true;
             }
         }
     }
+    /*
+    if (!killedToday && propertyExistAndNotNull(player, "lastAttacked")){
+        var currDate = new Date();
+        currDate = dateAdd(currDate, -5, 'minutes');
+        var formattedDate = formatDateToYYYYMMDDHHMISS(currDate);
+        if (formattedDate < player.lastAttacked){
+            logV2(INFO, "CHECK", "Player recently attacked: " + formattedDate + "/" + player.lastAttacked);
+            killedToday = true;
+        }
+
+
+    }*/
     return killedToday;
 }
 
@@ -1456,18 +1470,78 @@ function updateStatistics2(fighter, fighterType){
 function updateFighter(player){
     // reload fighther obj, possible that process field was updated by another script
     fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
+    var found = false;
     for (var i=0; i < fighterObj.fighters.length; i++){
         var obj = fighterObj.fighters[i];
         if (obj.id == player.id){
-            obj = player;
+            fighterObj.fighters[i] = player;
             writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
-            logV2(INFO, "UDATE", "Player Info Saved");
+            logV2(INFO, "UPDATE", "Player Info Saved");
+            found = true;
             break;
         }
+    }
+    if (!found){
+        logV2(INFO, "UPDATE", "Player Info Not Saved: " + JSON.stringify(player));
     }
 }
 
 function goToFightPage(){
     var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
     return retCode;
+}
+
+function extractTime(msg, unit, plural){
+    var regExp = " ([0-9]{1,2}) " + unit + plural + "?";
+    logHeader(INFO, "TST", unit, "*");
+    logObj(INFO, "TST", regExp);
+    var matches = msg.match(regExp);
+    logObj(INFO, "TST", matches);
+    var intUnit = 0;
+    if (matches != null && matches.length > 1){
+        intUnit = parseInt(matches[1]);
+    }
+    return intUnit;
+}
+
+function evaluateBossMessage() {
+    var retCode = playMacro(FIGHT_FOLDER, "71_Boss_Message.iim", MACRO_INFO_LOGGING);
+    var bossObj = getBossObj;
+    if (retCode == SUCCESS){
+        var msg = getLastExtract(1, "Boss Message", "There are no bosses available to fight. Please try coming back in 20 hours, 57 minutes.");
+        if (!isNullOrBlank(msg)){
+            msg = msg.toUpperCase();
+            if (msg.indexOf("THERE ARE NO BOSSES AVAILABLE") !== -1){
+                logV2(INFO, "BOSS", "Boss Message: " + msg);
+                var minutes = extractTime(msg, "MINUTE", "S");
+                var hours = extractTime(msg, "HOUR", "S");
+                var seconds = extractTime(msg, "SECOND", "S");
+                logV2(INFO, "BOSS", "hours: " + hours);
+                logV2(INFO, "BOSS", "minutes: " + minutes);
+                logV2(INFO, "BOSS", "seconds: " + seconds);
+                bossObj.status = 0;
+                date = new Date();
+                date = dateAdd(date, hours, 'hours');
+                date = dateAdd(date, minutes, 'minutes');
+                date = dateAdd(date, seconds, 'seconds');
+                var formattedDate = formatDateToYYYYMMDDHHMISS(date);
+                configMRObj.boss.defeatedOn = formattedDate;
+                writeMRObject(configMRObj, MR.MR_CONFIG_FILE);
+                bossObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.BOSSALREADYDEAD;
+            }
+            else if (msg.startsWith(settingsObj.boss.bossName.toUpperCase())) {
+                bossObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
+                logV2(INFO, "BOSS", "BOSS AVAILABLE ???");
+            }
+        }
+        else {
+            bossObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
+            logV2(WARNING, "BOSS", "Problem Extracting Boss Message");
+        }
+    }
+    else {
+        bossObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM;
+        logV2(WARNING, "BOSS", "Problem Getting Boss Message");
+    }
+    return bossObj;
 }

@@ -21,7 +21,9 @@ var fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
 var fightersToExclude = initMRObject(MR.MR_FIGHTERS_EXCLUDE_FILE);
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var profileObj = initObject(MR_PROFILE_FILE);
-var globalSettings = {"kills": 0, "heals": 0, "autoHealWait": false, "expReached": false, "oldHealth": -1, "assassinProfile": null};
+var globalSettings = {"kills": 0, "heals": 0, "autoHealWait": false, "expReached": false, "oldHealth": -1, "assassinProfile": null,
+                      "profile": getProfileObject(getProfile())
+                     };
 
 globalSettings.assassinProfile = getAssassinProfile();
 //displayObj(globalSettings.assassinProfile);
@@ -34,21 +36,21 @@ function activateTempSettings(){
     // Profile: Malin - Script: AutoHeal - Enable autoHeal
     setAssassinTempSettting("autoHeal", "autoHeal", true);
     // Profile: Eric - Script: Fight - Disable HomefeedAttack
-    setTempSetting(globalSettings.profileId, "fight", "homefeedAttack", false);
+    setTempSetting(globalSettings.profile.id, "fight", "homefeedAttack", false);
     // Profile: Eric - Script: Fight - Disable homefeed processing
-    setTempSetting(globalSettings.profileId, "homefeed", "processLines", false);
-    setTempSetting(globalSettings.profileId, "homefeed", "checkMini", false);
+    setTempSetting(globalSettings.profile.id, "homefeed", "processLines", false);
+    setTempSetting(globalSettings.profile.id, "homefeed", "checkMini", false);
     // Profile: Eric - Script: Fight - Disable autoHeal
-    setTempSetting(globalSettings.profileId, "fight", "fightAutoHeal", false);
+    setTempSetting(globalSettings.profile.id, "fight", "fightAutoHeal", false);
 }
 
 function deactivateTempSettings(){
     setAssassinTempSettting("autoHeal", "autoHeal", false);
-    setTempSetting(globalSettings.profileId, "fight", "homefeedAttack", null);
-    setTempSetting(globalSettings.profileId, "homefeed", "processLines", null);
-    setTempSetting(globalSettings.profileId, "homefeed", "checkMini", null);
-    setTempSetting(globalSettings.profileId, "fight", "fightAutoHeal", null);
-    setTempSetting(globalSettings.profileId, "assassin-a-nator", "busyFighting", false);
+    setTempSetting(globalSettings.profile.id, "fight", "homefeedAttack", null);
+    setTempSetting(globalSettings.profile.id, "homefeed", "processLines", null);
+    setTempSetting(globalSettings.profile.id, "homefeed", "checkMini", null);
+    setTempSetting(globalSettings.profile.id, "fight", "fightAutoHeal", null);
+    setTempSetting(globalSettings.profile.id, "assassin-a-nator", "busyFighting", false);
 }
 
 function getAssassinProfile(){
@@ -120,7 +122,7 @@ function startScript(){
                     continue;
                 }
                 waitTillEnoughStamina();
-                setTempSetting(globalSettings.profileId, "assassin-a-nator", "busyFighting", true);
+                setTempSetting(globalSettings.profile.id, "assassin-a-nator", "busyFighting", true);
                 // if (health is 0, don't check for underAttack, it's already checked
                 globalSettings.forceHealing = true;
                 configMRObj = initMRObject(MR.MR_CONFIG_FILE);
@@ -133,7 +135,7 @@ function startScript(){
                 else {
                     logV2(INFO, "FIGHT", "AutoHeal Disabled. Waiting till enough health again if autoheal disabled or stamina if minimum stamina has reached");
                 }
-                setTempSetting(globalSettings.profileId, "assassin-a-nator", "busyFighting", false);
+                setTempSetting(globalSettings.profile.id, "assassin-a-nator", "busyFighting", false);
             }
         }
         while (true);
@@ -952,7 +954,7 @@ function homeFeedAttack(){
     }
     else {
         if (assassinObj.checkMiniHomeFeed) {
-            checkMiniHomeFeed(profileObj, globalSettings.profileId, friendObj, fightersToExclude, fighterObj);
+            checkMiniHomeFeed(profileObj, globalSettings.profile.id, friendObj, fightersToExclude, fighterObj);
         }
         logV2(INFO, "FIGHT", "Start Fight List Using Home Feed");
         var list = [];

@@ -176,39 +176,21 @@ function startList() {
 
     function startChapter(districtId, chapter){
 
-        try {
-            var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
-            if (retCode == SUCCESS) {
-                addMacroSetting("DISTRICT", districtId);
-                retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
-                if (retCode == SUCCESS) {
-                    addMacroSetting("DISTRICT", districtId);
-                    addMacroSetting("CHAPTER", chapter);
-                    logV2(INFO, "DIS: " + districtId);
-                    logV2(INFO, "CHAPT: " + chapter);
-                    retCode = playMacro(JOB_FOLDER, "05_Job_Chapter.iim", MACRO_INFO_LOGGING);
-                    if (retCode == SUCCESS){
-                        var chapterObj = getChapterInfo(districtId, chapter);
-                        logV2(INFO, "CHAPTER", JSON.stringify(chapterObj));
-                        addOrUpdateChapter(districtId, chapterObj);
-                        extractJobs(districtId, chapter);
-                    }
-                    else {
-                        logV2(INFO, "JOBLIST", "Problem selecting district / chapter: " + districtId + "/" + chapter);
-                    }
-                }
-                else {
-                    logV2(INFO, "JOBLIST", "Problem Selecting district: " + districtId);
-                }
+        var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
+        if (retCode == SUCCESS) {
+            retCode = travel(districtId, false, chapter);
+            if (retCode == SUCCESS){
+                var chapterObj = getChapterInfo(districtId, chapter);
+                logV2(INFO, "CHAPTER", JSON.stringify(chapterObj));
+                addOrUpdateChapter(districtId, chapterObj);
+                extractJobs(districtId, chapter);
             }
             else {
-                logV2(INFO, "JOBLIST", "Problem With Init Job");
+                logV2(INFO, "JOBLIST", "Problem selecting chapter: " + chapter);
             }
         }
-        catch (ex) {
-            logError(ex);
-            logV2(INFO, "SUMMARY", "Jobs Completed: " + globalSettings.jobsCompleted);
-            logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
+        else {
+            logV2(INFO, "JOBLIST", "Problem With Init Job");
         }
     }
 
@@ -352,10 +334,6 @@ function findJob(jobs, jobId){
         }
         return obj;
     }
-
-function closePopup(){
-	playMacro(COMMON_FOLDER, "02_ClosePopup.iim", MACRO_INFO_LOGGING);
-}
 
 function init(){
 		
@@ -529,7 +507,7 @@ function goToChapter(districtId, chapter){
             ok = true;
         }
         else {
-            if (isChapterSelected(jobItem)) {
+            if (isChapterSelected(districtId, chapter)) {
                 ok = true;
             }
         }
@@ -585,6 +563,7 @@ function goToDistrict ( districtId, event){
     var retCode = -1;
     var counter = 0;
     var ok = false;
+    logV2(INFO, "JOB", "GoTo District: " + districtId);
     do {
         counter++;
         if (counter > 1){
@@ -596,9 +575,10 @@ function goToDistrict ( districtId, event){
         else {
             addMacroSetting("DISTRICT", districtId);
             retCode = playMacro(JOB_FOLDER, "02_Job_District.iim", MACRO_INFO_LOGGING);
+            logV2(INFO, "JOB", "retCode: " + retCode);
         }
         if (retCode == SUCCESS) {
-            if (isDistrictSelected(districtId)) {
+            if (isDistrictSelected(districtId, event)) {
                 ok = true;
             }
         }
@@ -609,4 +589,30 @@ function goToDistrict ( districtId, event){
     }
     while (!ok && counter < 5);
     return retCode;
+}
+
+function isDistrictSelected(districtId, event){
+    addMacroSetting("DISTRICT", districtId);
+    var retCode = SUCCESS;
+    if (event){
+        retCode = playMacro(JOB_FOLDER, "16_DistrictSelectEvent.iim", MACRO_INFO_LOGGING);
+    }
+    else {
+        retCode = playMacro(JOB_FOLDER, "15_DistrictSelect.iim", MACRO_INFO_LOGGING);
+    }
+    if (retCode == SUCCESS){
+        var selectInfo = getLastExtract(1, "District Selected", "<a href=\"#\" class=\"ajax_request h2_btn selected\" data-params=\"controller=job&amp;action=hip&amp;loc=2\" style=\"outline: 1px solid blue;\">The Getaway</a>");
+        if (!isNullOrBlank(selectInfo)) {
+            selectInfo = selectInfo.toLowerCase();
+            if (contains(selectInfo, "btn selected")) {
+                logV2(INFO, "JOB", "Right District Selected: " + districtId);
+                return true;
+            }
+        }
+        else {
+            logV2(WARNING, "JOB", "selectInfo: " + selectInfo);
+        }
+    }
+    logV2(WARNING, "JOB", "Problem getting selected district");
+    return false;
 }
