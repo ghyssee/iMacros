@@ -727,7 +727,6 @@ function attack(fighter, fighterType){
 					logV2(INFO, "FIGHT", "Opponent is dead. Move on to the next one");
 					statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
 					globalSettings.stolenIces++;
-                    //fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
                     // ADD 15/11
                     updateStatistics2(fighter, fighterType);
 					break;
@@ -812,7 +811,6 @@ function attackTillDeath(fighter, fighterType){
 				if (health > 100){
                     logV2(INFO, "ATTACK", "Victim has too much health: " + health);
                     statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-                    fighter.bigHealth = true;
                     break;
                 }
 				else if (nrOfAttacks > configMRObj.fight.maxNumberOfAttacks && health > configMRObj.fight.attackTillDiedHealth){

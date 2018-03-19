@@ -253,7 +253,6 @@ function attack(fighter, fighterType){
         statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.SKIP;
         return statusObj;
     }
-    fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
     var healthObj = performHealthCheck("ATTACK", configMRObj.fight.autoHeal);
     if (!continueFightingAfterHealthCheck(healthObj)){
         logV2(INFO, "ATTACK", "Not enough health to fight");
@@ -286,7 +285,6 @@ function attack(fighter, fighterType){
                 break;
             case FIGHTERCONSTANTS.OPPONENT.WON :
                 fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
-                fighter.lastTimeAlive = formatDateToYYYYMMDDHHMISS(new Date());
                 addValueToProperty(fighter, "alive", 1);
                 var attackStatusObj = attackTillDeath(fighter);
                 if (checkIfLevelUp() && configMRObj.fight.stopOnLevelUp) {
@@ -319,7 +317,6 @@ function attack(fighter, fighterType){
                 logV2(INFO, "FIGHT", "Opponent is dead. Move on to the next one");
                 statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
                 globalSettings.stolenIces++;
-                fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
                 updateStatistics(fighter, fighterType);
                 break;
             case FIGHTERCONSTANTS.OPPONENT.LOST :
@@ -585,63 +582,6 @@ function updateStatistics(fighter, fighterType){
     else {
         writeMRObject(assassinObj, MR.MR_ASSASSIN_FILE);
     }
-}
-
-// ADD 15/11
-function updateStatisticsOld(fighter, fighterType){
-    logV2(INFO, "FIGHT", "Updating statistics for " + fighter.id);
-    logV2(INFO, "FIGHT", "Fighter: " + JSON.stringify(fighter));
-    var found = false;
-    var list = [];
-    if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.ASSASSIN){
-        list = globalSettings.assassinProfile;
-    }
-    else {
-        list = assassinObj.homefeedPlayers;
-    }
-    logV2(INFO, "FIGHT", "Fighter Update List: " + JSON.stringify(list));
-    if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.HOMEFEED) {
-        // only update statistics for fighters coming from homefeed
-        // assassin type (coming from list players): object is already updated
-        for (var i = 0; i < list.length; i++) {
-            var fighterItem = list[i];
-            if (fighterItem.id == fighter.id) {
-                if (fighter.lastAttacked != null) {
-                    fighterItem.lastAttacked = fighter.lastAttacked;
-                }
-                fighterItem.bigHealth = fighter.bigHealth;
-                if (fighter.lastIced != null) {
-                    fighterItem.lastIced = fighter.lastIced;
-                }
-                if (valueNotNullAndGreaterThan(fighter.iced, 0)) {
-                    addValueToProperty(fighterItem, "iced", 1);
-                }
-                if (valueNotNullAndGreaterThan(fighter.alive, 0)) {
-                    addValueToProperty(fighterItem, "alive", 1);
-                }
-                if (valueNotNullAndGreaterThan(fighter.dead, 0)) {
-                    addValueToProperty(fighterItem, "dead", 1);
-                }
-                fighterItem.gangId = fighter.gangId;
-                fighterItem.gangName = fighter.gangName;
-                found = true;
-                logV2(INFO, "FIGHT", JSON.stringify(fighterItem));
-                break;
-            }
-        }
-    }
-    else {
-        found = true;
-    }
-    if (!found){
-        if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.ASSASSIN) {
-            logV2(INFO, "FIGHT", "Problem Updating statistics for " + fighter.id);
-        }
-        else {
-            assassinObj.homefeedPlayers.push(fighter);
-        }
-    }
-    writeMRObject(assassinObj, MR.MR_ASSASSIN_FILE);
 }
 
 function init(){
