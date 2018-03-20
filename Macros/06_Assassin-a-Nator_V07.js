@@ -9,7 +9,11 @@ eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.2.js"));
 
 var localConfigObject = null;
-setMRPath("MRAssassin-a-Nator");
+var globalSettings = {"kills": 0, "heals": 0, "autoHealWait": false, "expReached": false, "oldHealth": -1, "assassinProfile": null,
+    "autoHeal": false, "node": null,
+    "profile": null
+};
+setMRPath(getLogFile());
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 // 185 - 14 = 171
 
@@ -21,16 +25,38 @@ var fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
 var fightersToExclude = initMRObject(MR.MR_FIGHTERS_EXCLUDE_FILE);
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var profileObj = initObject(MR_PROFILE_FILE);
-var globalSettings = {"kills": 0, "heals": 0, "autoHealWait": false, "expReached": false, "oldHealth": -1, "assassinProfile": null,
-                      "profile": getProfileObject(getProfile())
-                     };
 
 globalSettings.assassinProfile = getAssassinProfile();
+initScript();
 //displayObj(globalSettings.assassinProfile);
-startScript();
+//startScript();
 //if (assassinObj.gang.extract){
 //    gangExtract(assassinObj.gang.gangId);
 //}
+
+function initScript(){
+    var value = getFirefoxSetting(MR_BRANCH_ASSASSIN,  MR_ASSASSIN_AUTOHEAL, DATATYPE_BOOLEAN);
+    if (value == null){
+        globalSettings.autoHeal = configMRObj.fight.autoHeal;
+    }
+    else {
+        globalSettings.autoHeal = value;
+    }
+    globalSettings.profile = getProfileObject(getProfile());
+    logV2(INFO, "INIT", "AutoHeal: " + globalSettings.autoHeal);
+    alert("globalSettings.autoHeal: " + globalSettings.autoHeal);
+
+}
+
+function getLogFile(){
+    var value = getFirefoxSetting(MR_BRANCH,  MR_NODE, DATATYPE_STRING);
+    var file = "MRAssassin-a-Nator";
+    if (value != null){
+        globalSettings.node = value;
+        file += ".Node" + value;
+    }
+    return file;
+}
 
 function activateTempSettings(){
     // Profile: Malin - Script: AutoHeal - Enable autoHeal
@@ -42,6 +68,10 @@ function activateTempSettings(){
     setTempSetting(globalSettings.profile.id, "homefeed", "checkMini", false);
     // Profile: Eric - Script: Fight - Disable autoHeal
     setTempSetting(globalSettings.profile.id, "fight", "fightAutoHeal", false);
+    setTempSetting(globalSettings.profile.id, "assassin-a-nator", "busyFighting", true);
+    var nrOfScriptsRunning = getTempSetting(null, "assassin-a-nator", "nrOfScriptsRunning");
+    nrOfScriptsRunning++;
+    setTempSetting(globalSettings.profile.id, "assassin-a-nator", "nrOfScriptsRunning", nrOfScriptsRunning);
 }
 
 function deactivateTempSettings(){
@@ -50,7 +80,12 @@ function deactivateTempSettings(){
     setTempSetting(globalSettings.profile.id, "homefeed", "processLines", null);
     setTempSetting(globalSettings.profile.id, "homefeed", "checkMini", null);
     setTempSetting(globalSettings.profile.id, "fight", "fightAutoHeal", null);
-    setTempSetting(globalSettings.profile.id, "assassin-a-nator", "busyFighting", false);
+    var nrOfScriptsRunning = getTempSetting(null, "assassin-a-nator", "nrOfScriptsRunning");
+    nrOfScriptsRunning--;
+    setTempSetting(globalSettings.profile.id, "assassin-a-nator", "nrOfScriptsRunning", nrOfScriptsRunning);
+    if (nrOfScriptsRunning == 0) {
+        setTempSetting(globalSettings.profile.id, "assassin-a-nator", "busyFighting", false);
+    }
 }
 
 function getAssassinProfile(){
@@ -668,14 +703,14 @@ function getOneDrivePath(){
 }
 
 function getMacrosPath(){
-    var value = getFirefoxSetting("extensions.imacros.",  "defsavepath");
+    var value = _getFirefoxSetting("extensions.imacros.",  "defsavepath");
     if (value == null){
         throw new Error("iMacros Probably not installed...");
     }
     return value;
 }
 
-function getFirefoxSetting(branch, key){
+function _getFirefoxSetting(branch, key){
 
     var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch(branch);
 
@@ -952,6 +987,7 @@ function performHealthCheck(message, autoHeal, stamina){
                 logV2(INFO, HEAL_CAT, "Retries: " + tries);
                 waitV2("1");
             }
+            dummyBank();
             health = getHealth();
         }
         if (health > configMRObj.fight.heal){
@@ -959,14 +995,12 @@ function performHealthCheck(message, autoHeal, stamina){
         }
     }
     else {
-        if (health == 0) {
-            if (homefeedCheck()){
-                healthObj.refresh = true;
-                logV2(INFO, HEAL_CAT, "Refresh After Homefeed check");
-            }
-            else {
+        if (stamina >= configMRObj.fight.minStaminaToHeal) {
+            while (health == 0) {
                 logV2(INFO, HEAL_CAT, "No health and AutoHeal Disabled. Waiting 20 seconds");
                 waitV2("20");
+                dummyBank();
+                health = getHealth();
             }
         }
     }

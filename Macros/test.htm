@@ -1,0 +1,25 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<title>Page Title</title>
+</head>
+<body>
+
+<h1>This is a Heading</h1>
+<p>This is a paragraph.</p>
+<div id="test123">BlaBla</div>
+<button id="btn1">Show Text</button>
+</body>
+</html> 
+
+<script>
+$(document).ready(function(){
+    $("#btn1").click(function(){
+		//$('#test123").html("This is a test");
+        alert("test");
+		var txt = $("#test123").text();
+		alert(txt);
+    });
+});
+</script>

@@ -12,27 +12,11 @@ LOG_FILE = new LogFile(LOG_DIR, "MRInit");
 
 init();
 setProfile();
+setNode();
 setAssassinProfile();
+setAssassinAutoHeal();
 checkMRProperties(MR.MR_CONFIG_FILE);
 checkMRProperties(MR.MR_TEMP_SETTINGS_FILE);
-
-function checkMRPropertiesOld(){
-    var initFile = new ConfigFile(MR_DIR + 'INIT\\', MR.MR_CONFIG_FILE);
-    logV2(INFO, "INIT", "Check MR Config File For All Profiles: " + initFile.fullPath());
-    var obj = initObject(initFile);
-    var profileObj = initObject(MR_PROFILE_FILE);
-    profileObj.list.forEach(function (item) {
-        var profilerFile = new ConfigFile(MR_DIR + item.id + '\\', MR.MR_CONFIG_FILE);
-        var profilerObj = initObject(profilerFile);
-        logV2(INFO, "INIT", "Profile:" + item.name);
-        check(obj, profilerObj);
-        if (GLOBAL_SAVE){
-            logV2(INFO, "INIT", "Update File: " + JSON.stringify(profilerObj));
-            writeObject(profilerObj, profilerFile);
-        }
-    });
-    //setMRPathProfile("INIT","MRInit");
-}
 
 function checkMRProperties(configFileCode){
     var initFile = new ConfigFile(MR_DIR + 'INIT\\', configFileCode);
@@ -104,6 +88,57 @@ function setAssassinProfile(){
         profile = inputTxt;
         changeFirefoxSetting(MR_BRANCH, MR_ASSASSIN_PROFILE_KEY, profile);
         logV2(INFO, "INIT", "Set Assassin Profile to " + profile);
+    }
+}
+
+function setNode(){
+    logV2(INFO, "INIT", "Setting Node");
+    var node = getFirefoxSetting(MR_BRANCH,  MR_NODE);
+    if (isNullOrBlank(node)){
+        node = "";
+    }
+    var inputTxt = prompt("Set Node", node);
+    if (inputTxt == null) {
+        // cancel pressed
+    }
+    else {
+        node = inputTxt;
+        changeFirefoxSetting(MR_BRANCH, MR_NODE, node);
+        logV2(INFO, "INIT", "Set Node to " + node);
+    }
+}
+
+function setAssassinAutoHeal(){
+    logV2(INFO, "INIT", "Mafia Reloaded Set Assassin Profile");
+    var autoHeal = getFirefoxSetting(MR_BRANCH_ASSASSIN,  MR_ASSASSIN_AUTOHEAL);
+    if (isNullOrBlank(autoHeal)){
+        autoHeal = "";
+    }
+    var clear = false;
+    var inputTxt = prompt("Set AutoHeal (Allowed Values: true, false. Any other value will clear this setting", autoHeal);
+    if (inputTxt == null) {
+        // cancel pressed
+    }
+    else {
+        inputTxt = inputTxt.toLowerCase();
+        switch (inputTxt) {
+            case "true":
+                autoHeal = true;
+                break;
+            case "false":
+                autoHeal = false;
+                break;
+            default :
+                var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch(MR_BRANCH_ASSASSIN);
+                prefs.clearUserPref(MR_ASSASSIN_AUTOHEAL);
+                clear = true;
+                //autoHeal = null;
+                break;
+        }
+        if (!clear) {
+            changeFirefoxSetting(MR_BRANCH_ASSASSIN, MR_ASSASSIN_AUTOHEAL, autoHeal);
+        }
+        logV2(INFO, "INIT", "Set AutoHeal to " + autoHeal);
     }
 }
 

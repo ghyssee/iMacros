@@ -1915,7 +1915,6 @@ function extractEnergy(energyInfo){
     return -1;
 }
 
-
 function extractStamina(staminaInfo) {
     var staminaObj = {"left": -1, "total": -1};
     if (!isNullOrBlank(staminaInfo)) {
@@ -1947,4 +1946,3 @@ function getEnergyOrStamina(jobType, resourceObj){
     }
     return total;
 }
-
