@@ -41,7 +41,8 @@ var MR = Object.freeze({
     "MR_CONFIG_FILE": "MafiaReloaded.json",
     "MR_HOMEFEED_FILE": "Homefeed.json",
     "MR_ASSASSIN_FILE": "Assassin-a-Nator.json",
-    "MR_TEMP_SETTINGS_FILE" : "TempSettings.json"
+    "MR_TEMP_SETTINGS_FILE" : "TempSettings.json",
+    "MR_KILLS_FILE": "Kills.json"
     }
 );
 
@@ -99,6 +100,11 @@ function initMRObject(fileId){
 function writeMRObject(object, fileId){
     var file = getMRFile(fileId);
     writeObject(object, file);
+}
+
+function writeMRFile(text, fileId, overwrite){
+    var file = getMRFile(fileId);
+    writeFileWrapper(file.fullPath(), text + NEWLINE, overwrite);
 }
 
 function LogFile(path, fileId){

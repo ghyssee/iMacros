@@ -1275,7 +1275,7 @@ function startProfileAttack(){
 function startProfileAttackRecentlyIced(){
     logHeader(INFO, "FIGHT", "Start Profile Attack From Recently Iced Players", "*");
     var nr = fighterObj.fighters.length;
-    var profileAttackLength = 100
+    var profileAttackLength = 100;
     logV2(INFO, "FIGHT", "Range Max:" + (nr - profileAttackLength));
     logV2(INFO, "FIGHT", "Total:" + nr);
     var start = randomIntFromInterval(0, nr - profileAttackLength);

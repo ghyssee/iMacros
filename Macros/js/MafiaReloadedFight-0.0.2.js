@@ -650,6 +650,15 @@ function updateIces(fighter){
 
 }
 
+function addKill(msg){
+    var kills = initMRObject(MR.MR_KILLS_FILE);
+    var currDate = formatDateYYYYMMDDHHMISS();
+    var homefeedObj = getHomeFeedObj(currDate, msg);
+    homefeedObj.timestamp = formatDateToYYYYMMDDHHMISS();
+    kills.list.push(homefeedObj);
+    writeMRObject(kills, MR.MR_KILLS_FILE);
+}
+
 function checkIfIced(fighter){
     iced = false;
     var retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status.iim", MACRO_INFO_LOGGING);
@@ -668,6 +677,7 @@ function checkIfIced(fighter){
     }
     if (iced){
         logV2(INFO, "FIGHT", "Total Ices: " + ++globalSettings.iced);
+        addKill(msg);
         updateIces(fighter);
     }
     return iced;
