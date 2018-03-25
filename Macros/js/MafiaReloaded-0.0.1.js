@@ -374,7 +374,7 @@ function initAndCheckScript(folder, initMacro, initTestMacro, testValue, categor
     do {
         counter++;
         retCode = playMacro(folder, initMacro, MACRO_INFO_LOGGING);
-        if (retCode == SUCCESS) {
+        //if (retCode == SUCCESS) {
             // check if Init Screen is realy selected
             retCode = playMacro(folder, initTestMacro, MACRO_INFO_LOGGING);
             var _value = getLastExtract(1, "Test Value", "Test Value");
@@ -382,11 +382,14 @@ function initAndCheckScript(folder, initMacro, initTestMacro, testValue, categor
                 logV2(WARNING, category, "Problem with " + logMessage + ". Value is empty, but should be " + testValue);
                 retCode = -1;
             }
+            else if (testValue == '*'){
+                retCode = SUCCESS;
+            }
             else if (_value.toLowerCase() != testValue.toLowerCase()){
                 logV2(WARNING, category, "Problem with " + logMessage + ". Value is: " + " but should be: " + testValue);
                 retCode = -1;
             }
-        }
+            //}
         if (retCode != SUCCESS){
             logV2(WARNING, category, "Retries: " + counter);
         }

@@ -29,7 +29,7 @@ var profileObj = initObject(MR_PROFILE_FILE);
 globalSettings.assassinProfile = getAssassinProfile();
 initScript();
 //displayObj(globalSettings.assassinProfile);
-//startScript();
+startScript();
 //if (assassinObj.gang.extract){
 //    gangExtract(assassinObj.gang.gangId);
 //}
@@ -44,7 +44,6 @@ function initScript(){
     }
     globalSettings.profile = getProfileObject(getProfile());
     logV2(INFO, "INIT", "AutoHeal: " + globalSettings.autoHeal);
-    alert("globalSettings.autoHeal: " + globalSettings.autoHeal);
 
 }
 

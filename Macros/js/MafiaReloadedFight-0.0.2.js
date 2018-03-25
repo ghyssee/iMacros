@@ -353,11 +353,13 @@ function addFighter(fighterObj, fighter){
 function addFighterV2(fighterObj, fighter){
     var foundFighter = getFighter(fighterObj.fighters, fighter.id);
     if (foundFighter == null){
+        logV2(INFO, "ADDFIGHTER", "Add fighter " + fighter.id);
         fighterObj.fighters.push(fighter);
         writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
         foundFighter = fighter;
     }
     else {
+        logV2(INFO, "ADDFIGHTER", "Update fighter " + fighter.id);
         updateFighterInfo(foundFighter, fighter);
     }
     return foundFighter;
@@ -367,11 +369,12 @@ function updateFighterInfo(fighterToUpdate, fighter){
     fighterToUpdate.gangId = fighter.gangId;
     fighterToUpdate.gangName = fighter.gangName;
     fighterToUpdate.level = fighter.level;
+    fighterToUpdate.lastChecked = formatDateToYYYYMMDDHHMISS();
 }
 
 function getFighterObject(id, name, level){
     return {"id":id, "name":name, "level": level, "skip": false,
-        "gangId": null, "gangName": null, "bigHealth": false, "lastAttacked": null, "lastIced": null,
+        "gangId": null, "gangName": null, "bigHealth": false, "lastAttacked": null, "lastIced": null, "lastChecked": null,
         "iced": 0, "alive": 0, "dead": 0, "homefeed": null
     };
 }
@@ -510,7 +513,7 @@ function performAttackInit(fighterType){
     if (retCode == SUCCESS) {
         var counter = 0;
         do {
-            retCode = initAndCheckScript(FIGHT_FOLDER, "33_Attack_Start_1st.iim", "34_Attack_Start_Test.iim", "power attack", "INITATTACK", "Init Attack Step 2");
+            retCode = initAndCheckScript(FIGHT_FOLDER, "33_Attack_Start_1st.iim", "35_Attack_Start_Test_Step2.iim", "*", "INITATTACK", "Init Attack Step 2");
             if (retCode != SUCCESS){
                 break;
             }

@@ -439,7 +439,7 @@ function performDistrict(jobItem){
             ok = true;
         }
     }
-    while (!ok && counter < 5);
+    while (!ok && counter < 10);
     return retCode;
 }
 
@@ -487,7 +487,7 @@ function performChapter(jobItem){
             }
         }
     }
-    while (!ok && counter < 5);
+    while (!ok && counter < 10);
     return retCode;
 }
 
