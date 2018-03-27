@@ -653,6 +653,16 @@ function updateIces(fighter){
 
 }
 
+function isExcludedKill(homefeedObj, player){
+    for (var i=0; i < homefeedObj.excludeKills.length; i++){
+        var item = homefeedObj.excludeKills[i];
+        if (item.id == player.id){
+            return true;
+        }
+    }
+    return false;
+}
+
 function addKill(msg){
     var kills = initMRObject(MR.MR_KILLS_FILE);
     var currDate = formatDateYYYYMMDDHHMISS();
