@@ -1359,16 +1359,32 @@ function extractFighterinfo(fighter){
                 fighter.lastChecked = formatDateToYYYYMMDDHHMISS();
             }
             else {
-                logV2(WARNING, "FIGHT", "Problem converting level for profile " + fighter.id);
+                logV2(WARNING, "FIGHT", "Problem converting level for player " + fighter.id);
             }
         }
         else {
-            logV2(WARNING, "FIGHT", "Problem extracting level for profile " + fighter.id);
+            logV2(WARNING, "FIGHT", "Problem extracting level for player " + fighter.id);
         }
     }
     else {
-        logV2(WARNING, "FIGHT", "Problem updating profile " + fighter.id);
+        logV2(WARNING, "FIGHT", "Problem updating player " + fighter.id);
     }
+}
+
+function filterProfile(array){
+    var filteredArray = [];
+    for (var i=0; i < array.length; i++) {
+        var item = array[i];
+        if (isAlreadyKilledToday(item)) {
+        }
+        else if (fighter.level > 0 && fighter.level < configMRObj.fight.minLevel && !checkForPlayerinfoToUpdate(fighter)){
+            logV2(INFO, "FIGHT", "Low Level: " + fighter.id + "(Level: " + fighter.level + ")");
+        }
+        else {
+            filteredArray.push(item);
+        }
+    }
+    return filteredArray;
 }
 
 function profileAttack(array, fighterType){
@@ -1377,16 +1393,8 @@ function profileAttack(array, fighterType){
     if (!configMRObj.fight.profileAttack){
         return status;
     }
-    var filteredArray = [];
-    for (var i=0; i < array.length; i++){
-        var item = array[i];
-        if (isAlreadyKilledToday(item))   {
-        }
-        else {
-            filteredArray.push(item);
-        }
-    }
-    logV2(INFO, "FIGHT", "Profile Fighting: Nr Of Fighters: " + filteredArray.length);
+    var filteredArray = filterProfile(array);
+    logV2(INFO, "FIGHT", "Profile Fighting: Nr Of Players: " + filteredArray.length);
     for (var i=0; i < filteredArray.length; i++) {
         var arrayItem = filteredArray[i];
         if (arrayItem.skip){
@@ -1394,7 +1402,7 @@ function profileAttack(array, fighterType){
         }
         logV2(INFO, "PROFILE", JSON.stringify(arrayItem));
         if (isAllyGang(friendObj.gangs, arrayItem.gangId)){
-            logV2(INFO, "FIGHT", "Profile Fighting: Friendly Gang Found for fighter " + arrayItem.id + " - " + arrayItem.name);
+            logV2(INFO, "FIGHT", "Profile Fighting: Friendly Gang Found for player " + arrayItem.id + " - " + arrayItem.name);
             continue;
         }
         addMacroSetting("ID", arrayItem.id);
@@ -1415,7 +1423,7 @@ function profileAttack(array, fighterType){
                     exitLoop = true;
                     break;
                 case FIGHTERCONSTANTS.ATTACKSTATUS.PROBLEM :
-                    logV2(INFO, "FIGHT", "Problem With Fighter. Skipping...");
+                    logV2(INFO, "FIGHT", "Problem With Player. Skipping...");
                     break;
                 case FIGHTERCONSTANTS.ATTACKSTATUS.NOSTAMINA :
                     logV2(INFO, "FIGHT", "Out Of Stamina. Exiting Profile Fighters List");
@@ -1440,7 +1448,7 @@ function profileAttack(array, fighterType){
         if (exitLoop) break;
     }
     // reload fighters list (because it's possible that fighters were removed => friend / stronger opponent
-    logV2(INFO, "FIGHT", "Reloading fighters list");
+    logV2(INFO, "FIGHT", "Reloading players list");
     fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
     return status;
 }
