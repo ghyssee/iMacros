@@ -312,6 +312,10 @@ function attack(fighter, fighterType){
         switch (status) {
             case FIGHTERCONSTANTS.OPPONENT.NOHEALTH:
                 break;
+            case FIGHTERCONSTANTS.OPPONENT.NOSTAMINA:
+                logV2(INFO, "FIGHT", "No Stamina to fight");
+                statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.NOSTAMINA;
+                break;
             case FIGHTERCONSTANTS.OPPONENT.FRIEND :
                 removeItemFromArray(MR.MR_FIGHTERS_FILE, fighterObj, fighter.id);
                 addFriend(fighter);
@@ -582,6 +586,9 @@ function evaluateAttackMessage(msg){
     }
     else if (msg.startsWith("YOU DO NOT FEEL HEALTHY")){
         return FIGHTERCONSTANTS.OPPONENT.NOHEALTH;
+    }
+    else if (msg.startsWith("YOU NEED AT LEAST")){
+        return FIGHTERCONSTANTS.OPPONENT.NOSTAMINA;
     }
     else {
         return FIGHTERCONSTANTS.OPPONENT.UNKNOWN;
