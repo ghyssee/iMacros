@@ -1,10 +1,11 @@
 ﻿var ONEDRIVEPATH = getOneDrivePath();
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyUtils-0.0.1.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyFileUtils-0.0.3.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyConstants-0.0.2.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.3.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\SongUtils-0.0.2.js"));
-setupEnvrionment(getOneDrivePath());
+var MACROS_PATH = getMacrosPath();
+eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.3.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.2.js"));
+eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.3.js"));
+eval(readScript(MACROS_PATH + "\\js\\SongUtils-0.0.2.js"));
+setupEnvrionment(ONEDRIVEPATH);
 
 LOG_FILE = new LogFile(LOG_DIR, "Albums");
 songInit();
@@ -12,7 +13,6 @@ songInit();
 var MACRO_FOLDER = "Amazon";
 var ALBUM = "Album";
 var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
-
 processAlbum();
 
 function processAlbum(){
@@ -53,7 +53,7 @@ function getAlbumName(macroName, albumObject){
 	albumObject.album = getLastExtract(1);
 	var ok = false;
 	if (!isNullOrBlank(albumObject.album)){
-		albumObject.album = albumObject.album.trim();
+		albumObject.album = removeFromAndAfterNewline(albumObject.album).trim();
 		ok =true;
 	}
 	else {
@@ -176,3 +176,20 @@ function getOneDrivePath(){
 	}
 	return id;
 }
+
+function getFirefoxSetting(branch, key){
+
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch(branch);
+
+    var value = prefs.getCharPref(key, Components.interfaces.nsISupportsString);
+    return value;
+}
+
+function getMacrosPath(){
+    var value = getFirefoxSetting("extensions.imacros.",  "defsavepath");
+    if (value == null){
+        throw new Error("iMacros Probably not installed...");
+    }
+    return value;
+}
+

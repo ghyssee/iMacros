@@ -460,3 +460,15 @@ function sleep(milliSeconds){
     var startTime = new Date().getTime(); // get the current time
     while (new Date().getTime() < startTime + milliSeconds); // hog cpu
 }
+
+function removeFromAndAfterString(text, searchStr){
+    if (text != null) {
+        var array = text.split(searchStr);
+        return array[0];
+    }
+    return text;
+}
+
+function removeFromAndAfterNewline(text){
+    return removeFromAndAfterString(text, '\n');
+}
