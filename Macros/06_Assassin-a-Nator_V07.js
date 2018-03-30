@@ -984,7 +984,7 @@ function performHealthCheck(message, autoHeal, stamina){
             tries++;
             if (tries > 2){
                 logV2(INFO, HEAL_CAT, "Retries: " + tries);
-                waitV2("1");
+                //waitV2("1");
             }
             dummyBank();
             health = getHealth();
