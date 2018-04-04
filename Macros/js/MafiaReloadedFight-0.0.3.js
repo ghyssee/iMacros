@@ -640,11 +640,11 @@ function updateIces(fighter){
         var iceDate = oldIceDate.substr(0,8);
         if (iceDate == newIceDate){
             addValueToProperty(fighter, "icesOfTheDay", 1);
-            logV2(INFO, "FIGHT", "Add Ice (New): " + fighter.icesOfTheDay);
+            logV2(INFO, "FIGHT", "Update Ice: " + fighter.icesOfTheDay);
         }
         else {
             fighter.icesOfTheDay = 1;
-            logV2(INFO, "FIGHT", "New Ice: " + fighter.icesOfTheDay);
+            logV2(INFO, "FIGHT", "Add Ice: " + fighter.icesOfTheDay);
         }
     }
     fighter.iced++;
