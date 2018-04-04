@@ -1336,6 +1336,7 @@ function checkForPlayerinfoToUpdate(fighter){
     else {
         chk = true;
     }
+    logV2(INFO, "FIGHT", "checkForPlayerinfoToUpdate: " + chk);
     return chk;
 }
 
@@ -1377,8 +1378,8 @@ function filterProfile(array){
         var item = array[i];
         if (isAlreadyKilledToday(item)) {
         }
-        else if (fighter.level > 0 && fighter.level < configMRObj.fight.minLevel && !checkForPlayerinfoToUpdate(fighter)){
-            logV2(INFO, "FIGHT", "Low Level: " + fighter.id + "(Level: " + fighter.level + ")");
+        else if (item.level > 0 && item.level < configMRObj.fight.minLevel && !checkForPlayerinfoToUpdate(item)){
+            logV2(INFO, "FIGHT", "Low Level: " + item.id + "(Level: " + item.level + ")");
         }
         else {
             filteredArray.push(item);

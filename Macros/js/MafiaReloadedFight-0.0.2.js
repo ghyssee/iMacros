@@ -5,7 +5,8 @@ var FIGHTERCONSTANTS = Object.freeze({
         "WON" : 2,
         "LOST": 3,
         "DEAD": 4,
-        "NOHEALTH": 5
+        "NOHEALTH": 5,
+        "NOSTAMINA": 6
     },
     "ATTACKSTATUS" : {
         "OK" : 0,
