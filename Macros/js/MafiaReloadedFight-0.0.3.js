@@ -653,10 +653,10 @@ function updateIces(fighter){
 
 }
 
-function isExcludedKill(homefeedObj, player){
-    for (var i=0; i < homefeedObj.excludeKills.length; i++){
-        var item = homefeedObj.excludeKills[i];
-        if (item.id == player.id){
+function isExcludedKill(fighter, profileObj){
+    for (var i=0; i < profileObj.list.length; i++){
+        var profile = profileObj.list[i];
+        if (profile.fighterId == fighter.id){
             return true;
         }
     }
@@ -664,15 +664,7 @@ function isExcludedKill(homefeedObj, player){
 }
 
 function addKill(msg, fighter, profileObj){
-    var found = false;
-    for (var i=0; i < profileObj.list.length; i++){
-        var profile = profileObj.list[i];
-        if (profile.fighterId == fighter.id){
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
+    if (!isExcludedKill(fighter, profileObj)) {
         var kills = initMRObject(MR.MR_KILLS_FILE);
         var currDate = formatDateYYYYMMDDHHMISS();
         var homefeedObj = getHomeFeedObj(currDate, msg);
