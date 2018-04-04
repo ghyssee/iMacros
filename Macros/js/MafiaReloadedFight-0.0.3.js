@@ -540,7 +540,7 @@ function refreshAfterHealing(healthObj){
     return refresh;
 }
 
-function getVictimHealth(fighter){
+function getVictimHealth(fighter, profileObj){
     var health = -1;
     retCode = playMacro(FIGHT_FOLDER, "40_Victim_Health", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
@@ -552,7 +552,7 @@ function getVictimHealth(fighter){
             if (health == 0){
                 waitV2("0.3");
                 // MOD 15/11
-                checkIfIced(fighter);
+                checkIfIced(fighter, profileObj);
             }
         }
         else {
@@ -663,20 +663,33 @@ function isExcludedKill(homefeedObj, player){
     return false;
 }
 
-function addKill(msg, fighter){
-    var kills = initMRObject(MR.MR_KILLS_FILE);
-    var currDate = formatDateYYYYMMDDHHMISS();
-    var homefeedObj = getHomeFeedObj(currDate, msg);
-    homefeedObj.timestamp = formatDateToYYYYMMDDHHMISS();
-    homefeedObj.fighterId = fighter.id;
-    homefeedObj.name = fighter.name;
-    homefeedObj.gangId = fighter.gangId;
-    homefeedObj.gangName = fighter.gangName;
-    kills.list.push(homefeedObj);
-    writeMRObject(kills, MR.MR_KILLS_FILE);
+function addKill(msg, fighter, profileObj){
+    var found = false;
+    for (var i=0; i < profileObj.list.length; i++){
+        var profile = profileObj.list[i];
+        if (profile.fighterId == fighter.id){
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        var kills = initMRObject(MR.MR_KILLS_FILE);
+        var currDate = formatDateYYYYMMDDHHMISS();
+        var homefeedObj = getHomeFeedObj(currDate, msg);
+        homefeedObj.timestamp = formatDateToYYYYMMDDHHMISS();
+        homefeedObj.fighterId = fighter.id;
+        homefeedObj.name = fighter.name;
+        homefeedObj.gangId = fighter.gangId;
+        homefeedObj.gangName = fighter.gangName;
+        kills.list.push(homefeedObj);
+        writeMRObject(kills, MR.MR_KILLS_FILE);
+    }
+    else {
+        logV2(INFO, "KILLS", "Player is one of my defined accounts. Not added to the kills list: " + fighter.id + "/" + fighter.name);
+    }
 }
 
-function checkIfIced(fighter){
+function checkIfIced(fighter, profileObj){
     iced = false;
     var retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS){
@@ -695,7 +708,7 @@ function checkIfIced(fighter){
     }
     if (iced){
         logV2(INFO, "FIGHT", "Total Ices: " + ++globalSettings.iced);
-        addKill(originalMsg, fighter);
+        addKill(originalMsg, fighter, profileObj);
         updateIces(fighter);
     }
     return iced;

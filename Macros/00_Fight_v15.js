@@ -6,7 +6,7 @@ eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.2.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.3.js"));
 
 // 182-11 = 171
 var localConfigObject = null;
@@ -737,7 +737,7 @@ function attack(fighter, fighterType){
 					break;
 				case FIGHTERCONSTANTS.OPPONENT.LOST :
                     // MOD 15/11
-				    getVictimHealth(fighter);
+				    getVictimHealth(fighter, profileObj);
 					logV2(INFO, "FIGHT", "Add Stronger Opponent: " + fighter.id);
                     fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
 					addStrongerOpponent(fighter);
@@ -780,7 +780,7 @@ function attackTillDeath(fighter, fighterType){
 			if (firstAttack) {
 				originalHealth = health;
 				// MOD 15/11
-                health = getVictimHealth(fighter);
+                health = getVictimHealth(fighter, profileObj);
 			}
 			if (previousHealth < health){
 				logV2(INFO, "ATTACK", "Victim healed: " + fighter.id);
@@ -869,7 +869,7 @@ function attackTillDeath(fighter, fighterType){
 					statusObj.totalStamina += 5;
 					nrOfAttacks++;
                     bigHealthAttacks++;
-                    health = getVictimHealth(fighter);
+                    health = getVictimHealth(fighter, profileObj);
                     if (health > configMRObj.fight.attackTillDiedHealth) {
                         globalSettings.money += checkSaldo();
                     }
