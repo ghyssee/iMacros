@@ -451,14 +451,14 @@ function attackRivals(){
     return status;
 }
 
-function attackFightList(){
+function attackFightList2(){
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
                 status = startProfileAttack();
     logV2(INFO, "FIGHT", "Status: " + status);
     return status;
 }
 
-function attackFightList2(){
+function attackFightList(){
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
     var fighters = getFightList();
     if (configMRObj.fight.fightList) {

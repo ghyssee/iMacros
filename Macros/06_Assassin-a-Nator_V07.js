@@ -967,9 +967,9 @@ function performHealthCheck(message, autoHeal, stamina){
     var tries = 0;
     dummyBank();
     //var health = getHealthV2(globalSettings);
-    var health = getHealth();
     var healthObj = {"refresh": false, "continueFighting": false, "message": message, autoHeal: false, "health": -1};
     healthObj.autoHeal = autoHeal;
+    var health = getHealth();
     if (autoHeal) {
         while (health < configMRObj.fight.heal) {
             if (!globalSettings.forceHealing) {
@@ -994,6 +994,7 @@ function performHealthCheck(message, autoHeal, stamina){
                 //waitV2("1");
             }
             dummyBank();
+            waitV2("0.3");
             health = getHealth();
         }
         if (health > configMRObj.fight.heal){
