@@ -486,7 +486,7 @@ function attackTillDeath(fighter){
                     }
                     var attackStatus = performAttack(health, FIGHTERCONSTANTS.FIGHTERTPE.ASSASSIN, fighter);
                     staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, !STOP_SCRIPT);
-                    if (stamina >= oldStaminaObj.leftOver){
+                    if (attackStatus == FIGHTERCONSTANTS.ATTACKSTATUS.OK && stamina >= oldStaminaObj.leftOver){
                         logV2(WARNING, "FIGHT", "ATTACK Button not registered");
                     }
                     else {
