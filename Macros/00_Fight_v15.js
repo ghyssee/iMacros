@@ -1027,18 +1027,30 @@ function isAlreadyKilledToday(player){
             }
         }
     }
-    /*
-    if (!killedToday && propertyExistAndNotNull(player, "lastAttacked")){
-        var currDate = new Date();
-        currDate = dateAdd(currDate, -5, 'minutes');
-        var formattedDate = formatDateToYYYYMMDDHHMISS(currDate);
-        if (formattedDate < player.lastAttacked){
-            logV2(INFO, "CHECK", "Player recently attacked: " + formattedDate + "/" + player.lastAttacked);
-            killedToday = true;
+    if (!killedToday){
+        if (propertyExistAndNotNull(player, "lastIced")){
+            var currDate = new Date();
+            currDate = dateAdd(currDate, -30, 'minutes');
+            var formattedDate = formatDateToYYYYMMDDHHMISS(currDate);
+//        logV2(INFO, "CHECK", "formatttedDate: " + formattedDate);
+//        logV2(INFO, "CHECK", "player.lastIced: " + player.lastIced);
+            if (formattedDate < player.lastIced){
+                logV2(INFO, "CHECK", "Player recently iced: " + formattedDate + "/" + player.lastIced);
+                killedToday = true;
+            }
         }
-
-
-    }*/
+        else if (propertyExistAndNotNull(player, "lastAttacked")){
+            var currDate = new Date();
+            currDate = dateAdd(currDate, -5, 'minutes');
+            var formattedDate = formatDateToYYYYMMDDHHMISS(currDate);
+//        logV2(INFO, "CHECK", "formatttedDate: " + formattedDate);
+//        logV2(INFO, "CHECK", "player.lastAttacked: " + player.lastAttacked);
+            if (formattedDate < player.lastAttacked){
+                logV2(INFO, "CHECK", "Player recently attacked: " + formattedDate + "/" + player.lastAttacked);
+                killedToday = true;
+            }
+        }
+    }
     return killedToday;
 }
 
