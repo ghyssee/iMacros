@@ -1505,8 +1505,9 @@ function performHealthCheck(message, autoHeal, stamina){
             tries++;
             if (tries > 2){
                 logV2(INFO, "HEAL", "Retries: " + tries);
-                waitV2("0.5");
+                //waitV2("0.5");
             }
+            dummyBank();
             health = getHealth();
         }
         if (health > configMRObj.fight.heal){

@@ -994,7 +994,7 @@ function performHealthCheck(message, autoHeal, stamina){
                 //waitV2("1");
             }
             dummyBank();
-            waitV2("0.3");
+            //waitV2("0.3");
             health = getHealth();
         }
         if (health > configMRObj.fight.heal){
