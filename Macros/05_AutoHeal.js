@@ -26,7 +26,7 @@ function startScript(){
     try {
         startMafiaReloaded();
         do  {
-            dummyBank();
+            refreshHealth();
             if (checkHealth()){
                 waitV2("10");
             }
@@ -45,6 +45,10 @@ function startScript(){
         }
     }
     logV2(INFO, "AUTOHEAL", "Nr Of Times Healed: " + globalSettings.heals);
+}
+
+function refreshHealth(){
+    playMacro(COMMON_FOLDER, "30_Home.iim", MACRO_INFO_LOGGING);
 }
 
 function checkHealth(){
@@ -77,7 +81,7 @@ function checkHealth(){
             underAttack(configMRObj, true);
         }
         tries++;
-        dummyBank();
+        refreshHealth();
         health = getHealth();
         if (health > 0){
             healed = true;
