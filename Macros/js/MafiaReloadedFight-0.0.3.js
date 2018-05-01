@@ -587,7 +587,7 @@ function performAttack(victimHealth, fighterType, fighter){
     else {
         //addMacroSetting("ID", fighter.id);
         logV2(DEBUG, "ATTACK", "ID: " + fighter.id);
-        if (victimHealth <= configMRObj.fight.attackTillDiedHealth){
+        if (victimHealth <= configMRObj.fight.attackTillDiedHealth || fighterType == FIGHTERCONSTANTS.FIGHTERTPE.ASSASSIN){
             retCode = playMacro(FIGHT_FOLDER, "44_Victim_SpeedAttack.iim", MACRO_INFO_LOGGING);
         }
         else {

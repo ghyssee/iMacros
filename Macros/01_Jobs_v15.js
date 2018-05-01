@@ -74,10 +74,10 @@ function start() {
             if (configMRObj.crimeEvent.enabled){
                 startCrimeEvent();
                 clearDistrict();
-            }
-            if (configMRObj.crimeEvent.help){
-                helpCrimeEvent();
-                clearDistrict();
+                if (configMRObj.crimeEvent.help){
+                    helpCrimeEvent();
+                    clearDistrict();
+                }
             }
             if (configMRObj.storyEvent.enabled){
                 clearDistrict();
