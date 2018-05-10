@@ -113,6 +113,7 @@ function startScript(){
                 }
                 setTempSetting(globalSettings.profile.id, "fight", "busyFighting", false);
             }
+            CheckHomefeedWhileWaiting();
         }
         while (true);
     }
@@ -137,6 +138,13 @@ function startScript(){
         logV2(INFO, "SUMMARY", "Max Healed: " + globalSettings.maxHealed);
         logV2(INFO, "SUMMARY", "Heals: " + globalSettings.heals);
     }
+}
+
+function CheckHomefeedWhileWaiting(){
+    logV2(INFO, "HOMEFEED", "Check Homefeed While Waiting...");
+    var homefeedLines = getHomefeedLines();
+    logV2(INFO, "HOMEFEED", "Check: " + homefeedLines);
+    processHomefeed(homefeedLines);
 }
 
 function startFightBoss(){
@@ -243,7 +251,7 @@ function performBossAttack(staminaObj, bossHealth){
         }
     }
     var retCode = SUCCESS;
-    // disable pummel if stopWhenHealthBelow is on and bossHelath is low
+    // disable pummel if stopWhenHealthBelow is on and bossHealth is low
     if (pummel) {
         logV2(INFO, "PUMMEL", "BossHealth: " + configMRObj.boss.stopWhenHealthBelow + "/" + bossHealth);
         if (configMRObj.boss.stopWhenHealthBelow > 0 && bossHealth < 100000) {
@@ -1541,8 +1549,12 @@ function performHealthCheck(message, autoHeal, stamina){
     return healthObj;
 }
 
+function getHomefeedLines(){
+    return getOverwrittenSetting(null, "homefeed", "processLines", configMRObj.homefeed.processLines);
+}
+
 function homefeedCheck(){
-    var processHomefeedLines = getOverwrittenSetting(null, "homefeed", "processLines", configMRObj.homefeed.processLines);
+    var processHomefeedLines = getHomefeedLines();
     var checked = false;
     if (processHomefeed(processHomefeedLines)){
         checked = true;

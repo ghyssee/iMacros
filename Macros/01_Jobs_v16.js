@@ -4,7 +4,7 @@ eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
 eval(readScript(MACROS_PATH + "\\js\\MRJobSelect.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 
@@ -48,6 +48,8 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
 
 //enableMacroPlaySimulation();
 start();
+//startStoryEvent();
+
 //test();
 
 function test(){
@@ -1106,7 +1108,9 @@ function startStoryEvent(){
     logV2(INFO, "JOB", "Start Story Event");
     var retCode = initAndCheckScript(COMMON_FOLDER, "30_Home.iim", "33_Home_Test.iim","feed", "STORY", "init Home");
     if (retCode == SUCCESS) {
-        retCode = initAndCheckScript(COMMON_FOLDER, "40_StoryEvent_Init.iim", "47_StoryEvent_Init_Test.iim","feed", "STORY", "init Story");
+        var paramsArray = [];
+        paramsArray.push(getParamObj("TITLE", settingsObj.story.title));
+        retCode = initAndCheckScriptParameters(JOB_FOLDER, "40_StoryEvent_Init.iim", null, "47_StoryEvent_Init_Test.iim", paramsArray, "*", "STORY", "init Story");
         //playMacro(JOB_FOLDER, "40_StoryEvent_Init.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
             if (configMRObj.storyEvent.restart) {
@@ -1149,6 +1153,11 @@ function getStoryTypeId(type){
     return null;
 }
 
+function getParamObj(id, value){
+    var paramObj = {"id": id, "value": value};
+    return paramObj;
+}
+
 function doStoryChoice(story){
     var nodeObj = configMRObj.storyEvent[story].node1;
     var status = CONSTANTS.STORY.DONE;
@@ -1156,25 +1165,26 @@ function doStoryChoice(story){
     if (!nodeObj.started) {
         logV2(INFO, "STORY", "Story Choice: " + story);
         logV2(INFO, "STORY", "Node ID: " + nodeObj.id);
-        addMacroSetting("NODE", nodeObj.id);
-        addMacroSetting("ID", nodeObj.EnergyId);
-        retCode = initAndCheckScript(COMMON_FOLDER, "41_StoryEvent_ChoiceExtract.iim", "48_StoryEvent_ChoiceExtract_Test.iim","*", "STORY", "Choice");
-            //playMacro(JOB_FOLDER, "41_StoryEvent_ChoiceExtract.iim", MACRO_INFO_LOGGING);
+        //addMacroSetting("NODE", nodeObj.id);
+        //addMacroSetting("ID", nodeObj.EnergyId);
+        var paramArray1 = [];
+        paramArray1.push(getParamObj("NODE", nodeObj.id));
+        paramArray1.push(getParamObj("ID", nodeObj.EnergyId));
+        var paramArray = [];
+        paramArray.push(getParamObj("STORY", configMRObj.storyEvent[story].id));
+        paramArray.push(getParamObj("NODE", configMRObj.storyEvent[story].node2.id));
+        logObj(INFO, "TST", paramArray);
+        retCode = initAndCheckScriptParameters(JOB_FOLDER, "42_StoryEvent_Choice.iim", paramArray1, "48_StoryEvent_ChoiceExtract_Test.iim", paramArray,
+            "*", "STORY", "Choice");
         if (retCode == SUCCESS) {
-            var msg = getLastExtract(1, "Story Extract", "Search");
-            logV2(INFO, "STORY", "Msg: " + msg);
-            if (!isNullOrBlank(msg)) {
-                addMacroSetting("NODE", nodeObj.id);
-                addMacroSetting("ID", nodeObj.EnergyId);
-                retCode = playMacro(JOB_FOLDER, "42_StoryEvent_Choice.iim", MACRO_INFO_LOGGING);
-                updateStory2(story, "node1", "started", true);
-            }
-            else {
-                status = CONSTANTS.STORY.PROBLEM;
-            }
+            //addMacroSetting("NODE", nodeObj.id);
+            //addMacroSetting("ID", nodeObj.EnergyId);
+            //retCode = playMacro(JOB_FOLDER, "42_StoryEvent_Choice.iim", MACRO_INFO_LOGGING);
+            updateStory2(story, "node1", "started", true);
         }
         else {
             logV2(WARNING, "JOB", "Problem Starting Story " + story + " node " + nodeObj.id);
+            status = CONSTANTS.STORY.PROBLEM;
             //makeScreenShot("MRJobStoryEventStartStoryProblem");
         }
     }
@@ -1226,6 +1236,27 @@ function getStoryEnergy(storyId, nodeId){
     return energy;
 }
 
+function checkStoryFinished(){
+    var retCode = playMacro(JOB_FOLDER, "49_StoryEvent_Completed.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS) {
+        var txt = getLastExtract(1, "Play Again", "Play Again");
+        if (!isNullOrBlank(txt) && txt.toLowerCase() == settingsObj.story.playAgain.toLowerCase()) {
+            logV2(INFO, "STORY", "Restart story");
+            retCode = initAndCheckScript(JOB_FOLDER, "51_StoryEvent_PlayAgain.iim", "52_StoryEvent_PlayAgain_Test.iim", "Investigate", "STORY", "Restart");
+            if (retCode == SUCCESS) {
+                closePopupByText("Replay Story");
+                restartStory();
+            }
+        }
+        else {
+            logV2(WARNING, "STORY", "Problem clicking Play Again Button");
+        }
+    }
+    else {
+            logV2(INFO, "STORY", "Story can not be restarted");
+    }
+}
+
 function doStoryTask(story){
     logV2(INFO, "STORY", "doStoryTask: " + story);
     var storyObj = configMRObj.storyEvent[story];
@@ -1263,6 +1294,9 @@ function doStoryTask(story){
                     closePopup();
                     updateStory(story, "completed", true);
                     status = CONSTANTS.STORY.DONE;
+                }
+                else if (story == "4" && isNullOrBlank(percentCompleted)){
+                    checkStoryFinished();
                 }
             }
             else {
