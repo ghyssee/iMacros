@@ -33,7 +33,8 @@ var CONSTANTS = Object.freeze({
         "DONE": 1,
         "NOENERGY": 2,
         "SKIP": 3,
-        "PROBLEM": 4
+        "PROBLEM": 4,
+        "RESTART": 5
     }
 });
 init();
@@ -48,7 +49,6 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
 
 //enableMacroPlaySimulation();
 start();
-//startStoryEvent();
 
 //test();
 
@@ -1113,23 +1113,30 @@ function startStoryEvent(){
         retCode = initAndCheckScriptParameters(JOB_FOLDER, "40_StoryEvent_Init.iim", null, "47_StoryEvent_Init_Test.iim", paramsArray, "*", "STORY", "init Story");
         //playMacro(JOB_FOLDER, "40_StoryEvent_Init.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
-            if (configMRObj.storyEvent.restart) {
-                restartStory();
+            do {
+                if (isStoryAllCompleted()){
+                    break;
+                }
+                if (configMRObj.storyEvent.restart) {
+                    checkStoryFinished();
+                }
+                doStoryChoice("story1");
+                status = doStoryTask("story1");
+                if (status == CONSTANTS.STORY.DONE) {
+                    doStoryChoice("story2");
+                    status = doStoryTask("story2");
+                }
+                if (status == CONSTANTS.STORY.DONE) {
+                    doStoryChoice("story3");
+                    status = doStoryTask("story3");
+                }
+                if (status == CONSTANTS.STORY.DONE) {
+                    doStoryChoice("story4");
+                    status = doStoryTask("story4");
+                }
+                logV2(INFO, "STORY", "Status: " + status);
             }
-            doStoryChoice("story1");
-            status = doStoryTask("story1");
-            if (status == CONSTANTS.STORY.DONE) {
-                doStoryChoice("story2");
-                status = doStoryTask("story2");
-            }
-            if (status == CONSTANTS.STORY.DONE) {
-                doStoryChoice("story3");
-                status = doStoryTask("story3");
-            }
-            if (status == CONSTANTS.STORY.DONE) {
-                doStoryChoice("story4");
-                status = doStoryTask("story4");
-            }
+            while (status == CONSTANTS.STORY.RESTART);
         }
         else {
             logV2(WARNING, "JOB", "Problem Init Story Event");
@@ -1236,11 +1243,37 @@ function getStoryEnergy(storyId, nodeId){
     return energy;
 }
 
+function isStoryAllCompleted(){
+    logV2(INFO, "STORY", "Check story completed");
+    var completed = false;
+    var retCode = playMacro(JOB_FOLDER, "53_StoryEvent_CompletedAll.iim", MACRO_INFO_LOGGING);
+    txt = getLastExtract(1, "Story Completed", "You have completed the story all 3 times");
+    logV2(INFO, "STORY", "txt=" + txt);
+    if (isNullOrBlank(txt)){
+        logV2(WARNING, "STORY", "Story not completed yet");
+    }
+    else {
+        if (contains(txt.toLowerCase(), "you have completed the story all 3 times")){
+            // completed the story 3 times / disable the story
+            logV2(INFO, "STORY", "Story 3 times completed");
+            var obj = initMRObject(MR.MR_CONFIG_FILE);
+            obj.storyEvent.enabled = false;
+            obj.storyEvent.restart = true;
+            obj.storyEvent.story4.completed = true;
+            obj.storyEvent.completed = true;
+            configMRObj = obj;
+            writeMRObject(obj, MR.MR_CONFIG_FILE);
+            completed = true;
+        }
+    }
+    return completed;
+}
+
 function checkStoryFinished(){
     var retCode = playMacro(JOB_FOLDER, "49_StoryEvent_Completed.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
         var txt = getLastExtract(1, "Play Again", "Play Again");
-        if (!isNullOrBlank(txt) && txt.toLowerCase() == settingsObj.story.playAgain.toLowerCase()) {
+        if (txt.toLowerCase() == settingsObj.story.playAgain.toLowerCase()) {
             logV2(INFO, "STORY", "Restart story");
             retCode = initAndCheckScript(JOB_FOLDER, "51_StoryEvent_PlayAgain.iim", "52_StoryEvent_PlayAgain_Test.iim", "Investigate", "STORY", "Restart");
             if (retCode == SUCCESS) {
@@ -1248,13 +1281,15 @@ function checkStoryFinished(){
                 restartStory();
             }
         }
-        else {
-            logV2(WARNING, "STORY", "Problem clicking Play Again Button");
-        }
     }
     else {
             logV2(INFO, "STORY", "Story can not be restarted");
     }
+    return retCode;
+}
+
+function lastStoryCompleted(completed, story){
+    return (story == "story4" && completed == -1);
 }
 
 function doStoryTask(story){
@@ -1295,8 +1330,11 @@ function doStoryTask(story){
                     updateStory(story, "completed", true);
                     status = CONSTANTS.STORY.DONE;
                 }
-                else if (story == "4" && isNullOrBlank(percentCompleted)){
-                    checkStoryFinished();
+                else if (lastStoryCompleted(percentCompleted, story)){
+                    retCode = checkStoryFinished();
+                    closePopup();
+                    status = CONSTANTS.STORY.RESTART;
+                    break;
                 }
             }
             else {
