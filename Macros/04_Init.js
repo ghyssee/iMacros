@@ -17,6 +17,7 @@ setAssassinProfile();
 setAssassinAutoHeal();
 checkMRProperties(MR.MR_CONFIG_FILE);
 checkMRProperties(MR.MR_TEMP_SETTINGS_FILE);
+checkMRProperties(MR.MR_ASSASSIN_FILE);
 
 function checkMRProperties(configFileCode){
     var initFile = new ConfigFile(MR_DIR + 'INIT\\', configFileCode);
