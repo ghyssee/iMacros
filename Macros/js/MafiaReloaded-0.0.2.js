@@ -46,6 +46,11 @@ var MR = Object.freeze({
     "MR_KILLS_FILE": "Kills.json"
     }
 );
+var RESOURCE_TYPE = Object.freeze({
+        "ENERGY" : "ENERGY",
+        "STAMINA": "STAMINA"
+    }
+);
 
 
 function getMRFile(fileId){

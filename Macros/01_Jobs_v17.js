@@ -44,11 +44,13 @@ var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var settingsObj = initObject(getMRRootFile(MR.MR_SETTINGS_FILE));
 var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                       "lastDistrict": null, "lastChapter": null, "lowestEnergy": null, "lowestStamina": null,
-                      "resources": null, "profileId": getProfile()
+                      "resources": null, "profileId": getProfile(),
+                      "optimization": false
                      };
 
 //enableMacroPlaySimulation();
-start();
+//start();
+checkOptimization();
 
 //test();
 
@@ -605,6 +607,11 @@ function isValidJob(jobItem, resourceObj){
     if (!settingsObj.global.eventEnabled && jobItem.district.event){
         logV2(INFO, "VALIDJOB", "Event is disabled");
         validJobStatus = CONSTANTS.STATUS.SKIP;
+        return validJobStatus;
+    }
+    if (globalSettings.optimization && configMRObj.jobs.optimization && resourceObj.exp <= jobItem.job.energy){
+        logObj(INFO, "VALIDJOB", "Optimization enabled and next job will level up. Skipping");
+        validJobStatus =  CONSTANTS.STATUS.SKIP;
         return validJobStatus;
     }
     if (isRangeDefined(jobItem)){
@@ -2027,12 +2034,37 @@ function getEnergyOrStamina(jobType, resourceObj){
     return total;
 }
 
-function checkOptimization(){
-    var resources = getResources();
+function stopFightScripts(){
+    setTempSetting(globalSettings.profileId, "fight", "stopFighting", true);
+    setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", true);
+    var exitLoop = false;
+    do {
+        var busyFighting1 = getTempSetting(null, "fight", "busyFighting");
+        var busyFighting2 = getTempSetting(null, "assassin-a-nator", "busyFighting");
+        logV2(INFO, "COLLECT", "Busy Fighting: " + busyFighting1);
+        logV2(INFO, "COLLECT", "Busy Assassin-a-nator: " + busyFighting2);
+        if (!busyFighting1 && !busyFighting2) {
+            exitLoop = true;
+        }
+        else {
+            waitV2("10");
+        }
+    }
+    while (!exitLoop);
+}
+
+function checkOptimization(scheduledJobs){
+    if (!configMRObj.jobs.optimization){
+        return false;
+    }
+    //var resources = getResources();
+    var resources = {"energyObj": {"left": 500, "total": 9000}, "staminaObj": {"left": 3000, "total": 7500}, "exp": 500};
     var RATIO = 5.87;
     var calcExp = (resources.energyObj.left + resources.staminaObj.left)*RATIO;
     if ((calcExp - resources.exp) > 2000){
         logV2(INFO, "OPTIMIZATION", "Ready to optimize");
+        stopFightScripts();
+        globalSettings.optimization = true;
         var filters = [
             addFilter(JOBSELECT.SELECTTYPES.EVENT, filterEvent()),
             addFilter(JOBSELECT.SELECTTYPES.MONEYCOST, JOBSELECT.FILTER.NO),
@@ -2049,18 +2081,160 @@ function checkOptimization(){
             addFilter(JOBSELECT.SELECTTYPES.ENERGYRANGE, JOBSELECT.FILTER.YES, 0, resources.staminaObj.left)
         ];
         var staminaJobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.EXP, JOBSELECT.SORTING.DESCENDING);
-        var optType = "ENERGY";
+        var optType = null;
         if (staminaJobs.length > 0){
             if (energyJobs.length > 0){
+                logObj(INFO, "OPTIMIZATION_STA_JOB", staminaJobs[0]);
+                logObj(INFO, "OPTIMIZATION_ENE_JOB", energyJobs[0]);
                 if (staminaJobs[0].exp > energyJobs[0].exp){
-                    optType = "STAMINA";
+                    optType = RESOURCE_TYPE.STAMINA;
+                }
+                else {
+                    optType = RESOURCE_TYPE.ENERGY;
                 }
             }
         }
-        logV2(INFO, "OPTIMIZATION", "Optimization Type:" + optType);
-        // filter out Stamina Jobs / Energy Jobs
-
-
+        if (optType == null){
+            logV2(WARNING, "OPTIMIZATION", "There was a problem getting the optimiation type");
+        }
+        else {
+            logV2(INFO, "OPTIMIZATION", "Optimization Type:" + optType);
+            // split STAMINA / ENERGY JOBS
+            var scheduledEnergyJobs = [];
+            var scheduledStaminaJobs = [];
+            for (var i = 0; i < scheduledJobs.length; i++) {
+                var schJob = scheduledJobs[i];
+                if (schJob.type == RESOURCE_TYPE.STAMINA){
+                    scheduledStaminaJobs.push(schJob);
+                }
+                else {
+                    scheduledEnergyJobs.push(schJob);
+                }
+            }
+            if (optType == RESOURCE_TYPE.STAMINA){
+                doOptimizationJobs(scheduledEnergyJobs, JOBSELECT.FILTER.ENERGY);
+                doOptimizationJobs(scheduledStaminaJobs, JOBSELECT.FILTER.STAMINA);
+            }
+            else {
+                doOptimizationJobs(scheduledStaminaJobs, JOBSELECT.FILTER.STAMINA);
+                doOptimizationJobs(scheduledEnergyJobs, JOBSELECT.FILTER.ENERGY);
+            }
+            doLevelUpJobV2(optType);
+        }
+        globalSettings.optimization = false;
     }
+    return true;
+}
 
+function doOptimizationJobs(scheduledJobs, resourceType){
+    // Step 1: Scheduled Jobs
+    doJobs(scheduledJobs);
+    // Step 2: Money Jobs
+    var resources = getResources();
+    var moneyJobs = getMoneyJobs(resources.exp, resourceType);
+    doJobs(moneyJobs);
+    // Step 3: Low Resource Jobs
+    var resources = getResources();
+    var lowresourceJobs = getLowResourceJobs(resources.exp, resourceType);
+    doJobs(lowresourceJobs);
+}
+
+function getMoneyJobs(exp, resourceType){
+    var filters = [
+        addFilter(JOBSELECT.SELECTTYPES.EVENT, filterEvent()),
+        addFilter(JOBSELECT.SELECTTYPES.MONEYCOST, JOBSELECT.FILTER.NO),
+        addFilter(JOBSELECT.SELECTTYPES.JOBTYPE, resourceType),
+        addFilter(JOBSELECT.SELECTTYPES.MONEYRATIO, JOBSELECT.FILTER.YES, 50),
+        addFilter(JOBSELECT.SELECTTYPES.CONSUMABLECOST, JOBSELECT.FILTER.NO),
+        addFilter(JOBSELECT.SELECTTYPES.EXPRANGE, JOBSELECT.FILTER.YES, 0, exp)
+    ];
+    var moneyJobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.MONEY, JOBSELECT.SORTING.DESCENDING);
+    var schJobs = convertJobsToScheduledJobs(moneyJobs);
+    return schJobs;
+
+}
+
+function convertJobsToScheduledJobs(jobs){
+    var schJobs = [];
+    for (var i=0; i < jobs.length; i++){
+        var jobObj = jobs[i];
+        var activeJobObj = getJobTaskObject(jobObj.districtId, jobObj.id, jobObj.type);
+        activeJobObj.enabled = true;
+        activeJobObj.type = "REPEAT";
+        fillDistrictInfo(activeJobObj);
+        schJobs.push(activeJobObj);
+    }
+    return schJobs;
+}
+
+function getLowResourceJobs(exp, resourceType){
+    var filters = [
+        addFilter(JOBSELECT.SELECTTYPES.EVENT, filterEvent()),
+        addFilter(JOBSELECT.SELECTTYPES.MONEYCOST, JOBSELECT.FILTER.NO),
+        addFilter(JOBSELECT.SELECTTYPES.JOBTYPE, JOBSELECT.FILTER.ENERGY),
+        addFilter(JOBSELECT.SELECTTYPES.CONSUMABLECOST, JOBSELECT.FILTER.NO),
+        addFilter(JOBSELECT.SELECTTYPES.ENERGYRANGE, JOBSELECT.FILTER.YES, 0, exp)
+    ];
+    var jobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.EXP, JOBSELECT.SORTING.DESCENDING);
+    var schJobs = convertJobsToScheduledJobs(jobs);
+    return schJobs;
+    return jobs;
+
+}
+
+function doLevelUpJobV2(resourceType){
+    var resourceObj = getResources();
+    var left = -1;
+    if (resourceType == JOBSELECT.FILTER.ENERGY){
+        left = resourceObj.energyObj.left;
+    }
+    else {
+        left = resourceObj.staminaObj.left;
+    }
+    var exp = resourceObj.exp;
+    logHeader(INFO, "COLLECTLEVELUPJOB", "doLevelUpJob", "*");
+    logV2(INFO, "COLLECTLEVELUPJOB", "Exp: " + exp);
+    var filters = [
+        addFilter(JOBSELECT.SELECTTYPES.EVENT, filterEvent()),
+        addFilter(JOBSELECT.SELECTTYPES.JOBTYPE, resourceType),
+        addFilter(JOBSELECT.SELECTTYPES.ENERGYRANGE, JOBSELECT.FILTER.YES, 0, left)
+    ];
+    var jobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.EXP, JOBSELECT.SORTING.DESCENDING);
+    logV2(INFO, "COLLECT", "Total Jobs Found: " + jobs.length);
+    if (jobs.length > 0){
+        for (var i=0; i < jobs.length; i++) {
+            var jobObj = jobs[i];
+            var activeJobObj = getJobTaskObject(jobObj.districtId, jobObj.id, jobObj.type);
+            activeJobObj.enabled = true;
+            activeJobObj.type = "REPEAT";
+            fillDistrictInfo(activeJobObj);
+            var status = checkIfEnoughEnerygOrStamina(activeJobObj, resourceObj);
+            if (status == CONSTANTS.STATUS.OK) {
+                status = travel(activeJobObj);
+                if (status == CONSTANTS.STATUS.OK) {
+                    makeScreenShot("MRJobCollectBeforeLevelUp");
+                    logJob(activeJobObj);
+                    status = performSingleJob(activeJobObj);
+                    if (status == CONSTANTS.STATUS.OK) {
+                        if (checkIfLevelUp()) {
+                            makeScreenShot("MRJobCollectAfterLevelUp");
+                            break;
+                        }
+                        else {
+                            logV2(INFO, "COLLECT", "Level Up Job Executed but not leveled up. This Should never occur");
+                            resourceObj = getResources();
+                        }
+                    }
+                }
+            }
+            if (status == CONSTANTS.STATUS.LEVELUP){
+                logV2(INFO, "COLLECT", "Leveled Up. This should never occur");
+            }
+        }
+    }
+    else {
+        logV2(WARNING, "COLLECT", "Level Up Job: No Jobs Found");
+    }
+    setTempSetting(globalSettings.profileId, "fight", "stopFighting", false);
+    setTempSetting(globalSettings.profileId, "assassin-a-nator", "stopFighting", false);
 }

@@ -68,10 +68,8 @@ function startScript(){
         do  {
             dummyBank();
             checkMiniHomeFeed(profileObj, globalSettings.profile.id, friendObj, fightersToExclude, fighterObj);
-            if (checkForStopFighting("fight")){
-                continue;
-            }
-            else if (globalSettings.stopOnLevelUp){
+            checkForStopFighting("fight", configMRObj.jobs.optimization);
+            if (globalSettings.stopOnLevelUp){
                 logV2(INFO, "FIGHT", "You Leveled Up and setting stopOnLevelUp is enabled");
                 waitV2("60");
             }
@@ -236,7 +234,6 @@ function performBossAttack(staminaObj, bossHealth){
                     logV2(INFO, "PUMMEL", "expRequired: " + expRequired);
                     logV2(INFO, "PUMMEL", "Calculated exp Left: " + exp);
                     pummel = (exp >= configMRObj.global.stopWhenExpBelow);
-
                 }
                 else {
                     pummel = true;
@@ -259,6 +256,7 @@ function performBossAttack(staminaObj, bossHealth){
             pummel = false;
         }
     }
+    checkForStopFighting("fight", configMRObj.jobs.optimization);
     if (pummel) {
         logV2(INFO, "PUMMEL", "Pummel Attack activated");
         retCode = playMacro(FIGHT_FOLDER, "76_Boss_Pummel.iim", MACRO_INFO_LOGGING);
@@ -782,6 +780,7 @@ function attackTillDeath(fighter, fighterType){
 	var health = 0;
 	var victimHealed;
 	var bigHealthAttacks = 0;
+    checkForStopFighting("fight", configMRObj.jobs.optimization);
 	do {
         victimHealed = false;
 	    if (health > -1){

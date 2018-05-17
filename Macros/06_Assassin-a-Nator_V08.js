@@ -123,10 +123,8 @@ function startScript(){
             gangExtract(assassinObj.gang.gangId);
         }
         do  {
-            if (checkForStopFighting("assassin-a-nator")){
-                continue;
-            }
-            else if (globalSettings.stopOnLevelUp){
+            checkForStopFighting("assassin-a-nator", configMRObj.jobs.optimization);
+            if (globalSettings.stopOnLevelUp){
                 logV2(INFO, "FIGHT", "You Leveled Up and setting stopOnLevelUp is enabled");
                 waitV2("60");
             }
@@ -302,7 +300,7 @@ function attackWonOrRedIce(statusObj, fighter, fighterType){
         statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
     }
     updateStatistics(fighter, fighterType);
-    if (!propertyExistAndNotNull(fighter, status) || fighter.status == FIGHTERCONSTANTS.FIGHTERSTATUS.UNKNOWN){
+    if (!propertyExistAndNotNull(fighter, "status") || fighter.status == FIGHTERCONSTANTS.FIGHTERSTATUS.UNKNOWN){
         logV2(INFO, "FIGHT", "Updating status for fighter " + fighter.id);
         fighter.status = FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK;
         writeMRObject(assassinObj, MR_ASSASSIN_FILE);
@@ -371,7 +369,7 @@ function attack(fighter, fighterType){
                     logV2(INFO, "FIGHT", "Add Stronger Opponent: " + fighter.id);
                     removeItemFromArray(MR.MR_FIGHTERS_FILE, fighterObj, fighter.id);
                     addStrongerOpponent(fighter);
-                    if (!propertyExistAndNotNull(fighter, status) || fighter.status == FIGHTERCONSTANTS.FIGHTERSTATUS.UNKNOWN) {
+                    if (!propertyExistAndNotNull(fighter, "status") || fighter.status == FIGHTERCONSTANTS.FIGHTERSTATUS.UNKNOWN) {
                         fighter.status = FIGHTERCONSTANTS.FIGHTERSTATUS.STRONGER;
                         writeMRObject(assassinObj, MR_ASSASSIN_FILE);
                     }
@@ -408,6 +406,7 @@ function attackTillDeath(fighter){
     var oldStaminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, !STOP_SCRIPT);
     var staminaObj = oldStaminaObj;
     globalSettings.oldHealth = -1; // resetting old health;
+    checkForStopFighting("fight", configMRObj.jobs.optimization);
 
     do {
         victimHealed = false;

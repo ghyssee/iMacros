@@ -475,16 +475,22 @@ function checkMiniHomeFeed(profileObj, activeProfile, friendObj, fightersToExclu
     });
 }
 
-function checkForStopFighting(category){
-    var stopFighting = getTempSetting(null, category, "stopFighting");
-    if (stopFighting){
-        var msg = "Fighting temporary disabled";
-        logV2(INFO, category.toUpperCase(), msg);
-        iimdisplay(msg);
-        waitV2("60");
+function checkForStopFighting(category, optimization){
+    if (optimization){
+        var stopFighting = false;
+        do {
+            stopFighting = getTempSetting(null, category, "stopFighting");
+            if (stopFighting){
+                var msg = "Fighting temporary disabled";
+                logV2(INFO, category.toUpperCase(), msg);
+                iimdisplay(msg);
+                waitV2("10");
+            }
+        }
+        while (stopFighting);
         iimdisplay("");
     }
-    return stopFighting;
+    return false;
 }
 
 function performAttackInit(fighterType){
