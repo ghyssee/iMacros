@@ -2096,6 +2096,7 @@ function checkOptimization(scheduledJobs){
         }
         if (optType == null){
             logV2(WARNING, "OPTIMIZATION", "There was a problem getting the optimiation type");
+            return;
         }
         else {
             logV2(INFO, "OPTIMIZATION", "Optimization Type:" + optType);
@@ -2150,6 +2151,7 @@ function getMoneyJobs(exp, resourceType){
     ];
     var moneyJobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.MONEY, JOBSELECT.SORTING.DESCENDING);
     var schJobs = convertJobsToScheduledJobs(moneyJobs);
+    logJobs(schJobs);
     return schJobs;
 
 }
@@ -2171,15 +2173,25 @@ function getLowResourceJobs(exp, resourceType){
     var filters = [
         addFilter(JOBSELECT.SELECTTYPES.EVENT, filterEvent()),
         addFilter(JOBSELECT.SELECTTYPES.MONEYCOST, JOBSELECT.FILTER.NO),
-        addFilter(JOBSELECT.SELECTTYPES.JOBTYPE, JOBSELECT.FILTER.ENERGY),
+        addFilter(JOBSELECT.SELECTTYPES.JOBTYPE, resourceType),
         addFilter(JOBSELECT.SELECTTYPES.CONSUMABLECOST, JOBSELECT.FILTER.NO),
-        addFilter(JOBSELECT.SELECTTYPES.ENERGYRANGE, JOBSELECT.FILTER.YES, 0, exp)
+        addFilter(JOBSELECT.SELECTTYPES.ENERGYRANGE, JOBSELECT.FILTER.YES, 0, 40)
     ];
     var jobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.EXP, JOBSELECT.SORTING.DESCENDING);
     var schJobs = convertJobsToScheduledJobs(jobs);
+    logJobs(schJobs);
     return schJobs;
-    return jobs;
+}
 
+function logJobs(jobs){
+    jobs.forEach(function (jobItem) {
+        logV2(INFO, "Job: " + jobItem.job.id + " " + jobItem.job.description);
+        logV2(INFO, "District: " + jobItem.districtId + " " + jobItem.district.name);
+        if (jobItem.job.chapter != null){
+            logV2(INFO, "Chapter: " + jobItem.job.chapter);
+        }
+        logV2(INFO, "Info: " + jobItem.job.type + " (" + jobItem.job.energy + "/" + jobItem.job.exp + ")");
+    });
 }
 
 function doLevelUpJobV2(resourceType){
