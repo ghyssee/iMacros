@@ -49,8 +49,8 @@ var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                      };
 
 //enableMacroPlaySimulation();
-//start();
-checkOptimization();
+start();
+
 
 //test();
 
@@ -68,9 +68,11 @@ function start() {
 
     try {
         var listOfJobs = getListOfEnabledJobs(jobsObj.activeJobs);
-        startMafiaReloaded();
-        globalSettings.currentLevel = getLevel();
+        //startMafiaReloaded();
+        //globalSettings.currentLevel = getLevel();
         var newJobs = initJobs(listOfJobs);
+        checkOptimization(newJobs);
+        /*
         do {
             logV2(INFO, "JOB", "DummyBanking");
             dummyBank();
@@ -105,7 +107,7 @@ function start() {
                 waitV2("60");
             }
         }
-        while (true);
+        while (true);*/
     }
     catch (ex) {
         logError(ex);
@@ -2063,7 +2065,7 @@ function checkOptimization(scheduledJobs){
     var calcExp = (resources.energyObj.left + resources.staminaObj.left)*RATIO;
     if ((calcExp - resources.exp) > 2000){
         logV2(INFO, "OPTIMIZATION", "Ready to optimize");
-        stopFightScripts();
+        //stopFightScripts();
         globalSettings.optimization = true;
         var filters = [
             addFilter(JOBSELECT.SELECTTYPES.EVENT, filterEvent()),
@@ -2120,7 +2122,7 @@ function checkOptimization(scheduledJobs){
                 doOptimizationJobs(scheduledStaminaJobs, JOBSELECT.FILTER.STAMINA);
                 doOptimizationJobs(scheduledEnergyJobs, JOBSELECT.FILTER.ENERGY);
             }
-            doLevelUpJobV2(optType);
+            //doLevelUpJobV2(optType);
         }
         globalSettings.optimization = false;
     }
@@ -2129,15 +2131,16 @@ function checkOptimization(scheduledJobs){
 
 function doOptimizationJobs(scheduledJobs, resourceType){
     // Step 1: Scheduled Jobs
-    doJobs(scheduledJobs);
+    //doJobs(scheduledJobs);
     // Step 2: Money Jobs
-    var resources = getResources();
+    //var resources = getResources();
+    var resources = {"energyObj": {"left": 500, "total": 9000}, "staminaObj": {"left": 3000, "total": 7500}, "exp": 500};
     var moneyJobs = getMoneyJobs(resources.exp, resourceType);
-    doJobs(moneyJobs);
+    //doJobs(moneyJobs);
     // Step 3: Low Resource Jobs
-    var resources = getResources();
+    //resources = getResources();
     var lowresourceJobs = getLowResourceJobs(resources.exp, resourceType);
-    doJobs(lowresourceJobs);
+    //doJobs(lowresourceJobs);
 }
 
 function getMoneyJobs(exp, resourceType){
