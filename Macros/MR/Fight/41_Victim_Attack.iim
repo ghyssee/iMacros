@@ -3,3 +3,5 @@ SET !TIMEOUT_STEP 1
 ' A T T A C K
 TAG POS=1 TYPE=A ATTR=DATA-PARAMS:action=*&controller=fight&id=*&tab=0&amt=5
 WAIT SECONDS=0.1
+TAG POS=1 TYPE=A ATTR=DATA-PARAMS:action=*&controller=fight&id=*&tab=0&amt=5
+WAIT SECONDS=0.1
