@@ -791,8 +791,8 @@ function attackTillDeath(fighter, fighterType){
                 health = getVictimHealth(fighter, profileObj);
 			}
 			if (previousHealth < health){
-				logV2(INFO, "ATTACK", "Victim healed: " + fighter.id);
-				nrOfHeals++;
+                nrOfHeals++;
+				logV2(INFO, "ATTACK", "Victim healed: " + fighter.id + " " + nrOfHeals + " time(s)");
 				originalHealth = health;
 				previousHealth = health;
                 victimHealed = true;
