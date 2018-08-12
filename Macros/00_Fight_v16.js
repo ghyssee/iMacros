@@ -27,6 +27,7 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
                         "forceHealing": false, "profile": getProfileObject((getProfile())),
                       "boss": {"attacks": 0}};
 startScript();
+//CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 
 
