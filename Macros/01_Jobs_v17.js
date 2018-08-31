@@ -68,8 +68,8 @@ function start() {
 
     try {
         var listOfJobs = getListOfEnabledJobs(jobsObj.activeJobs);
-        //startMafiaReloaded();
-        //globalSettings.currentLevel = getLevel();
+        startMafiaReloaded();
+        globalSettings.currentLevel = getLevel();
         var newJobs = initJobs(listOfJobs);
         checkOptimization(newJobs);
         /*
@@ -2059,8 +2059,9 @@ function checkOptimization(scheduledJobs){
     if (!configMRObj.jobs.optimization){
         return false;
     }
-    //var resources = getResources();
-    var resources = {"energyObj": {"left": 500, "total": 9000}, "staminaObj": {"left": 3000, "total": 7500}, "exp": 500};
+    logV2(INFO, "OPTIMIZATION", "Checking...");
+    var resources = getResources();
+    //var resources = {"energyObj": {"left": 500, "total": 9000}, "staminaObj": {"left": 3000, "total": 7500}, "exp": 500};
     var RATIO = 5.87;
     var calcExp = (resources.energyObj.left + resources.staminaObj.left)*RATIO;
     if ((calcExp - resources.exp) > 2000){
@@ -2083,6 +2084,7 @@ function checkOptimization(scheduledJobs){
             addFilter(JOBSELECT.SELECTTYPES.ENERGYRANGE, JOBSELECT.FILTER.YES, 0, resources.staminaObj.left)
         ];
         var staminaJobs = getJobs(jobsObj.districts, filters, !JOBSELECT_LOG, null, JOBSELECT.SORTING.EXP, JOBSELECT.SORTING.DESCENDING);
+        //alert(JSON.stringify(staminaJobs));
         var optType = null;
         if (staminaJobs.length > 0){
             if (energyJobs.length > 0){
@@ -2098,7 +2100,6 @@ function checkOptimization(scheduledJobs){
         }
         if (optType == null){
             logV2(WARNING, "OPTIMIZATION", "There was a problem getting the optimiation type");
-            return;
         }
         else {
             logV2(INFO, "OPTIMIZATION", "Optimization Type:" + optType);
@@ -2131,16 +2132,16 @@ function checkOptimization(scheduledJobs){
 
 function doOptimizationJobs(scheduledJobs, resourceType){
     // Step 1: Scheduled Jobs
-    //doJobs(scheduledJobs);
+    doJobs(scheduledJobs);
     // Step 2: Money Jobs
-    //var resources = getResources();
-    var resources = {"energyObj": {"left": 500, "total": 9000}, "staminaObj": {"left": 3000, "total": 7500}, "exp": 500};
+    var resources = getResources();
+    //var resources = {"energyObj": {"left": 500, "total": 9000}, "staminaObj": {"left": 3000, "total": 7500}, "exp": 500};
     var moneyJobs = getMoneyJobs(resources.exp, resourceType);
-    //doJobs(moneyJobs);
+    doJobs(moneyJobs);
     // Step 3: Low Resource Jobs
-    //resources = getResources();
+    resources = getResources();
     var lowresourceJobs = getLowResourceJobs(resources.exp, resourceType);
-    //doJobs(lowresourceJobs);
+    doJobs(lowresourceJobs);
 }
 
 function getMoneyJobs(exp, resourceType){
