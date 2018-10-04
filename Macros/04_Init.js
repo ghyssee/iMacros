@@ -11,6 +11,8 @@ var localConfigObject = null;
 LOG_FILE = new LogFile(LOG_DIR, "MRInit");
 
 init();
+
+/*
 setProfile();
 setNode();
 setAssassinProfile();
@@ -18,6 +20,30 @@ setAssassinAutoHeal();
 checkMRProperties(MR.MR_CONFIG_FILE);
 checkMRProperties(MR.MR_TEMP_SETTINGS_FILE);
 checkMRProperties(MR.MR_ASSASSIN_FILE);
+*/
+checkKills(MR.MR_KILLS_FILE);
+
+function checkKills(configFileCode){
+    var initFile = new ConfigFile(MR_DIR + 'INIT\\', configFileCode);
+    logV2(INFO, "INIT", "Check Following File For All Profiles: " + initFile.fullPath());
+    var obj = initObject(initFile);
+    var profileObj = initObject(MR_PROFILE_FILE);
+    profileObj.list.forEach(function (item) {
+        if (item.id == "01") {
+            var killsFile = new ConfigFile(MR_DIR + item.id + '\\', configFileCode);
+            var killsObj = initObject(killsFile);
+            logV2(INFO, "INIT", "Profile:" + item.name);
+            var newKillsObj = [];
+            killsObj.list.forEach(function (killObj) {
+                if (killObj.fighterId != "RIVAL" && killObj.fighterId != null){
+                    newKillsObj.push(killObj);
+                }
+            });
+            killsObj.list = newKillsObj;
+            writeObject(killsObj, killsFile);
+        }
+    });
+}
 
 function checkMRProperties(configFileCode){
     var initFile = new ConfigFile(MR_DIR + 'INIT\\', configFileCode);
