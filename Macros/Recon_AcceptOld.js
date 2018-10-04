@@ -8,6 +8,9 @@ var LOG_FILE = LOG_DIR + "log.RECON.ACCEPTOLD." + getDateYYYYMMDD() + ".txt";
 var INFO = 0; var ERROR = 1; WARNING = 2;
 var TIMEOUT = 120;
 var WRITE_FILE = false;
+var PREFIX = "Work/Atos/"
+var SUCCESS = 1;
+var RECON_OBJ = {"total": 0, "TPPN": "3280", "size": 100};
 
 String.prototype.lpad = function(padString, length) {
     var str = this;
@@ -33,31 +36,71 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 	var retcode = 1;
 	var NEWLINE = "\n";
 	var TITLE = "Ultratop List" + NEWLINE + "-".repeat(100) + NEWLINE.repeat(2);
-	
 	logV2(INFO, "Start");
+	logV2(INFO, "Total Confirmed: " + RECON_OBJ.total);
+	var found = false;
 	do {
+        found = doAcceptOld(RECON_OBJ.TPPN);
+        if (found){
+        	logV2(INFO, "Number Of Times Accepted: " + RECON_OBJ.total);
+        }
+        if (RECON_OBJ.total > 3){
+        	found = false;
+		}
+    }
+    while (found);
+	
+function doAcceptOld(tppn){
+	logV2(INFO, "Accept Old");
+	var found = false;
+	//iimSet("header", header.toString());
+	var retCode = iimPlay(PREFIX + "01_Select_Stream");
+	if (retCode == SUCCESS){
+        iimSet("TPPN", tppn);
+        iimSet("SIZE", RECON_OBJ.size);
+        retCode = iimPlay(PREFIX + "02_Search_Records");
+        if (retCode == SUCCESS){
+            retCode = iimPlay(PREFIX + "10_Records_Found.iim");
+            if (retCode == SUCCESS){
+				var msg = getExtract(1);
+				if (msg.startsWith("Geen data")){
+                    logV2(INFO, "No data found");
+				}
+				else {
+					found = true;
+					retCode = confirmAcceptOld(tppn);
+				}
+            }
+            else {
+                logV2(WARNING, "Problem Records Found");
+			}
+		}
+    	else {
+            logV2(WARNING, "Problem Searching Records");
+        }
 	}
-	while (true);
-	
-function getHeader(file, pos, header){
-	logV2(INFO, "Get Header Info");
-		logV2(INFO, "Pos = " + pos);
-		logV2(INFO, "Header = " + header);
-	var obj2 = {eanCode:null, description:null, application:null, sd:null, ed:null, linked:null};
-		addHeader(file, obj);
-		iimSet("pos", (pos-1).toString());
-		iimSet("header", header.toString());
-		var macroName = "PMT/header.iim";
-		var retcode = iimPlay(macroName);
-		var j=1;
-		obj2.eanCode = getExtract(j++);
-		obj2.description = getExtract(j++);
-		obj2.application = getExtract(j++);
-		obj2.sd = getExtract(j++);
-		obj2.ed = getExtract(j++);
-		obj2.linked = getExtract(j++);
-		addLine(file, obj2);
-	
+	else {
+        logV2(WARNING, "Problem Selecting Stream");
+	}
+	return found;
+}
+
+function confirmAcceptOld(tppn){
+    var retCode = iimPlay(PREFIX + "03_Select_Records.iim");
+	if (retCode == SUCCESS){
+        iimSet("TPPN", tppn);
+		retCode = iimPlay(PREFIX + "04_Confirm.iim");
+		if (retCode == SUCCESS) {
+		  RECON_OBJ.total++;
+		}
+    	else {
+			logV2(WARNING, "Problem Confirm Accept Old");
+		}
+    }
+    else {
+    	logV2(WARNING, "Problem Selecting Records");
+    }
+    return retCode;
 }
 
 function getExtract(nr){
