@@ -165,7 +165,7 @@ function doJobs(listOfJobs){
                 break;
             }*/
             var jobItem = listOfJobs[i];
-            if (jobItem.job.type == STAMINA && !jobsObj.staminaJobs) {
+            if (jobItem.job.type == STAMINA && !configMRObj.jobs.stamina) {
                 // skip stamina jobs
                 logV2(INFO, "JOB", "Skipping stamina job " + jobItem.job.id);
                 continue;

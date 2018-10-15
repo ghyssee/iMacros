@@ -6,11 +6,11 @@ var CONFIG_DIR  = BASE_DIR + "config\\";
 var LOG_DIR = BASE_DIR + "logs\\";
 var LOG_FILE = LOG_DIR + "log.RECON.ACCEPTOLD." + getDateYYYYMMDD() + ".txt";
 var INFO = 0; var ERROR = 1; WARNING = 2;
-var TIMEOUT = 120;
-var WRITE_FILE = false;
-var PREFIX = "Work/Atos/"
+var PREFIX = "Work/Atos/";
 var SUCCESS = 1;
-var RECON_OBJ = {"total": 0, "TPPN": "3280", "size": 100};
+var RECON_OBJ = {"total": 0, "tppns": ["3267", "3268", "3269", "3270", "3271", "3272", "3273", "3274", "3275", "3276", "3277", "3278", "3279",
+                                       "3280", "3281", "3282", "3283", "3284", "3285", "3286", "3287", "3288", "3289", "3290", "3291",
+                                       "3355", "3356", "3357", "3358"], "size": 200};
 
 String.prototype.lpad = function(padString, length) {
     var str = this;
@@ -35,54 +35,83 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 
 	var retcode = 1;
 	var NEWLINE = "\n";
-	var TITLE = "Ultratop List" + NEWLINE + "-".repeat(100) + NEWLINE.repeat(2);
+    logV2(INFO, "*".repeat(100));
 	logV2(INFO, "Start");
-	logV2(INFO, "Total Confirmed: " + RECON_OBJ.total);
+    logV2(INFO, "*".repeat(100));
 	var found = false;
-	do {
-        found = doAcceptOld(RECON_OBJ.TPPN);
-        if (found){
-        	logV2(INFO, "Number Of Times Accepted: " + RECON_OBJ.total);
+
+	RECON_OBJ.tppns.forEach(function (tppn) {
+        logV2(INFO, "Processing TPPN: " + tppn);
+        logV2(INFO, "=".repeat(100));
+        processTPPN(tppn);
+    });
+
+    function processTPPN(tppn) {
+        RECON_OBJ.total = 0;
+        var retCode = iimPlay(PREFIX + "01_Select_Stream");
+        if (retCode == SUCCESS) {
+            do {
+                var found = doAcceptOld(tppn);
+                if (found) {
+                    logV2(INFO, "Number Of Times Confirmed: " + RECON_OBJ.total);
+                }
+                logV2(INFO, "Found: " + false);
+            }
+            while (found);
         }
-        if (RECON_OBJ.total > 3){
-        	found = false;
-		}
+        else {
+                logException("Problem Selecting Stream");
+        }
     }
-    while (found);
-	
+
+function checkIfDataFound(){
+    var found = false;
+    logV2(INFO, "Entering checkIfDataFound");
+    retCode = iimPlay(PREFIX + "10_Records_Found.iim");
+    if (retCode == SUCCESS){
+        var msg = getExtract(1);
+        if (msg.toUpperCase().startsWith("GEEN DATA")){
+            found = false;
+        }
+        else {
+            found = true;
+        }
+    }
+    else {
+        logException("Problem Records Found");
+    }
+    logV2(INFO, "found: " + found);
+    return found;
+}
+
 function doAcceptOld(tppn){
 	logV2(INFO, "Accept Old");
-	var found = false;
-	//iimSet("header", header.toString());
-	var retCode = iimPlay(PREFIX + "01_Select_Stream");
-	if (retCode == SUCCESS){
+	var dataFound = false;
+    dataFound = checkIfDataFound();
+    if (dataFound){
+        logV2(INFO, "Data found. No need to search again");
+        retCode = confirmAcceptOld(tppn);
+    }
+    else {
         iimSet("TPPN", tppn);
         iimSet("SIZE", RECON_OBJ.size);
         retCode = iimPlay(PREFIX + "02_Search_Records");
-        if (retCode == SUCCESS){
-            retCode = iimPlay(PREFIX + "10_Records_Found.iim");
-            if (retCode == SUCCESS){
-				var msg = getExtract(1);
-				if (msg.startsWith("Geen data")){
-                    logV2(INFO, "No data found");
-				}
-				else {
-					found = true;
-					retCode = confirmAcceptOld(tppn);
-				}
+        if (retCode == SUCCESS) {
+            dataFound = checkIfDataFound();
+            if (!dataFound){
+                logV2(INFO, "No data found");
             }
             else {
-                logV2(WARNING, "Problem Records Found");
-			}
-		}
-    	else {
-            logV2(WARNING, "Problem Searching Records");
+                retCode = confirmAcceptOld(tppn);
+            }
         }
 	}
-	else {
-        logV2(WARNING, "Problem Selecting Stream");
-	}
-	return found;
+	return dataFound;
+}
+
+function logException(message){
+    logV2(WARNING,message);
+    throw new Error(message);
 }
 
 function confirmAcceptOld(tppn){
@@ -94,11 +123,11 @@ function confirmAcceptOld(tppn){
 		  RECON_OBJ.total++;
 		}
     	else {
-			logV2(WARNING, "Problem Confirm Accept Old");
+            logException("Problem Confirm Accept Old");
 		}
     }
     else {
-    	logV2(WARNING, "Problem Selecting Records");
+        logException("Problem Selecting Records");
     }
     return retCode;
 }
@@ -107,77 +136,6 @@ function getExtract(nr){
 		var txt2 = iimGetLastExtract(nr);
 		return txt2==null ? null : txt2.trim();
 }	
-
-function getEmptyObj(){
-		var obj = {description:"", sd:null, ed:null, minRange:null, maxRange:null, price:0,
-		           value:null, priceElementDescription:null, fixed: null, quantityType: null,
-				   valueType:null, calculationType: null
-		          };
-		return obj;
-}
-
-function addLine(file, obj){
-	var line = null;
-	for (var name in obj) {
-		if (line == null){
-			line = "";
-		}
-		else {
-		   line += ";";
-		}
-		line += obj[name];
-	}
-	line += NEWLINE;
-	writeFile(file, line, false);
-}
-	
-function addHeader(file, obj){
-	var line = null;
-	for (var name in obj) {
-		if (line == null){
-			line = "";
-		}
-		else {
-		   line += ";";
-		}
-		line += name;
-	}
-	line += NEWLINE;
-	writeFile(file, line, false);
-}
-	
-function getValue(macro, pos, header){
-		logV2(INFO, "Pos = " + pos);
-		logV2(INFO, "Header = " + header);
-		iimSet("pos", pos.toString());
-		iimSet("pos2", (pos-1).toString());
-		iimSet("header", header.toString());
-		var macroName = "PMT/" + macro + ".iim";
-		retcode = iimPlay(macroName);
-		var txt=iimGetLastExtract(1);
-		logV2(INFO, "Macro: " + macroName + 
-		      " / Txt: " + txt +
-			  " / Retcode: " + retcode);
-		
-		return txt==null ? null : txt.trim();
-}
-
-function pad(number, length) {
-    var str = '' + number;
-    while (str.length < length) {
-        str = '0' + str;
-    }
-    return str;
-}
-
-function htmlDecode(enitity){
-	var decoded = enitity.replace(/&amp;/g, "&");
-	decoded = decoded.replace(/&gt;/g, ">");
-	decoded = decoded.replace(/&lt;/g, "<");
-	decoded = decoded.replace(/&quot;/g, '"');
-	decoded = decoded.replace(/'&#39;/g, "'");
-	return decoded;
-}
 
 function writeFile(fileName, data, overwrite) {
 	// file is nsIFile, data is a string

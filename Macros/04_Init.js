@@ -12,7 +12,7 @@ LOG_FILE = new LogFile(LOG_DIR, "MRInit");
 
 init();
 
-/*
+
 setProfile();
 setNode();
 setAssassinProfile();
@@ -20,7 +20,6 @@ setAssassinAutoHeal();
 checkMRProperties(MR.MR_CONFIG_FILE);
 checkMRProperties(MR.MR_TEMP_SETTINGS_FILE);
 checkMRProperties(MR.MR_ASSASSIN_FILE);
-*/
 checkKills(MR.MR_KILLS_FILE);
 
 function checkKills(configFileCode){
