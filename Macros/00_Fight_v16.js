@@ -27,6 +27,7 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
                         "forceHealing": false, "profile": getProfileObject((getProfile())),
                       "boss": {"attacks": 0}};
 startScript();
+
 //CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 
@@ -729,7 +730,8 @@ function attack(fighter, fighterType){
                         statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED;
                     }
                     else {
-						statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
+						// continue with next player
+                        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
 					}
                     // ADD 15/11
                     updateStatistics2(fighter, fighterType);
@@ -781,6 +783,7 @@ function attackTillDeath(fighter, fighterType){
 	var health = 0;
 	var victimHealed;
 	var bigHealthAttacks = 0;
+    var staminaCost = 0;
     checkForStopFighting("fight", configMRObj.jobs.optimization);
 	do {
         victimHealed = false;
@@ -797,6 +800,10 @@ function attackTillDeath(fighter, fighterType){
 				previousHealth = health;
                 victimHealed = true;
                 bigHealthAttacks = 0;
+                if (isStaminaCostTooHigh(health, staminaCost)){
+                    statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STAMINACOSTHIGH;
+                    break;
+                }
 			}
 			var victimIsDeath = false;
 			if (health == 0){
@@ -873,7 +880,6 @@ function attackTillDeath(fighter, fighterType){
 				        break;
                     }
                     var attackStatus = performAttack(health, fighterType, fighter);
-					firstAttack = false;
 					statusObj.totalStamina += 5;
 					nrOfAttacks++;
                     bigHealthAttacks++;
@@ -885,6 +891,19 @@ function attackTillDeath(fighter, fighterType){
 					var exitAttack = false;
 					switch (attackStatus){
                         case FIGHTERCONSTANTS.ATTACKSTATUS.OK:
+                            if (health > 0 && firstAttack){
+                                if (fighterType != FIGHTERCONSTANTS.FIGHTERTPE.RIVAL){
+                                    // get stamina cost
+                                    staminaCost = getStaminaCost();
+                                    if (isStaminaCostTooHigh(health, staminaCost)){
+                                        logV2(INFO, "ATTACK", "Stamina Cost too high. Skipping Player");
+                                        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STAMINACOSTHIGH;
+                                        exitAttack = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            firstAttack = false;
                             break;
                         case FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED:
                             statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED;
@@ -914,6 +933,10 @@ function attackTillDeath(fighter, fighterType){
 	logV2(INFO, "ATTACK", "Total Attacks: " + nrOfAttacks);
 	globalSettings.nrOfAttacks += nrOfAttacks;
 	return statusObj;
+}
+
+function isStaminaCostTooHigh(health, staminaCost){
+    return (configMRObj.fight.staminaCost > 0 && staminaCost > configMRObj.fight.staminaCost && health > 50);
 }
 
 function checkIfLevelUp(){
