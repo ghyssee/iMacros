@@ -160,7 +160,7 @@ function startList() {
         try {
             var retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
             if (retCode == SUCCESS) {
-                retCode = playMacro(JOB_FOLDER, "06_Job_DistrictEvent.iim", MACRO_INFO_LOGGING);
+                retCode = travel(districtId, true, null);
                 if (retCode == SUCCESS) {
                         extractJobs(districtId, null);
                 }
@@ -512,7 +512,7 @@ function goToChapter(districtId, chapter){
             }
         }
     }
-    while (!ok && counter < 5);
+    while (!ok && counter < 20);
     return retCode;
 }
 
@@ -525,7 +525,7 @@ function isChapterSelected(districtId, chapter){
         if (!isNullOrBlank(selectInfo)) {
             selectInfo = selectInfo.toLowerCase();
             if (contains(selectInfo, "tab_button selected")) {
-                logV2(INFO, "JOB", "WRight Chapter Selected: " + districtId + "/" + chapter);
+                logV2(INFO, "JOB", "Wright Chapter Selected: " + districtId + "/" + chapter);
                 return true;
             }
         }
@@ -587,7 +587,7 @@ function goToDistrict ( districtId, event){
             ok = true;
         }
     }
-    while (!ok && counter < 5);
+    while (!ok && counter < 20);
     return retCode;
 }
 
