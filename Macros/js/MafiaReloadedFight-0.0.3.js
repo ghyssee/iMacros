@@ -19,7 +19,8 @@ var FIGHTERCONSTANTS = Object.freeze({
         "EXPREACHED": 7,
         "STAMINALIMIT": 8,
         "REFRESH": 9,
-        "NOHEALTH": 10
+        "NOHEALTH": 10,
+        "STAMINACOSTHIGH": 11
     },
     "FIGHTERTPE" : {
         "RIVAL" : 1,
@@ -710,4 +711,25 @@ function checkIfIced(fighter, profileObj){
         updateIces(fighter);
     }
     return iced;
+}
+
+function getStaminaCost(){
+    iced = false;
+    var retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status.iim", MACRO_INFO_LOGGING);
+    var staminaCost = 0;
+    if (retCode == SUCCESS){
+        var originalMsg = getLastExtract(1, "Ice Status", "Riki just Killed blabla. Your Kill Count is now 777");
+        var msg = originalMsg.toUpperCase();
+        logV2(INFO, "FIGHT", "Check Stamina Cost: " + msg);
+        var regExp = "USING ([0-9]{1,3})";
+        var matches = msg.match(regExp);
+        if (matches != null && matches.length > 0){
+            staminaCost = parseInt(matches[matches.length-1]);
+        }
+    }
+    else {
+        logV2(INFO, "FIGHT", "Problem getting stamina cost: " + retCode);
+    }
+    logV2(INFO, "FIGHT", "staminaCost: " + staminaCost);
+    return staminaCost;
 }
