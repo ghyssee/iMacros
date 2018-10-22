@@ -303,7 +303,7 @@ function attackWonOrRedIce(statusObj, fighter, fighterType){
     if (!propertyExistAndNotNull(fighter, "status") || fighter.status == FIGHTERCONSTANTS.FIGHTERSTATUS.UNKNOWN){
         logV2(INFO, "FIGHT", "Updating status for fighter " + fighter.id);
         fighter.status = FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK;
-        writeMRObject(assassinObj, MR_ASSASSIN_FILE);
+        writeMRObject(assassinObj, MR.MR_ASSASSIN_FILE);
     }
 }
 
@@ -371,7 +371,7 @@ function attack(fighter, fighterType){
                     addStrongerOpponent(fighter);
                     if (!propertyExistAndNotNull(fighter, "status") || fighter.status == FIGHTERCONSTANTS.FIGHTERSTATUS.UNKNOWN) {
                         fighter.status = FIGHTERCONSTANTS.FIGHTERSTATUS.STRONGER;
-                        writeMRObject(assassinObj, MR_ASSASSIN_FILE);
+                        writeMRObject(assassinObj, MR.MR_ASSASSIN_FILE);
                     }
                     fighter.skip = true;
                     statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;

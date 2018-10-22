@@ -64,7 +64,7 @@ function test(){
 
 }
 
-function start() {
+function start2() {
 
     try {
         var listOfJobs = getListOfEnabledJobs(jobsObj.activeJobs);
@@ -72,7 +72,21 @@ function start() {
         globalSettings.currentLevel = getLevel();
         var newJobs = initJobs(listOfJobs);
         checkOptimization(newJobs);
-        /*
+    }
+    catch (ex) {
+        logError(ex);
+        logV2(INFO, "SUMMARY", "Jobs Completed: " + globalSettings.jobsCompleted);
+        logV2(INFO, "SUMMARY", "Money Gained: " + globalSettings.money);
+    }
+}
+
+function start() {
+
+    try {
+        var listOfJobs = getListOfEnabledJobs(jobsObj.activeJobs);
+        startMafiaReloaded();
+        globalSettings.currentLevel = getLevel();
+        var newJobs = initJobs(listOfJobs);
         do {
             logV2(INFO, "JOB", "DummyBanking");
             dummyBank();
@@ -107,7 +121,7 @@ function start() {
                 waitV2("60");
             }
         }
-        while (true);*/
+        while (true);
     }
     catch (ex) {
         logError(ex);
@@ -127,29 +141,7 @@ function getListOfEnabledJobs(listOfJobs) {
 }
 
 function initJob(){
-    var retCode = -1;
-    var counter = 0;
-    do {
-        counter++;
-        retCode = playMacro(JOB_FOLDER, "01_Job_Init.iim", MACRO_INFO_LOGGING);
-        if (retCode == SUCCESS) {
-            // check if Init Screen is realy selected
-            retCode = playMacro(JOB_FOLDER, "08_Job_Init_Test.iim", MACRO_INFO_LOGGING);
-            var testDistrict = getLastExtract(1, "District", "Downtown");
-            if (isNullOrBlank(testDistrict)){
-                logV2(WARNING, "INITJOB", "Problem with init Job. TestDistrict is empty");
-                retCode = -1;
-            }
-            else if (testDistrict.toLowerCase() != "downtown"){
-                logV2(WARNING, "INITJOB", "Problem with init Job. TestDistrict is: " + testDistrict);
-                retCode = -1;
-            }
-        }
-        if (retCode != SUCCESS){
-            logV2(WARNING, "INITJOB", "Retries: " + counter);
-        }
-    }
-    while (retCode != SUCCESS && counter < 10);
+    var retCode = initAndCheckScript(FIGHT_FOLDER, "01_Job_Init.iim", "08_Job_Init_Test.iim", "downtown", "INITJOB", "Init Job");
     return retCode;
 }
 
