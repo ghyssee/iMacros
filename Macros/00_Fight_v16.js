@@ -936,7 +936,7 @@ function attackTillDeath(fighter, fighterType){
 }
 
 function isStaminaCostTooHigh(health, staminaCost){
-    return (configMRObj.fight.staminaCost > 0 && staminaCost > configMRObj.fight.staminaCost && health > 50);
+    return (configMRObj.fight.staminaCost > 0 && staminaCost > configMRObj.fight.staminaCost && health > configMRObj.fight.staminaCostHealth);
 }
 
 function checkIfLevelUp(){
