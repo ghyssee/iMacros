@@ -27,7 +27,8 @@ var FIGHTERCONSTANTS = Object.freeze({
         "PROFILE": 2,
         "NORMALPROFILE": 3,
         "ASSASSIN" : 4,
-        "HOMEFEED" : 5
+        "HOMEFEED" : 5,
+        "WISEGUY" : 6,
     },
     "FIGHTERSTATUS": {
         "UNKNOWN": "UNKNOWN",
@@ -505,6 +506,9 @@ function performAttackInit(fighterType){
         case FIGHTERCONSTANTS.FIGHTERTPE.RIVAL:
             macro = "32_AttackRivalMobster_start.iim";
             break;
+        case FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY:
+            macro = "37_AttackWiseGuy_start.iim";
+            break;
         case FIGHTERCONSTANTS.FIGHTERTPE.NORMALPROFILE:
             macro = "81_Profile_Attack_Start.iim";
             break;
@@ -588,7 +592,7 @@ function performAttack(victimHealth, fighterType, fighter){
     if (status == FIGHTERCONSTANTS.ATTACKSTATUS.EXP){
         return status;
     }
-    if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.RIVAL){
+    if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.RIVAL || fighterType == FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY ){
         retCode = playMacro(FIGHT_FOLDER, "42_VictimRivalMobster_Attack.iim", MACRO_INFO_LOGGING);
     }
     else {

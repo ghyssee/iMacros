@@ -445,7 +445,11 @@ function attackRivals(){
             if (rival > 0) {
                 var fighter = getFighterObject("RIVAL", "RIVAL " + rival, "0");
                 var list = [fighter];
-                status = processList(list, FIGHTERCONSTANTS.FIGHTERTPE.RIVAL);
+                var rivalType = FIGHTERCONSTANTS.FIGHTERTPE.RIVAL;
+                if (rival == 9999){
+                    rivalType = FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY;
+                }
+                status = processList(list, rivalType);
                 logV2(INFO, "FIGHT", "Status: " + status);
                 if (!continueFighting(status)) {
                     logV2(INFO, "FIGHT", "Exit Fight V1...");
@@ -632,6 +636,19 @@ function extractRivalMobster(){
 	var retCode = 0;
 	var retCode = goToFightPage();
 	if (retCode == SUCCESS) {
+        if (configMRObj.fight.wiseguy){
+            retCode = playMacro(FIGHT_FOLDER, "24_Extract_WiseGuy.iim", MACRO_INFO_LOGGING);
+            if (retCode == SUCCESS) {
+                var msg = getLastExtract(1, "Wiseguy");
+                if (!isNullOrBlank(msg)) {
+                    logV2(INFO, "FIGHT", "Wiseguy found");
+                    return 9999;
+                }
+            }
+            else {
+                logV2(WARNING, "FIGHT", "Problem extracting wiseguy");
+            }
+        }
         retCode = playMacro(FIGHT_FOLDER, "22_Extract_Rival.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
             var msg = getLastExtract(1, "Rival", "20 / 20");
@@ -669,7 +686,7 @@ function attack(fighter, fighterType){
 	//fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
 	var retCode = SUCCESS;
 	if (fighterType != FIGHTERCONSTANTS.FIGHTERTPE.PROFILE && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.NORMALPROFILE
-        && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.RIVAL) {
+        && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.RIVAL && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY) {
         retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
     }
     var healthObj = performHealthCheck("ATTACK", configMRObj.fight.autoHeal);
@@ -892,7 +909,7 @@ function attackTillDeath(fighter, fighterType){
 					switch (attackStatus){
                         case FIGHTERCONSTANTS.ATTACKSTATUS.OK:
                             if (health > 0 && firstAttack){
-                                if (fighterType != FIGHTERCONSTANTS.FIGHTERTPE.RIVAL){
+                                if (fighterType != FIGHTERCONSTANTS.FIGHTERTPE.RIVAL && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY){
                                     // get stamina cost
                                     staminaCost = getStaminaCost();
                                     if (isStaminaCostTooHigh(health, staminaCost)){
@@ -1592,7 +1609,7 @@ function homefeedCheck(){
 }
 
 function updateStatistics2(fighter, fighterType){
-    if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.RIVAL){
+    if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.RIVAL || fighterType == FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY){
         // no stats for rival mobsters
         return;
     }
