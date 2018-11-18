@@ -27,6 +27,8 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
                         "forceHealing": false, "profile": getProfileObject((getProfile())),
                       "boss": {"attacks": 0}};
 startScript();
+
+//CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 
 
@@ -68,10 +70,8 @@ function startScript(){
         do  {
             dummyBank();
             checkMiniHomeFeed(profileObj, globalSettings.profile.id, friendObj, fightersToExclude, fighterObj);
-            if (checkForStopFighting("fight")){
-                continue;
-            }
-            else if (globalSettings.stopOnLevelUp){
+            checkForStopFighting("fight", configMRObj.jobs.optimization);
+            if (globalSettings.stopOnLevelUp){
                 logV2(INFO, "FIGHT", "You Leveled Up and setting stopOnLevelUp is enabled");
                 waitV2("60");
             }
@@ -236,7 +236,6 @@ function performBossAttack(staminaObj, bossHealth){
                     logV2(INFO, "PUMMEL", "expRequired: " + expRequired);
                     logV2(INFO, "PUMMEL", "Calculated exp Left: " + exp);
                     pummel = (exp >= configMRObj.global.stopWhenExpBelow);
-
                 }
                 else {
                     pummel = true;
@@ -259,6 +258,7 @@ function performBossAttack(staminaObj, bossHealth){
             pummel = false;
         }
     }
+    checkForStopFighting("fight", configMRObj.jobs.optimization);
     if (pummel) {
         logV2(INFO, "PUMMEL", "Pummel Attack activated");
         retCode = playMacro(FIGHT_FOLDER, "76_Boss_Pummel.iim", MACRO_INFO_LOGGING);
@@ -445,7 +445,11 @@ function attackRivals(){
             if (rival > 0) {
                 var fighter = getFighterObject("RIVAL", "RIVAL " + rival, "0");
                 var list = [fighter];
-                status = processList(list, FIGHTERCONSTANTS.FIGHTERTPE.RIVAL);
+                var rivalType = FIGHTERCONSTANTS.FIGHTERTPE.RIVAL;
+                if (rival == 9999){
+                    rivalType = FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY;
+                }
+                status = processList(list, rivalType);
                 logV2(INFO, "FIGHT", "Status: " + status);
                 if (!continueFighting(status)) {
                     logV2(INFO, "FIGHT", "Exit Fight V1...");
@@ -632,6 +636,19 @@ function extractRivalMobster(){
 	var retCode = 0;
 	var retCode = goToFightPage();
 	if (retCode == SUCCESS) {
+        if (configMRObj.fight.wiseguy){
+            retCode = playMacro(FIGHT_FOLDER, "24_Extract_WiseGuy.iim", MACRO_INFO_LOGGING);
+            if (retCode == SUCCESS) {
+                var msg = getLastExtract(1, "Wiseguy");
+                if (!isNullOrBlank(msg)) {
+                    logV2(INFO, "FIGHT", "Wiseguy found");
+                    return 9999;
+                }
+            }
+            else {
+                logV2(WARNING, "FIGHT", "Problem extracting wiseguy");
+            }
+        }
         retCode = playMacro(FIGHT_FOLDER, "22_Extract_Rival.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
             var msg = getLastExtract(1, "Rival", "20 / 20");
@@ -669,7 +686,7 @@ function attack(fighter, fighterType){
 	//fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
 	var retCode = SUCCESS;
 	if (fighterType != FIGHTERCONSTANTS.FIGHTERTPE.PROFILE && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.NORMALPROFILE
-        && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.RIVAL) {
+        && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.RIVAL && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY) {
         retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
     }
     var healthObj = performHealthCheck("ATTACK", configMRObj.fight.autoHeal);
@@ -730,7 +747,8 @@ function attack(fighter, fighterType){
                         statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED;
                     }
                     else {
-						statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
+						// continue with next player
+                        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
 					}
                     // ADD 15/11
                     updateStatistics2(fighter, fighterType);
@@ -782,6 +800,8 @@ function attackTillDeath(fighter, fighterType){
 	var health = 0;
 	var victimHealed;
 	var bigHealthAttacks = 0;
+    var staminaCost = 0;
+    checkForStopFighting("fight", configMRObj.jobs.optimization);
 	do {
         victimHealed = false;
 	    if (health > -1){
@@ -792,11 +812,15 @@ function attackTillDeath(fighter, fighterType){
 			}
 			if (previousHealth < health){
                 nrOfHeals++;
-				logV2(INFO, "ATTACK", "Victim healed: " + fighter.id + " " + nrOfHeals + " time(s)");
+                logV2(INFO, "ATTACK", "Victim healed: " + fighter.id + " " + nrOfHeals + " time(s)");
 				originalHealth = health;
 				previousHealth = health;
                 victimHealed = true;
                 bigHealthAttacks = 0;
+                if (isStaminaCostTooHigh(health, staminaCost)){
+                    statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STAMINACOSTHIGH;
+                    break;
+                }
 			}
 			var victimIsDeath = false;
 			if (health == 0){
@@ -873,7 +897,6 @@ function attackTillDeath(fighter, fighterType){
 				        break;
                     }
                     var attackStatus = performAttack(health, fighterType, fighter);
-					firstAttack = false;
 					statusObj.totalStamina += 5;
 					nrOfAttacks++;
                     bigHealthAttacks++;
@@ -885,6 +908,19 @@ function attackTillDeath(fighter, fighterType){
 					var exitAttack = false;
 					switch (attackStatus){
                         case FIGHTERCONSTANTS.ATTACKSTATUS.OK:
+                            if (health > 0 && firstAttack){
+                                if (fighterType != FIGHTERCONSTANTS.FIGHTERTPE.RIVAL && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY){
+                                    // get stamina cost
+                                    staminaCost = getStaminaCost();
+                                    if (isStaminaCostTooHigh(health, staminaCost)){
+                                        logV2(INFO, "ATTACK", "Stamina Cost too high. Skipping Player");
+                                        statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STAMINACOSTHIGH;
+                                        exitAttack = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            firstAttack = false;
                             break;
                         case FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED:
                             statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.EXPREACHED;
@@ -914,6 +950,10 @@ function attackTillDeath(fighter, fighterType){
 	logV2(INFO, "ATTACK", "Total Attacks: " + nrOfAttacks);
 	globalSettings.nrOfAttacks += nrOfAttacks;
 	return statusObj;
+}
+
+function isStaminaCostTooHigh(health, staminaCost){
+    return (configMRObj.fight.staminaCost > 0 && staminaCost > configMRObj.fight.staminaCost && health > configMRObj.fight.staminaCostHealth);
 }
 
 function checkIfLevelUp(){
@@ -1569,7 +1609,7 @@ function homefeedCheck(){
 }
 
 function updateStatistics2(fighter, fighterType){
-    if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.RIVAL){
+    if (fighterType == FIGHTERCONSTANTS.FIGHTERTPE.RIVAL || fighterType == FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY){
         // no stats for rival mobsters
         return;
     }
