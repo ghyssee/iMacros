@@ -561,7 +561,7 @@ function getVictimHealth(fighter, profileObj){
             logV2(INFO, "ATTACK", "Victim Health: " + healthMsg);
             health = parseInt(healthMsg);
             if (health == 0){
-                waitV2("0.3");
+                waitV2("0.2");
                 // MOD 15/11
                 checkIfIced(fighter, profileObj);
             }

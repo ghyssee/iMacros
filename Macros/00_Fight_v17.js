@@ -624,7 +624,7 @@ function waitTillEnoughStamina(){
                 logV2(WARNING, "WAIT", "Problem getting experience");
             }
         }
-        waitV2("60");
+        waitV2(configMRObj.fight.waitTillEnoughStamina.toString());
 	}
 	while (true);
     logV2(INFO, "WAIT", "Leaving wait");
@@ -1260,7 +1260,7 @@ function getFirefoxSetting(branch, key){
 function removeItemFromArray(file, id){
 	logV2(INFO, "FIGHT", "Save Current Fighters List");
     writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
-    waitV2("1");
+    waitV2("0.5");
     var obj= initMRObject(file);
     var index = -1;
 	for (var i=0; i < obj.fighters.length; i++){
@@ -1537,7 +1537,7 @@ function performHealthCheck(message, autoHeal, stamina){
         while (health < configMRObj.fight.heal) {
             if (!globalSettings.forceHealing) {
                 if (health == 0) {
-                    if (homefeedCheck()){
+                    if (homefeedCheck(configMRObj.fight.waitingTimeKilled)){
                         healthObj.refresh = true;
                     }
                 }
@@ -1571,7 +1571,7 @@ function performHealthCheck(message, autoHeal, stamina){
             tries++;
             if (health == 0) {
                 if (tries == 1) {
-                    if (homefeedCheck()) {
+                    if (homefeedCheck(configMRObj.fight.waitingTimeKilled)) {
                         healthObj.refresh = true;
                     }
                 }
@@ -1593,7 +1593,7 @@ function getHomefeedLines(){
     return getOverwrittenSetting(null, "homefeed", "processLines", configMRObj.homefeed.processLines);
 }
 
-function homefeedCheck(){
+function homefeedCheck(waitingTimeKilled){
     var processHomefeedLines = getHomefeedLines();
     var checked = false;
     if (processHomefeed(processHomefeedLines)){
@@ -1601,8 +1601,8 @@ function homefeedCheck(){
     }
     var bullied = underAttack(configMRObj, processHomefeedLines);
     if (!bullied) {
-        logV2(INFO, "HOMEFEEDCHECK", "Killed. Waiting 60 seconds to heal again");
-        waitV2("60");
+        logV2(INFO, "HOMEFEEDCHECK", "Killed. Waiting seconds to heal again:" + waitingTimeKilled);
+        waitV2(waitingTimeKilled.toString());
     }
     logV2(INFO, "HOMEFEEDCHECK", "checked: " + checked);
     return checked;
