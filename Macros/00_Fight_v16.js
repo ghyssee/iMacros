@@ -6,7 +6,7 @@ eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.3.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.4.js"));
 
 // 182-11 = 171
 var localConfigObject = null;
@@ -27,10 +27,26 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
                         "forceHealing": false, "profile": getProfileObject((getProfile())),
                       "boss": {"attacks": 0}};
 startScript();
+//test();
 
 //CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 
+function test(){
+    addMacroSetting("pos", "10", ENABLE_LOGGING);
+    var retCode = playMacro(FIGHT_FOLDER, "21_ExtractV2.iim", MACRO_INFO_LOGGING);
+    var tmp = getLastExtract(1, "Gang", "data-params=\"controller=gang&amp;action=view&amp;id=3985490\">*TBC*</a>");
+    alert(tmp);
+    var gangObj = extractIdNameFromString(tmp, "GANG");
+    alert(JSON.stringify(gangObj));
+    var level = extractLevelFromString(tmp);
+    alert("LVL: " + level);
+    var id = extractIdFromString(tmp);
+    alert("ID:" + id);
+    var name = extractFighterNameFromString(tmp);
+    alert("NAME:" + name);
+
+}
 
 function testFightList(){
     var array = [];
@@ -1023,16 +1039,15 @@ function getFightList(){
 	if (retCode == SUCCESS){
 		for (var i=1; i<= configMRObj.fight.listLength; i++){
 			addMacroSetting("pos", i.toString(), ENABLE_LOGGING);
-			var retCode = playMacro(FIGHT_FOLDER, "21_Extract.iim", MACRO_INFO_LOGGING);
+			var retCode = playMacro(FIGHT_FOLDER, "21_ExtractV2.iim", MACRO_INFO_LOGGING);
 			if (retCode == SUCCESS){
-				var id = extractIdFromString(getLastExtract(1, "Fighter ID", "123456789"));
-				var name = getLastExtract(2, "Fighter Name", "BlaBla");
-				name = name.substring(0,100);
-				var level = extractLevelFromString(getLastExtract(3, "Fighter Level", "200"));
+			    var txt = getLastExtract(1, "Fight Line", "Fight Line")
+				var id = extractIdFromString(txt);
+				var name = extractFighterNameFromString(txt).substring(0,100);;
+				var level = extractLevelFromString(txt);
 				var object = getFighterObject(id, name, level);
 				// MOD 15/11
-				var gangObj = extractIdNameFromString(getLastExtract(4, "Gang", "data-params=\"controller=gang&amp;action=view&amp;id=3985490\">*TBC*</a>"),
-				                                      "GANG");
+				var gangObj = extractIdNameFromString(txt);
                 object.gangId = gangObj.id;
                 object.gangName = gangObj.name;
                 object.lastChecked = formatDateToYYYYMMDDHHMISS();
@@ -1138,7 +1153,7 @@ function filterFightList(fightList){
 
 function extractLevelFromString(text){
 	text = removeComma(text);
-    var regExp = /Level (.*)$/;
+    var regExp = "</a> Level (.*)<";
 	var matches = text.match(regExp);
 	if (matches != null && matches.length > 0){
 		var level = matches[matches.length-1];
@@ -1150,7 +1165,19 @@ function extractLevelFromString(text){
 
 
 function extractIdFromString(text){
-    var regExp = /id=([0-9]{1,30})"/;
+    var regExp = "CLASS=\"PRO\" DATA-ID=\"" + "([0-9]{1,30})\">";
+    //var regExp = /id=([0-9]{1,30})"/;
+    text = text.toUpperCase();
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return matches[matches.length-1];
+    }
+    return text;
+}
+
+function extractFighterNameFromString(text){
+    var regExp = "class=\"pro\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
+    //var regExp = /id=([0-9]{1,30})"/;
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         return matches[matches.length-1];
@@ -1410,7 +1437,7 @@ function extractFighterinfo(fighter){
         if (!isNullOrBlank(lvlInfo)){
             lvlInfo = removeComma(lvlInfo);
             var level = parseInt(lvlInfo);
-            var pl = extractPlayerName(xtraInfo);
+            var pl = extractFighterNameFromString(xtraInfo);
             if (level > 0){
                 fighter.level = level;
                 var gangObj = extractIdNameFromString(xtraInfo, "GANG");
