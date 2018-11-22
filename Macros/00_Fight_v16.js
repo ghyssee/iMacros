@@ -37,13 +37,13 @@ function test(){
     var retCode = playMacro(FIGHT_FOLDER, "21_ExtractV2.iim", MACRO_INFO_LOGGING);
     var tmp = getLastExtract(1, "Gang", "data-params=\"controller=gang&amp;action=view&amp;id=3985490\">*TBC*</a>");
     alert(tmp);
-    var gangObj = extractIdNameFromString(tmp, "GANG");
+    var gangObj = extractGangInformation(tmp, "GANG");
     alert(JSON.stringify(gangObj));
     var level = extractLevelFromString(tmp);
     alert("LVL: " + level);
-    var id = extractIdFromString(tmp);
+    var id = extractFighterId(tmp);
     alert("ID:" + id);
-    var name = extractFighterNameFromString(tmp);
+    var name = extractFighterName(tmp);
     alert("NAME:" + name);
 
 }
@@ -1041,13 +1041,13 @@ function getFightList(){
 			addMacroSetting("pos", i.toString(), ENABLE_LOGGING);
 			var retCode = playMacro(FIGHT_FOLDER, "21_ExtractV2.iim", MACRO_INFO_LOGGING);
 			if (retCode == SUCCESS){
-			    var txt = getLastExtract(1, "Fight Line", "Fight Line")
-				var id = extractIdFromString(txt);
-				var name = extractFighterNameFromString(txt).substring(0,100);;
+			    var txt = getLastExtract(1, "Fight Line", "Fight Line");
+				var id = extractFighterId(txt);
+				var name = extractFighterName(txt).substring(0,100);
 				var level = extractLevelFromString(txt);
 				var object = getFighterObject(id, name, level);
 				// MOD 15/11
-				var gangObj = extractIdNameFromString(txt);
+				var gangObj = extractGangInformation(txt);
                 object.gangId = gangObj.id;
                 object.gangName = gangObj.name;
                 object.lastChecked = formatDateToYYYYMMDDHHMISS();
@@ -1163,27 +1163,6 @@ function extractLevelFromString(text){
 	return text;
 }
 
-
-function extractIdFromString(text){
-    var regExp = "CLASS=\"PRO\" DATA-ID=\"" + "([0-9]{1,30})\">";
-    //var regExp = /id=([0-9]{1,30})"/;
-    text = text.toUpperCase();
-    var matches = text.match(regExp);
-    if (matches != null && matches.length > 0){
-        return matches[matches.length-1];
-    }
-    return text;
-}
-
-function extractFighterNameFromString(text){
-    var regExp = "class=\"pro\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
-    //var regExp = /id=([0-9]{1,30})"/;
-    var matches = text.match(regExp);
-    if (matches != null && matches.length > 0){
-        return matches[matches.length-1];
-    }
-    return text;
-}
 
 function init(){
 		
@@ -1437,10 +1416,10 @@ function extractFighterinfo(fighter){
         if (!isNullOrBlank(lvlInfo)){
             lvlInfo = removeComma(lvlInfo);
             var level = parseInt(lvlInfo);
-            var pl = extractFighterNameFromString(xtraInfo);
+            var pl = extractFighterName(xtraInfo);
             if (level > 0){
                 fighter.level = level;
-                var gangObj = extractIdNameFromString(xtraInfo, "GANG");
+                var gangObj = extractGangInformation(xtraInfo);
                 fighter.gangId = gangObj.id;
                 fighter.gangName = gangObj.name;
                 fighter.name = pl;

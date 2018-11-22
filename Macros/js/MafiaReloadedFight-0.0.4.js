@@ -38,18 +38,18 @@ var FIGHTERCONSTANTS = Object.freeze({
     }
 });
 
-function extractIdNameFromString (text, type){
-    var gangObj = {id:null, name:null};
-    text = text.toUpperCase();
-    if (contains(text, "CLASS=\"TAG\"")){
-        gangObj.id = extractGangIdFromString(text, type);
-        gangObj.name = extractGangNameFromString(text, type);
-    }
-    return gangObj;
+function extractFighterInformation(text){
+    var obj = {id:null, name:null};
+    obj.id = extractFighterId(text);
+    obj.name = extractFighterName(text);
+    return obj;
 }
 
-function extractGangIdFromString(text, type){
-    var regExp = "CLASS=\"TAG\" DATA-ID=\"" + "([0-9]{1,20})\">";
+
+function extractFighterId(text){
+    var regExp = "CLASS=\"PRO\" DATA-ID=\"" + "([0-9]{1,30})\">";
+    //var regExp = /id=([0-9]{1,30})"/;
+    text = text.toUpperCase();
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         return matches[matches.length-1];
@@ -57,8 +57,37 @@ function extractGangIdFromString(text, type){
     return text;
 }
 
-function extractGangNameFromString(text, type){
-    var regExp = "CLASS=\"TAG\" DATA-ID=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/A>(?:.*)";
+function extractFighterName(text){
+    var regExp = "class=\"pro\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
+    //var regExp = /id=([0-9]{1,30})"/;
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return matches[matches.length-1];
+    }
+    return text;
+}
+
+
+function extractGangInformation(text){
+    var gangObj = {id:null, name:null};
+    if (contains(text, "class=\"tag\"")){
+        gangObj.id = extractGangIdFromString(text);
+        gangObj.name = extractGangNameFromString(text);
+    }
+    return gangObj;
+}
+
+function extractGangIdFromString(text){
+    var regExp = "class=\"tag\" data-id=\"" + "([0-9]{1,20})\">";
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return matches[matches.length-1];
+    }
+    return text;
+}
+
+function extractGangNameFromString(text){
+    var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/A>(?:.*)";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         return matches[matches.length-1];
@@ -275,10 +304,10 @@ function getHomeFeed(configMRObj, homefeedObj){
                 var line = getHomeFeedObj(timeMsg, txtMsg);
                 txtMsg = txtMsg.toLowerCase();
                 var msg = originalMsg.toLowerCase();
-                var gangObj = extractIdNameFromString(msg, "GANG");
+                var gangObj = extractGangInformation(msg);
                 line.gangId = gangObj.id;
                 line.gangName = gangObj.name;
-                var fighterObj = extractIdNameFromString(msg, "PROFILE");
+                var fighterObj = extractFighterInformation(msg);
                 if (fighterObj.id == null){
                     logV2(WARNING, "HOMEFEED", "Problem with homefeed line: " + originalMsg);
                     continue;
