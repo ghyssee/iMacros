@@ -45,6 +45,9 @@ function extractFighterInformation(text){
     return obj;
 }
 
+function unescape(text){
+    return _.unescape(text);
+}
 
 function extractFighterId(text){
     var regExp = "CLASS=\"PRO\" DATA-ID=\"" + "([0-9]{1,30})\">";
@@ -54,7 +57,7 @@ function extractFighterId(text){
     if (matches != null && matches.length > 0){
         return matches[matches.length-1];
     }
-    return text;
+    return null;
 }
 
 function extractFighterName(text){
@@ -62,9 +65,9 @@ function extractFighterName(text){
     //var regExp = /id=([0-9]{1,30})"/;
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
-        return matches[matches.length-1];
+        return unescape(matches[matches.length-1]);
     }
-    return text;
+    return unescape(text);
 }
 
 
@@ -87,12 +90,12 @@ function extractGangIdFromString(text){
 }
 
 function extractGangNameFromString(text){
-    var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/A>(?:.*)";
+    var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
-        return matches[matches.length-1];
+        return unescape(matches[matches.length-1]);
     }
-    return text;
+    return unescape(text);
 }
 
 function findFighter(list, id){
@@ -302,12 +305,12 @@ function getHomeFeed(configMRObj, homefeedObj){
                 var originalMsg = getLastExtract(2, "Home Feed Line", "BlaBla");
                 var txtMsg = getLastExtract(3, "Home Feed Line", "BlaBla");
                 var line = getHomeFeedObj(timeMsg, txtMsg);
-                txtMsg = txtMsg.toLowerCase();
-                var msg = originalMsg.toLowerCase();
-                var gangObj = extractGangInformation(msg);
+                //txtMsg = txtMsg.toLowerCase();
+                //var msg = originalMsg.toLowerCase();
+                var gangObj = extractGangInformation(originalMsg);
                 line.gangId = gangObj.id;
                 line.gangName = gangObj.name;
-                var fighterObj = extractFighterInformation(msg);
+                var fighterObj = extractFighterInformation(originalMsg);
                 if (fighterObj.id == null){
                     logV2(WARNING, "HOMEFEED", "Problem with homefeed line: " + originalMsg);
                     continue;
@@ -328,7 +331,7 @@ function getHomeFeed(configMRObj, homefeedObj){
                 line.timeStamp = formatDateToYYYYMMDDHHMISS(timeStamp);
                 logV2(INFO, "HOMEFEED", "Time: " + timeStamp);
                 logV2(INFO, "HOMEFEED", "Player: " + line.fighterId + " - " + line.name);
-                if (txtMsg.startsWith("you were killed")) {
+                if (txtMsg.toLowerCase().startsWith("you were killed")) {
                     if (!isExcludedPlayer(homefeedObj, line.fighterId)) {
                         listOfKills.push(line);
                     }

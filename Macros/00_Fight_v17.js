@@ -7,6 +7,7 @@ eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 // 182-11 = 171
 var localConfigObject = null;
@@ -28,7 +29,6 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "boss": {"attacks": 0}};
 startScript();
 //test();
-
 //CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 
@@ -1043,6 +1043,10 @@ function getFightList(){
             if (retCode == SUCCESS){
                 var txt = getLastExtract(1, "Fight Line", "Fight Line");
                 var id = extractFighterId(txt);
+                if (id == null){
+                    // if setting rival mobster is disabled, than fighterId is empty and line must be skipped
+                    continue;
+                }
                 var name = extractFighterName(txt).substring(0,100);
                 var level = extractLevelFromString(txt);
                 var object = getFighterObject(id, name, level);
