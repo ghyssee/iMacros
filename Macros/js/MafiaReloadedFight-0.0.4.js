@@ -70,6 +70,14 @@ function extractFighterName(text){
     return unescape(text);
 }
 
+function extractProfileFighterName(text){
+    var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">(?:[^<]*)<\/a>(.*)</h2>";
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return unescape(matches[matches.length-1]);
+    }
+    return unescape(text);
+}
 
 function extractGangInformation(text){
     var gangObj = {id:null, name:null};

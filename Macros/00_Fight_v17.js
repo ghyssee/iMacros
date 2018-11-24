@@ -1420,7 +1420,7 @@ function extractFighterinfo(fighter){
         if (!isNullOrBlank(lvlInfo)){
             lvlInfo = removeComma(lvlInfo);
             var level = parseInt(lvlInfo);
-            var pl = extractFighterName(xtraInfo);
+            var pl = extractProfileFighterName(xtraInfo);
             if (level > 0){
                 fighter.level = level;
                 var gangObj = extractGangInformation(xtraInfo);
