@@ -35,6 +35,12 @@ var FIGHTERCONSTANTS = Object.freeze({
         "ATTACK": "ATTACK",
         "FRIEND": "FRIEND",
         "STRONGER": "STRONGER"
+    },
+    "SHAKEDOWN": {
+        "CHOOSE_BUSINESS": 0,
+        "NODEAL": 1,
+        "SUCCESSFUL": 2,
+        "PROBLEM": -1
     }
 });
 
@@ -603,7 +609,11 @@ function getVictimHealth(fighter, profileObj){
             if (health == 0){
                 waitV2("0.2");
                 // MOD 15/11
-                checkIfIced(fighter, profileObj);
+                var iced = checkIfIced(fighter, profileObj);
+                if (!iced){
+                    logV2(INFO, "ATTACK", "Victim Health is 0, but is not killed yet");
+                    health = 1;
+                }
             }
         }
         else {
@@ -751,8 +761,10 @@ function checkIfIced(fighter, profileObj){
     }
     if (iced){
         logV2(INFO, "FIGHT", "Total Ices: " + ++globalSettings.iced);
-        addKill(originalMsg, fighter, profileObj);
-        updateIces(fighter);
+        if (fighter != null) {
+            addKill(originalMsg, fighter, profileObj);
+            updateIces(fighter);
+        }
     }
     return iced;
 }

@@ -423,3 +423,9 @@ function initAndCheckScriptParameters(folder, initMacro, listParameters, initTes
     while (retCode != SUCCESS && counter < nrOfRetries);
     return retCode;
 }
+
+
+function getParamObj(id, value){
+    var paramObj = {"id": id, "value": value};
+    return paramObj;
+}

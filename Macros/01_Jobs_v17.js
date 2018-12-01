@@ -1161,11 +1161,6 @@ function getStoryTypeId(type){
     return null;
 }
 
-function getParamObj(id, value){
-    var paramObj = {"id": id, "value": value};
-    return paramObj;
-}
-
 function doStoryChoice(story){
     var nodeObj = configMRObj.storyEvent[story].node1;
     var status = CONSTANTS.STORY.DONE;
