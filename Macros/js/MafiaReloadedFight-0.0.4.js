@@ -40,6 +40,9 @@ var FIGHTERCONSTANTS = Object.freeze({
         "CHOOSE_BUSINESS": 0,
         "NODEAL": 1,
         "SUCCESSFUL": 2,
+        "NOSTAMINA": 3,
+        "COLLECT": 4,
+        "FINISHED": 5,
         "PROBLEM": -1
     }
 });

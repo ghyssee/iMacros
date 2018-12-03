@@ -1713,20 +1713,30 @@ function evaluateBossMessage() {
 function doDowntownShakedown(){
     var retCode = startShakedown();
     if (retCode == SUCCESS){
-        var status = checkStatusShakedown();
-        switch (status){
-            case FIGHTERCONSTANTS.SHAKEDOWN.CHOOSE_BUSINESS:
-                retCode = chooseBusiness();
-                break;
-            case FIGHTERCONSTANTS.SHAKEDOWN.NODEAL:
-                break;
-            case FIGHTERCONSTANTS.SHAKEDOWN.SUCCESSFUL:
-                break;
+        do {
+            var status = checkStatusShakedown();
+            switch (status) {
+                case FIGHTERCONSTANTS.SHAKEDOWN.CHOOSE_BUSINESS:
+                    retCode = chooseBusiness();
+                    break;
+                case FIGHTERCONSTANTS.SHAKEDOWN.NODEAL:
+                    retCode = startShakedownFight();
+                    if (retCode == FIGHTERCONSTANTS.SHAKEDOWN.NOSTAMINA) {
+                        return retCode;
+                    }
+                    break;
+                case FIGHTERCONSTANTS.SHAKEDOWN.SUCCESSFUL:
+                    retCode = FIGHTERCONSTANTS.SHAKEDOWN.COLLECT;
+                    collectShakedown();
+                    break;
+            }
         }
+        while (status != FIGHTERCONSTANTS.SHAKEDOWN.FINISHED);
     }
     else {
         logV2(WARNING, "SHAKEDOWN", "Start Downtown Shakedown");
     }
+    logV2(INFO, "SHAKEDOWN", "doDowntownShakedown retCode:" + retCode);
 }
 
 function startShakedown(){
@@ -1745,16 +1755,16 @@ function checkStatusShakedown(){
         txt = txt.toUpperCase();
         if (txt.startsWith("CHOOSE A BUSINESS")){
             status = FIGHTERCONSTANTS.SHAKEDOWN.CHOOSE_BUSINESS;
-            alert("Choose Business");
+            //alert("Choose Business");
         }
         else if (txt.startsWith("NO DEAL")){
             status = FIGHTERCONSTANTS.SHAKEDOWN.NODEAL;
-            alert("NO Deal");
+            //alert("NO Deal");
         }
         else if (txt.startsWith("SUCCESSFUL")){
             status = FIGHTERCONSTANTS.SHAKEDOWN.SUCCESSFUL;
             logV2(INFO, "SHAKEDOWN", "Successfull Takedown. Collect");
-            alert("SUCCESSFUL Takedown");
+            //alert("SUCCESSFUL Takedown");
         }
 
     }
@@ -1764,38 +1774,59 @@ function checkStatusShakedown(){
     return status;
 }
 
+function collectShakedown(){
+    var retCode = playMacro(FIGHT_FOLDER, "108_Shakedown_CollectStatus.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS){
+        logV2(INFO, "SHAKEDOWN", "Collect (Energy / Stamina");
+        logV2(INFO, "SHAKEDOWN", "Type: " + getLastExtract(1, "Type", "Energy"));
+    }
+    else {
+        logV2(INFO, "SHAKEDOWN", "Collect (No Energy / Stamina");
+    }
+    playMacro(FIGHT_FOLDER, "109_Shakedown_Collect.iim", MACRO_INFO_LOGGING);
+}
+
 function chooseBusiness(){
+    logV2(INFO, "SHAKEDOWN", "Choose Business");
     var number = randomNumber(1, 3);
-    var paramsArray = [];
-    paramsArray.push(getParamObj("ID", number.toString()));
-    var retCode = initAndCheckScriptParameters(FIGHT_FOLDER, "103_Shakedown_Choose.iim", paramsArray, "104_Shakedown_Choose_Test.iim", null, "POWER ATTACK", "CHOOSE_BUS", "init Choose Business");
+    logV2(INFO, "SHAKEDOWN", "Business choosen: " + number);
+    //var paramsArray = [];
+    //paramsArray.push(getParamObj("ID", number.toString()));
+//    var retCode = initAndCheckScriptParameters(FIGHT_FOLDER, "103_Shakedown_Choose.iim", paramsArray, "104_Shakedown_Choose_Test.iim", null, "POWER ATTACK", "CHOOSE_BUS", "init Choose Business");
+    addMacroSetting("ID", number.toString());
+    retCode = playMacro(FIGHT_FOLDER, "103_Shakedown_Choose.iim", MACRO_INFO_LOGGING);
     if (retCode != SUCCESS){
         logV2(WARNING, "SHAKEDOWN", "Problem choosing business");
     }
+    logV2(INFO, "SHAKEDOWN", "Choose Business - retCode: " + retCode);
     return retCode;
 }
 
 function startShakedownFight(){
-    logV2(INFO, "SHAKEDOWN", "Start");
+    logV2(INFO, "SHAKEDOWN", "Start Fight");
     var staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, STOP_SCRIPT);
     var retCode = -1;
     var victimHealth =  0;
     do {
         if (staminaObj.leftOver >= 5) {
             var healthObj = getHealthObj();
-            if (healthObj <= configMRObj.fight.heal) {
+            if (healthObj.leftOver <= configMRObj.fight.heal) {
                 healInShakedown();
             }
             playMacro(FIGHT_FOLDER, "106_Shakedown_Attack.iim", MACRO_INFO_LOGGING);
             var victimHealth = getVictimHealth(null, null);
             if (victimHealth == 0){
                 logV2(INFO, "SHAKEDOWN", "Opponent is iced");
+                retCode = playMacro(FIGHT_FOLDER, "107_Shakedown_Continue.iim", MACRO_INFO_LOGGING);
+                if (retCode != SUCCESS){
+                  logV2(WARNING, "SHAKEDOWN", "Problem with Continue");
+                }
                 retCode = SUCCESS;
             }
         }
         else {
             logV2(INFO, "SHAKEDOWN", "Not Enough stamina");
-            retCode = -1;
+            retCode =  FIGHTERCONSTANTS.SHAKEDOWN.NOSTAMINA;
             break;
         }
     }
@@ -1805,18 +1836,21 @@ function startShakedownFight(){
 }
 
 function healInShakedown(){
+    logV2(INFO, "SHAKEDOWN", "Heal in Shakedown");
     var health = 0;
     var tries = 1;
+    var retCode = SUCCESS;
     do {
         logV2(INFO, "SHAKEDOWN", "Healing " + tries + " time(s)");
         tries++;
-        playMacro(FIGHT_FOLDER, "105_Shakedown_Heal.iim", MACRO_INFO_LOGGING);
+        retCode = playMacro(FIGHT_FOLDER, "105_Shakedown_Heal.iim", MACRO_INFO_LOGGING);
+        if (retCode != SUCCESS){
+            // no heal button
+            return -1;
+        }
         var healthObj = getHealthObj();
         health = healthObj.leftOver;
     }
     while (health < configMRObj.fight.heal);
-}
-
-function getShakedownVictimHealth(){
-
+    return retCode;
 }
