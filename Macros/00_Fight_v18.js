@@ -1729,6 +1729,9 @@ function doDowntownShakedown(){
                     retCode = FIGHTERCONSTANTS.SHAKEDOWN.COLLECT;
                     collectShakedown();
                     break;
+                case FIGHTERCONSTANTS.SHAKEDOWN.FINISHED:
+                    retCode = FIGHTERCONSTANTS.SHAKEDOWN.FINISHED;
+                    break;
             }
         }
         while (status != FIGHTERCONSTANTS.SHAKEDOWN.FINISHED);
@@ -1765,6 +1768,11 @@ function checkStatusShakedown(){
             status = FIGHTERCONSTANTS.SHAKEDOWN.SUCCESSFUL;
             logV2(INFO, "SHAKEDOWN", "Successfull Takedown. Collect");
             //alert("SUCCESSFUL Takedown");
+        }
+        else if (txt.startsWith("THERE ARE COPS")){
+            status = FIGHTERCONSTANTS.SHAKEDOWN.FINISHED;
+            logV2(INFO, "SHAKEDOWN", "There Are Cops Patrolling (maxed)");
+            closePopup();
         }
 
     }
@@ -1804,15 +1812,15 @@ function chooseBusiness(){
 
 function startShakedownFight(){
     logV2(INFO, "SHAKEDOWN", "Start Fight");
-    var staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, STOP_SCRIPT);
+    var staminaObj = null;
     var retCode = -1;
+    var firstHeal = true;
     var victimHealth =  0;
     do {
+        staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, STOP_SCRIPT);
         if (staminaObj.leftOver >= 5) {
-            var healthObj = getHealthObj();
-            if (healthObj.leftOver <= configMRObj.fight.heal) {
-                healInShakedown();
-            }
+            healInShakedown(firstHeal);
+            firstHeal = false;
             playMacro(FIGHT_FOLDER, "106_Shakedown_Attack.iim", MACRO_INFO_LOGGING);
             var victimHealth = getVictimHealth(null, null);
             if (victimHealth == 0){
@@ -1835,22 +1843,27 @@ function startShakedownFight(){
     return retCode;
 }
 
-function healInShakedown(){
-    logV2(INFO, "SHAKEDOWN", "Heal in Shakedown");
-    var health = 0;
-    var tries = 1;
+function healInShakedown(firstHeal){
+    var healthObj = getHealthObj();
     var retCode = SUCCESS;
-    do {
-        logV2(INFO, "SHAKEDOWN", "Healing " + tries + " time(s)");
-        tries++;
-        retCode = playMacro(FIGHT_FOLDER, "105_Shakedown_Heal.iim", MACRO_INFO_LOGGING);
-        if (retCode != SUCCESS){
-            // no heal button
-            return -1;
+    if (healthObj.leftOver <= configMRObj.fight.heal) {
+        logV2(INFO, "SHAKEDOWN", "Heal in Shakedown");
+        if (!firstHeal && healthObj.leftOver == 0){
+            // killed by somebody
+            waitV2("30");
         }
-        var healthObj = getHealthObj();
-        health = healthObj.leftOver;
+        var tries = 1;
+        do {
+            logV2(INFO, "SHAKEDOWN", "Healing " + tries + " time(s)");
+            tries++;
+            retCode = playMacro(FIGHT_FOLDER, "105_Shakedown_Heal.iim", MACRO_INFO_LOGGING);
+            if (retCode != SUCCESS) {
+                // no heal button
+                return -1;
+            }
+            var healthObj = getHealthObj();
+        }
+        while (healthObj.leftOver  < configMRObj.fight.heal);
     }
-    while (health < configMRObj.fight.heal);
     return retCode;
 }
