@@ -28,7 +28,6 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
 //startScript();
-//doDowntownShakedown();
 doDowntownShakedown();
 
 //test();
@@ -1848,12 +1847,14 @@ function healInShakedown(firstHeal){
     var retCode = SUCCESS;
     if (healthObj.leftOver <= configMRObj.fight.heal) {
         logV2(INFO, "SHAKEDOWN", "Heal in Shakedown");
-        if (!firstHeal && healthObj.leftOver == 0){
-            // killed by somebody
-            waitV2("30");
-        }
         var tries = 1;
         do {
+            logV2(INFO, "SHAKEDOWN", "Health: " + healthObj.leftOver);
+            if (!firstHeal && healthObj.leftOver == 0){
+                // killed by somebody
+                logV2(INFO, "SHAKEDOWN", "Killed By someebody");
+                waitV2("30");
+            }
             logV2(INFO, "SHAKEDOWN", "Healing " + tries + " time(s)");
             tries++;
             retCode = playMacro(FIGHT_FOLDER, "105_Shakedown_Heal.iim", MACRO_INFO_LOGGING);
