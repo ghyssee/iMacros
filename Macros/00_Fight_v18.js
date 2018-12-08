@@ -27,8 +27,8 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "skippedHealth": 0, "maxHealed": 0, "heals": 0, "stopOnLevelUp": false, "expReached": false,
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
-//startScript();
-doDowntownShakedown();
+startScript();
+//doDowntownShakedown();
 
 //test();
 //CheckHomefeedWhileWaiting();
@@ -930,6 +930,7 @@ function attackTillDeath(fighter, fighterType){
                                 if (fighterType != FIGHTERCONSTANTS.FIGHTERTPE.RIVAL && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY){
                                     // get stamina cost
                                     staminaCost = getStaminaCost();
+                                    fighter.staminaCost = staminaCost;
                                     if (isStaminaCostTooHigh(health, staminaCost)){
                                         logV2(INFO, "ATTACK", "Stamina Cost too high. Skipping Player");
                                         statusObj.status = FIGHTERCONSTANTS.ATTACKSTATUS.STAMINACOSTHIGH;
@@ -1771,6 +1772,11 @@ function checkStatusShakedown(){
         else if (txt.startsWith("THERE ARE COPS")){
             status = FIGHTERCONSTANTS.SHAKEDOWN.FINISHED;
             logV2(INFO, "SHAKEDOWN", "There Are Cops Patrolling (maxed)");
+            closePopup();
+        }
+        else if (txt.startsWith("EVENT COMPLETE")){
+            status = FIGHTERCONSTANTS.SHAKEDOWN.FINISHED;
+            logV2(INFO, "SHAKEDOWN", "Completed");
             closePopup();
         }
 

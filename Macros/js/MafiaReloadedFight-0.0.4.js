@@ -426,7 +426,7 @@ function updateFighterInfo(fighterToUpdate, fighter){
 function getFighterObject(id, name, level){
     return {"id":id, "name":name, "level": level, "skip": false,
         "gangId": null, "gangName": null, "bigHealth": false, "lastAttacked": null, "lastIced": null, "lastChecked": null,
-        "iced": 0, "alive": 0, "dead": 0, "homefeed": null
+        "iced": 0, "alive": 0, "dead": 0, "homefeed": null, "staminaCost": null
     };
 }
 
