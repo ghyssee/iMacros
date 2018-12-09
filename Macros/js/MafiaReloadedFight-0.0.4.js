@@ -74,7 +74,8 @@ function extractFighterName(text){
     //var regExp = /id=([0-9]{1,30})"/;
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
-        return unescape(matches[matches.length-1]);
+        var name = unescape(matches[matches.length-1]);
+        return name.trim();
     }
     return unescape(text);
 }
@@ -83,7 +84,8 @@ function extractProfileFighterName(text){
     var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">(?:[^<]*)<\/a>(.*)</h2>";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
-        return unescape(matches[matches.length-1]);
+        var name = unescape(matches[matches.length-1]);
+        return name.trim();
     }
     return unescape(text);
 }
@@ -110,7 +112,8 @@ function extractGangNameFromString(text){
     var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
-        return unescape(matches[matches.length-1]);
+        var name = unescape(matches[matches.length-1]);
+        return name.trim();
     }
     return unescape(text);
 }
