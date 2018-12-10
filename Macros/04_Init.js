@@ -6,6 +6,7 @@ eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
+eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 var localConfigObject = null;
 LOG_FILE = new LogFile(LOG_DIR, "MRInit");
@@ -13,6 +14,7 @@ LOG_FILE = new LogFile(LOG_DIR, "MRInit");
 init();
 
 
+/*
 setProfile();
 setNode();
 setAssassinProfile();
@@ -21,6 +23,61 @@ checkMRProperties(MR.MR_CONFIG_FILE);
 checkMRProperties(MR.MR_TEMP_SETTINGS_FILE);
 checkMRProperties(MR.MR_ASSASSIN_FILE);
 checkKills(MR.MR_KILLS_FILE);
+*/
+checkFightersFile("02");
+checkFightersFile("03");
+
+function checkFightersFile(profile){
+    var file = getMRFileById(MR.MR_FIGHTERS_FILE, profile);
+    var fighterObj = initObject(file);
+    fighterObj.fighters.forEach( function (fighter)
+    {
+        if (fighter.name.startsWith("<h2 style")){
+            logV2(INFO, "INIT", "Test: " + fighter.id);
+            var name = extractFighterNameV1(fighter.name);
+            if (name != null) {
+                logV2(INFO, "INIT", "New Fighter name V1: " + name);
+                fighter.name = name;
+                return;
+            }
+            name = extractFighterNameV2(fighter.name);
+            if (name != null) {
+                logV2(INFO, "INIT", "New Fighter name V2: " + name);
+                fighter.name = name;
+                return;
+            }
+        }
+    });
+    writeObject(fighterObj, file);
+
+}
+
+function unescape(text){
+    return _.unescape(text);
+}
+
+function extractFighterNameV2(text){
+    var regExp = "class=\"ellipsis\" ?>(.*)</h2>";
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        logV2(INFO, "INIT", "matches.length: " + matches.length);
+        var name = unescape(matches[matches.length-1]);
+        return name.trim();
+    }
+    return null;
+}
+
+function extractFighterNameV1(text){
+    var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">(?:[^<]*)<\/a>(.*)</h2>";
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        var name = unescape(matches[matches.length-1]);
+        return name.trim();
+    }
+    return null;
+}
+
+
 
 function checkKills(configFileCode){
     var initFile = new ConfigFile(MR_DIR + 'INIT\\', configFileCode);
