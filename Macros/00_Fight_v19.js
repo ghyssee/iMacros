@@ -6,7 +6,7 @@ eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 // 182-11 = 171
@@ -19,6 +19,7 @@ init();
 var fightersToExclude = initMRObject(MR.MR_FIGHTERS_EXCLUDE_FILE);
 var friendObj = initMRObject(MR.MR_FRIENDS_FILE);
 var fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
+var fighterArrayObj = {};
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var settingsObj = initObject(getMRRootFile(MR.MR_SETTINGS_FILE));
 var profileObj = initObject(MR_PROFILE_FILE);
@@ -27,7 +28,12 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "skippedHealth": 0, "maxHealed": 0, "heals": 0, "stopOnLevelUp": false, "expReached": false,
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
-startScript();
+createFightersIndexedArray();
+if (propertyExistAndNotNull(fighterArrayObj, "1075022339259972")){
+    var foundObj = fighterArrayObj["1075022339259972"];
+    alert("OK3:" + JSON.stringify(foundObj));
+}
+//startScript();
 //doDowntownShakedown();
 
 //test();
@@ -77,6 +83,13 @@ function testIces(){
     logObj(INFO, "TST", fighter);
     updateIces(fighter);
     writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+}
+
+function createFightersIndexedArray(){
+    fighterObj.fighters.forEach( function (fighter)
+        {
+            fighterArrayObj[fighter.id] = fighter;
+        });
 }
 
 function startScript(){
@@ -1109,19 +1122,34 @@ function isAlreadyKilledToday(player){
                 killedToday = true;
             }
         }
-        else if (propertyExistAndNotNull(player, "lastAttacked")){
-            var currDate = new Date();
-            currDate = dateAdd(currDate, -5, 'minutes');
-            var formattedDate = formatDateToYYYYMMDDHHMISS(currDate);
-//        logV2(INFO, "CHECK", "formatttedDate: " + formattedDate);
-//        logV2(INFO, "CHECK", "player.lastAttacked: " + player.lastAttacked);
-            if (formattedDate < player.lastAttacked){
-                logV2(INFO, "CHECK", "Player recently attacked: " + formattedDate + "/" + player.lastAttacked);
-                killedToday = true;
+        else if (isRecentlyAttacked(player)){
+            logV2(INFO, "CHECK", "Player recently attacked: " + formattedDate + "/" + player.lastAttacked);
+            killedToday = true;
+        }
+        else if (propertyExistAndNotNull(fighterArrayObj, player.id)){
+            var foundObj = fighterArrayObj[player.id];
+            killedToday = isRecentlyAttacked(foundObj);
+            if (killedToday){
+                logV2(INFO, "CHECK", "Player recently attacked (idx) : " + formattedDate + "/" + foundObj.lastAttacked);
             }
         }
     }
     return killedToday;
+}
+
+function isRecentlyAttacked(player){
+    var recentlyAttacked = false;
+    if (propertyExistAndNotNull(player, "lastAttacked")) {
+        var currDate = new Date();
+        currDate = dateAdd(currDate, -5, 'minutes');
+        var formattedDate = formatDateToYYYYMMDDHHMISS(currDate);
+        if (formattedDate < player.lastAttacked) {
+            logV2(INFO, "CHECK", "Player recently attacked (idx) : " + formattedDate + "/" + player.lastAttacked);
+            recentlyAttacked = true;
+        }
+    }
+    return recentlyAttacked;
+
 }
 
 function filterFightList(fightList){

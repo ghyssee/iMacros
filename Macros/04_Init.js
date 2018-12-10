@@ -5,14 +5,14 @@ eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
 
 var localConfigObject = null;
 LOG_FILE = new LogFile(LOG_DIR, "MRInit");
 
 init();
 
-/*
+
 setProfile();
 setNode();
 setAssassinProfile();
@@ -20,7 +20,6 @@ setAssassinAutoHeal();
 checkMRProperties(MR.MR_CONFIG_FILE);
 checkMRProperties(MR.MR_TEMP_SETTINGS_FILE);
 checkMRProperties(MR.MR_ASSASSIN_FILE);
-*/
 checkKills(MR.MR_KILLS_FILE);
 
 function checkKills(configFileCode){
