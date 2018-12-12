@@ -753,9 +753,10 @@ function addKill(msg, fighter, profileObj){
 function checkIfIced(fighter, profileObj){
     iced = false;
     var retCode = playMacro(FIGHT_FOLDER, "31_Attack_Status.iim", MACRO_INFO_LOGGING);
+    var msg = null;
     if (retCode == SUCCESS){
         var originalMsg = getLastExtract(1, "Ice Status", "BlaBlaBla just Killed blabla. Your Kill Count is now 777");
-        var msg = originalMsg.toUpperCase();
+        msg = originalMsg.toUpperCase();
         logV2(INFO, "FIGHT", "Check For Iced: " + msg);
         if (msg.indexOf("YOUR KILL COUNT") !== -1){
             iced = true;
@@ -771,10 +772,23 @@ function checkIfIced(fighter, profileObj){
         logV2(INFO, "FIGHT", "Total Ices: " + ++globalSettings.iced);
         if (fighter != null) {
             addKill(originalMsg, fighter, profileObj);
+            fighter.gangPoints = getGangPoints(msg);
             updateIces(fighter);
         }
     }
     return iced;
+}
+
+
+function getGangPoints(text){
+    var regExp = "YOU EARNED ([0-9]{0,5}) GANG POINT";
+    var matches = text.match(regExp);
+    var gangPoints = 0;
+    if (matches != null && matches.length > 0){
+        gangPoints = parseInt(matches[matches.length-1]);
+        logV2(INFO, "FIGHT", "Gang Points: " + gangPoints);
+    }
+    return gangPoints;
 }
 
 function getStaminaCost(){

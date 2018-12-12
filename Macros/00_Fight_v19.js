@@ -29,14 +29,9 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
 createFightersIndexedArray();
-if (propertyExistAndNotNull(fighterArrayObj, "1075022339259972")){
-    var foundObj = fighterArrayObj["1075022339259972"];
-    alert("OK3:" + JSON.stringify(foundObj));
-}
-//startScript();
+startScript();
 //doDowntownShakedown();
 
-//test();
 //CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 
@@ -1123,14 +1118,14 @@ function isAlreadyKilledToday(player){
             }
         }
         else if (isRecentlyAttacked(player)){
-            logV2(INFO, "CHECK", "Player recently attacked: " + formattedDate + "/" + player.lastAttacked);
+            logV2(INFO, "CHECK", "Player recently attacked: " + player.lastAttacked);
             killedToday = true;
         }
         else if (propertyExistAndNotNull(fighterArrayObj, player.id)){
             var foundObj = fighterArrayObj[player.id];
             killedToday = isRecentlyAttacked(foundObj);
             if (killedToday){
-                logV2(INFO, "CHECK", "Player recently attacked (idx) : " + formattedDate + "/" + foundObj.lastAttacked);
+                logV2(INFO, "CHECK", "Player recently attacked (idx) : " + foundObj.lastAttacked);
             }
         }
     }
@@ -1144,7 +1139,6 @@ function isRecentlyAttacked(player){
         currDate = dateAdd(currDate, -5, 'minutes');
         var formattedDate = formatDateToYYYYMMDDHHMISS(currDate);
         if (formattedDate < player.lastAttacked) {
-            logV2(INFO, "CHECK", "Player recently attacked (idx) : " + formattedDate + "/" + player.lastAttacked);
             recentlyAttacked = true;
         }
     }
