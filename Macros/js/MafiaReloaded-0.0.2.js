@@ -43,6 +43,7 @@ var MR = Object.freeze({
     "MR_HOMEFEED_FILE": "Homefeed.json",
     "MR_ASSASSIN_FILE": "Assassin-a-Nator.json",
     "MR_TEMP_SETTINGS_FILE" : "TempSettings.json",
+    "MR_FIGHTLIST_FILE" : "Fightlist.json",
     "MR_KILLS_FILE": "Kills.json"
     }
 );

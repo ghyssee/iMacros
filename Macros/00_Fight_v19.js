@@ -489,25 +489,51 @@ function attackRivals(){
     return status;
 }
 
-function attackFightList2(){
+function startFightList(){
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-    status = startProfileAttack();
-    logV2(INFO, "FIGHT", "Status: " + status);
+    if (configMRObj.fight.fightList) {
+        logV2(INFO, "FIGHT", "Start Fightlist...");
+        var fighters = getFightList();
+        status = attackFightList(fighters, true);
+    }
     return status;
 }
 
-function attackFightList(){
+function startFightList2(){
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-    var fighters = getFightList();
-    if (configMRObj.fight.fightList) {
-        var filteredFightersList = filterFightList(fighters);
-        var minFightList = configMRObj.fight.minLengthOfFightList == null ? 2 : configMRObj.fight.minLengthOfFightList;
-        logV2(INFO, "FIGHT", "Min Fighters on Fight List: " + minFightList);
-        if (filteredFightersList.length >= minFightList) {
-            logV2(INFO, "FIGHT", "Normal Fighters - Profile Attack");
-            status = startNormalAttack(filteredFightersList);
+    if (configMRObj.fight.fightList2) {
+        logV2(INFO, "FIGHT", "Start Fightlist2...");
+        var fightListObj = initMRObject(MR.MR_FIGHTLIST_FILE);
+        if (fightListObj != null && fightListObj.list != null)
+        {
+            logV2(INFO, "FIGHT", "Checking fightlist code...");
+            if (configMRObj.fight.fightlistCode != fightListObj.lastDate) {
+                logV2(INFO, "FIGHT", "Starting Fightlist2");
+                status = attackFightList(fightListObj.list, false);
+                // reload to get latest config settings
+                configMRObj = initMRObject(MR.MR_CONFIG_FILE);
+                configMRObj.fight.fightlistCode = fightListObj.lastDate;
+                writeMRObject(configMRObj, MR.MR_CONFIG_FILE);
+            }
+            else {
+                logV2(INFO, "FIGHT", "Fightlist2: " + fightListObj.lastDate + " already executed");
+            }
         }
-        else {
+    }
+    return status;
+}
+
+function attackFightList(fighters, profileAttack){
+    var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
+    var filteredFightersList = filterFightList(fighters);
+    var minFightList = configMRObj.fight.minLengthOfFightList == null ? 2 : configMRObj.fight.minLengthOfFightList;
+    logV2(INFO, "FIGHT", "Min Fighters on Fight List: " + minFightList);
+    if (filteredFightersList.length >= minFightList) {
+        logV2(INFO, "FIGHT", "Normal Fighters - Profile Attack");
+        status = startNormalAttack(filteredFightersList);
+    }
+    else {
+        if (profileAttack) {
             status = homeFeedAttack();
             if (continueFighting(status)) {
                 status = startProfileAttack();
@@ -529,15 +555,13 @@ function fight(){
         configMRObj = initMRObject(MR.MR_CONFIG_FILE);
         status = attackRivals();
         if (continueFighting(status)) {
-            status = attackFightList();
-            if (!continueFighting(status)){
-                logV2(INFO, "FIGHT", "Exit Fight V2...");
-                exitLoop = true;
-                break;
-            }
+            status = startFightList2();
         }
-        else {
-            logV2(INFO, "FIGHT", "Exit Fight V3...");
+        if (continueFighting(status)) {
+            status = startFightList();
+        }
+        if (!continueFighting(status)){
+            logV2(INFO, "FIGHT", "Exit Fight...");
             exitLoop = true;
             break;
         }
