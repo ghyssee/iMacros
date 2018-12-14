@@ -23,9 +23,9 @@ var settingsObj = initObject(getMRRootFile(MR.MR_SETTINGS_FILE));
 var profileObj = initObject(MR_PROFILE_FILE);
 
 var globalSettings = {"profile": getProfileObject((getProfile()))};
-createFightersIndexedArray();
-//startScript();
-startFightList();
+//createFightersIndexedArray();
+startScript();
+//startFightList();
 
 function createFightersIndexedArray(){
     fighterObj.fighters.forEach( function (fighter)
@@ -58,57 +58,62 @@ function startScript(){
     }
 }
 
+
+function goToFightPage(){
+    var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
+    return retCode;
+}
+
 function startFightList(){
-    var fightListObj = {"list": null, "lastDate": null};
-    //fightListObj.list = getFightList();
-    var fileObj = getMRFileById(MR.MR_FIGHTLIST_FILE, "01");
-    fightListObj.lastDate = getDateYYYYMMDDHHMISS();
-    writeObject(fightListObj, fileObj);
+    var retCode = goToFightPage();
+    if (retCode == SUCCESS) {
+        var fightListObj = {"list": null, "lastDate": null};
+        var fileObj = getMRFileById(MR.MR_FIGHTLIST_FILE, "01");
+        fightListObj.lastDate = getDateYYYYMMDDHHMISS();
+        //fightListObj.list = getFightList();
+        writeObject(fightListObj, fileObj);
+    }
+    else {
+        logV2(WARNING, "FIGHTLIST", "Problem going to fightpage");
+    }
 }
 
 
 function getFightList(){
     logV2(INFO, "FIGHTLIST", "Getting Fight List Info");
     var list = [];
-    var retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
-    logV2(INFO, "FIGHTLIST", "Extract_Start Return Code: " + retCode);
-    if (retCode == SUCCESS){
-        for (var i=1; i<= configMRObj.fight.listLength; i++){
-            addMacroSetting("pos", i.toString(), ENABLE_LOGGING);
-            var retCode = playMacro(FIGHT_FOLDER, "21_ExtractV2.iim", MACRO_INFO_LOGGING);
-            if (retCode == SUCCESS){
-                var txt = getLastExtract(1, "Fight Line", "Fight Line");
-                var id = extractFighterId(txt);
-                if (id == null){
-                    // if setting rival mobster is disabled, than fighterId is empty and line must be skipped
-                    continue;
-                }
-                var name = extractFighterName(txt).substring(0,100);
-                var level = extractLevelFromString(txt);
-                var object = getFighterObject(id, name, level);
-                // MOD 15/11
-                var gangObj = extractGangInformation(txt);
-                object.gangId = gangObj.id;
-                object.gangName = gangObj.name;
-                object.lastChecked = formatDateToYYYYMMDDHHMISS();
-                /*
-                if (isAllyGang(friendObj.gangs, object.gangId)) {
-                    logV2(INFO, "FIGHT", "Prefiltered: Is Ally Gang");
-                    logObj(INFO, "FIGHT", object);
-                }*/
-                //else {
-                    list.push(object);
-                //}
+    for (var i=1; i<= configMRObj.fight.listLength; i++){
+        addMacroSetting("pos", i.toString(), ENABLE_LOGGING);
+        var retCode = playMacro(FIGHT_FOLDER, "21_ExtractV2.iim", MACRO_INFO_LOGGING);
+        if (retCode == SUCCESS){
+            var txt = getLastExtract(1, "Fight Line", "Fight Line");
+            var id = extractFighterId(txt);
+            if (id == null){
+                // if setting rival mobster is disabled, than fighterId is empty and line must be skipped
+                continue;
             }
-            else {
-                // ignore this line on the fight list
-                logV2(INFO, "FIGHTLIST", "Last Line reached: " + i);
-                break;
-            }
+            var name = extractFighterName(txt).substring(0,100);
+            var level = extractLevelFromString(txt);
+            var object = getFighterObject(id, name, level);
+            // MOD 15/11
+            var gangObj = extractGangInformation(txt);
+            object.gangId = gangObj.id;
+            object.gangName = gangObj.name;
+            object.lastChecked = formatDateToYYYYMMDDHHMISS();
+            /*
+            if (isAllyGang(friendObj.gangs, object.gangId)) {
+                logV2(INFO, "FIGHT", "Prefiltered: Is Ally Gang");
+                logObj(INFO, "FIGHT", object);
+            }*/
+            //else {
+                list.push(object);
+            //}
         }
-    }
-    else {
-        logV2(WARNING, "FIGHTLIST", "Problem With Starting Fight List. Retcode= " + retCode);
+        else {
+            // ignore this line on the fight list
+            logV2(INFO, "FIGHTLIST", "Last Line reached: " + i);
+            break;
+        }
     }
     return list;
 }

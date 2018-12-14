@@ -499,6 +499,34 @@ function startFightList(){
     return status;
 }
 
+function removeFriendsAndAllies(fightlist){
+    fightList.forEach( function (fighter)
+    {
+        var foundFighter = getFighter(fighterObj.fighters, fighter.id);
+        if (foundFighter != null) {
+            if (isAlreadyKilledToday(foundFighter)){
+                return;
+            }
+        }
+        if (findFighter(fightersToExclude.fighters, fighter.id)){
+            logV2(INFO, "FIGHTLIST", "Excluded Fighter Found: " + fighter.id);
+        }
+        else if (findFighter(friendObj.fighters, fighter.id)) {
+            logV2(INFO, "FIGHTLIST", "Friend Found: " + fighter.id);
+        }
+        else if (fighter.level > maxLevel) {
+            logV2(INFO, "FIGHTLIST", "High Level: " + fighter.id + " / Level: " + fighter.level);
+        }
+        else if (isAllyGang(friendObj.gangs, fighter.gangId)){
+            logV2(INFO, "FIGHTLIST", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
+        }
+        else {
+            filteredList.push(fighter);
+        }
+    });
+
+}
+
 function startFightList2(){
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
     if (configMRObj.fight.fightList2) {
@@ -508,8 +536,9 @@ function startFightList2(){
         {
             logV2(INFO, "FIGHT", "Checking fightlist code...");
             if (configMRObj.fight.fightlistCode != fightListObj.lastDate) {
-                logV2(INFO, "FIGHT", "Starting Fightlist2");
-                status = attackFightList(fightListObj.list, false);
+                logV2(INFO, "FIGHT", "FightlistCode different. Starting Fightlist2");
+                var filteredFightersList = filterFightList(fightListObj.list);
+                status = attackFightList(filteredFightersList, false);
                 // reload to get latest config settings
                 configMRObj = initMRObject(MR.MR_CONFIG_FILE);
                 configMRObj.fight.fightlistCode = fightListObj.lastDate;
@@ -538,9 +567,10 @@ function attackFightList(fighters, profileAttack){
             if (continueFighting(status)) {
                 status = startProfileAttack();
             }
+            /*
             if (continueFighting(status)) {
                 status = startProfileAttackRecentlyIced();
-            }
+            }*/
         }
     }
     logV2(INFO, "FIGHT", "Status: " + status);
@@ -1420,23 +1450,6 @@ function startProfileAttackRecentlyIced(){
     });
     status = profileAttack(filteredArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE);
     return status;
-}
-
-function extractPlayerName(text){
-    var regExp = "</a>(.*)</h2>";
-    var name = text;
-    var matches = text.match(regExp);
-    if (matches != null && matches.length > 0){
-        name = matches[matches.length-1];
-    }
-    else {
-        // <h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\">Jocelyn brown</h2>"
-        regExp = "h2 style=(?:.*)>(.*)</h2>";
-        matches = text.match(regExp);
-        if (matches != null && matches.length > 0){
-            name = matches[matches.length-1];
-        }    }
-    return name.trim();
 }
 
 function checkForPlayerinfoToUpdate(fighter){
