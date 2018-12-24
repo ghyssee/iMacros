@@ -7,6 +7,7 @@ eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
 eval(readScript(MACROS_PATH + "\\js\\MRJobSelect.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
+eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 //xxx : 180-9 = 171
 
@@ -91,6 +92,7 @@ function start() {
             logV2(INFO, "JOB", "DummyBanking");
             dummyBank();
             checkIfLevelUp();
+            checkOptimization(newJobs);
             if (configMRObj.crimeEvent.enabled){
                 startCrimeEvent();
                 clearDistrict();
@@ -141,7 +143,7 @@ function getListOfEnabledJobs(listOfJobs) {
 }
 
 function initJob(){
-    var retCode = initAndCheckScript(FIGHT_FOLDER, "01_Job_Init.iim", "08_Job_Init_Test.iim", "downtown", "INITJOB", "Init Job");
+    var retCode = initAndCheckScript(JOB_FOLDER, "01_Job_Init.iim", "08_Job_Init_Test.iim", "downtown", "INITJOB", "Init Job");
     return retCode;
 }
 
@@ -665,7 +667,7 @@ function logJob(jobItem){
 
 function executeJob(jobItem){
     var success = false;
-    if (performJob(jobItem.job.id, jobItem.district.event, jobItem.job.chapter) !== SUCCESS) {
+    if (performJob(jobItem) !== SUCCESS) {
         logV2(INFO, "JOB", "Problem Executing Job");
         logV2(INFO, "JOB", "District: " + jobItem.district);
         if (jobItem.job.chapter != null) {
@@ -691,14 +693,30 @@ function executeJob(jobItem){
     return success;
 }
 
-function performJob(jobId, districtEvent, chapter) {
-    addMacroSetting("ID", jobId);
+function performJob(jobItem) {
+    if (checkForExperienceLimit()){
+        var exp = getExperience();
+        logObj(INFO, "JOBEXP", "Check for experience limit...");
+        if (exp == 0){
+            logV2(WARNING, "JOBEXP", "Problem getting experience");
+        }
+        else {
+            logObj(INFO, "JOBEXP", jobItem);
+            var expLeft = exp - jobItem.job.exp;
+            logV2(INFO, "JOBEXP", "Experience Left after job is executed: " + expLeft);
+            if (expLeft <= configMRObj.global.stopWhenExpBelow){
+                logV2(WARNING, "JOBEXP", "Experience limit reached: " + expLeft + " (calc)/" + configMRObj.global.stopWhenExpBelow);
+                throw new UserCancelError("Experience Limit Reached");
+            }
+        }
+    }
+    addMacroSetting("ID", jobItem.job.id);
     var retCode = 0;
-    if (districtEvent) {
+    if (jobItem.district.event) {
         retCode = playMacro(JOB_FOLDER, "07_Job_StartEvent.iim", MACRO_INFO_LOGGING);
     }
     else {
-        addMacroSetting("CHAPTER", chapter);
+        addMacroSetting("CHAPTER", jobItem.job.chapter);
         retCode = playMacro(JOB_FOLDER, "04_Job_Start.iim", MACRO_INFO_LOGGING);
     }
     if (retCode === SUCCESS){
@@ -1886,7 +1904,7 @@ function checkExpLevelUpJob(jobItem){
 
 function performSingleJob(jobItem){
     logV2(INFO, "COLLECT", "Perform Single Job" + NEWLINE);
-    var retCode = performJob(jobItem.job.id, jobItem.district.event, jobItem.job.chapter);
+    var retCode = performJob(jobItem);
     var status = CONSTANTS.STATUS.OK;
     if (retCode != SUCCESS){
         logV2(INFO, "COLLECT", "Job NOT Executed");

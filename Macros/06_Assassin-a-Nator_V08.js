@@ -2,11 +2,12 @@ var ONEDRIVEPATH = getOneDrivePath();
 var MACROS_PATH = getMacrosPath();
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.3.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 var localConfigObject = null;
 var globalSettings = {"kills": 0, "heals": 0, "autoHealWait": false, "expReached": false, "oldHealth": -1, "assassinProfile": null,
@@ -28,11 +29,7 @@ var profileObj = initObject(MR_PROFILE_FILE);
 
 globalSettings.assassinProfile = getAssassinProfile();
 initScript();
-//displayObj(globalSettings.assassinProfile);
 startScript();
-//if (assassinObj.gang.extract){
-//    gangExtract(assassinObj.gang.gangId);
-//}
 
 function initScript(){
     var value = getFirefoxSetting(MR_BRANCH_ASSASSIN,  MR_ASSASSIN_AUTOHEAL, DATATYPE_BOOLEAN);
@@ -523,7 +520,6 @@ function attackTillDeath(fighter){
                         }
                     }
                 }
-
             }
         }
         else {
@@ -885,10 +881,11 @@ function profileAttack(array, fighterType){
             continue;
         }
         logObj(INFO, arrayItem);
+        /*
         if (isAllyGang(friendObj.gangs, arrayItem.gangId)){
             logV2(INFO, "FIGHT", "Friendly Gang Found for fighter " + arrayItem.id + " - " + arrayItem.name);
             continue;
-        }
+        }*/
         addMacroSetting("ID", arrayItem.id);
         var retCode = playMacro(FIGHT_FOLDER, "80_Profile_Attack_Init.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {

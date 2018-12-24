@@ -232,6 +232,9 @@ function checkForAttackers(configMRObj, homefeedObj){
             else {
                 attackers[homefeedLine.fighterId] = {"name": homefeedLine.name, "count": 1};
             }
+            if (homefeedLine.fighterId == "10212700280927276"){
+                alert("Our Famous Bully Is Busy. Waiting...");
+            }
 
         }
         else {
@@ -381,6 +384,7 @@ function getHomeFeed(configMRObj, homefeedObj){
             homefeedObj.lines.push(listOfLines[i]);
         }
         writeMRObject(homefeedObj, MR.MR_HOMEFEED_FILE);
+
         do {
             retCode = playMacro(COMMON_FOLDER, "32_HomeFeedClear.iim", MACRO_INFO_LOGGING);
             if (retCode != SUCCESS) {
@@ -670,11 +674,6 @@ function performAttack(victimHealth, fighterType, fighter){
         status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
     }
     return status;
-}
-
-
-function checkForExperienceLimit(){
-    return (configMRObj.global.stopWhenExpBelow > 0);
 }
 
 function performExperienceCheck(configMRObj, globalSettings){

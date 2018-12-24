@@ -430,3 +430,7 @@ function getParamObj(id, value){
     var paramObj = {"id": id, "value": value};
     return paramObj;
 }
+
+function checkForExperienceLimit(){
+    return (configMRObj.global.stopWhenExpBelow > 0);
+}

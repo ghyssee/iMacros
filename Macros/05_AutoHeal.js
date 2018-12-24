@@ -1,12 +1,13 @@
 var ONEDRIVEPATH = getOneDrivePath();
 var MACROS_PATH = getMacrosPath();
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.2.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 var localConfigObject = null;
 setMRPath("MRAutoHeal");

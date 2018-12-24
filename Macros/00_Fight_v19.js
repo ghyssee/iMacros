@@ -73,13 +73,6 @@ function testUppdate(){
     //writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
 }
 
-function testIces(){
-    var fighter = fighterObj.fighters[0];
-    logObj(INFO, "TST", fighter);
-    updateIces(fighter);
-    writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
-}
-
 function createFightersIndexedArray(){
     fighterObj.fighters.forEach( function (fighter)
         {
@@ -497,34 +490,6 @@ function startFightList(){
         status = attackFightList(fighters, true);
     }
     return status;
-}
-
-function removeFriendsAndAllies(fightlist){
-    fightList.forEach( function (fighter)
-    {
-        var foundFighter = getFighter(fighterObj.fighters, fighter.id);
-        if (foundFighter != null) {
-            if (isAlreadyKilledToday(foundFighter)){
-                return;
-            }
-        }
-        if (findFighter(fightersToExclude.fighters, fighter.id)){
-            logV2(INFO, "FIGHTLIST", "Excluded Fighter Found: " + fighter.id);
-        }
-        else if (findFighter(friendObj.fighters, fighter.id)) {
-            logV2(INFO, "FIGHTLIST", "Friend Found: " + fighter.id);
-        }
-        else if (fighter.level > maxLevel) {
-            logV2(INFO, "FIGHTLIST", "High Level: " + fighter.id + " / Level: " + fighter.level);
-        }
-        else if (isAllyGang(friendObj.gangs, fighter.gangId)){
-            logV2(INFO, "FIGHTLIST", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
-        }
-        else {
-            filteredList.push(fighter);
-        }
-    });
-
 }
 
 function startFightList2(){
@@ -1423,6 +1388,7 @@ function startProfileAttack(){
     logV2(INFO, "FIGHT", "Random Start Position: " + start);
     logV2(INFO, "FIGHT", "Random End Position: " + max);
     var newArray = fighterObj.fighters.slice(start, max);
+    newArray = filterFightList(newArray);
     status = profileAttack(newArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE);
     return status;
 }
@@ -1510,7 +1476,7 @@ function filterProfile(array){
         var item = array[i];
         if (isAlreadyKilledToday(item)) {
         }
-        else if (item.level > 0 && item.level < configMRObj.fight.minLevel && !checkForPlayerinfoToUpdate(item)){
+        else if (item.level >= 0 && item.level < configMRObj.fight.minLevel && !checkForPlayerinfoToUpdate(item)){
             logV2(INFO, "FIGHT", "Low Level: " + item.id + "(Level: " + item.level + ")");
         }
         else {
