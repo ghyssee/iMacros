@@ -31,15 +31,16 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
 createFightersIndexedArray();
 startScript();
 //doDowntownShakedown();
-
+//test();
 //CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 
 function test(){
-    addMacroSetting("pos", "10", ENABLE_LOGGING);
+    addMacroSetting("pos", "4", ENABLE_LOGGING);
     var retCode = playMacro(FIGHT_FOLDER, "21_ExtractV2.iim", MACRO_INFO_LOGGING);
     var tmp = getLastExtract(1, "Gang", "data-params=\"controller=gang&amp;action=view&amp;id=3985490\">*TBC*</a>");
     alert(tmp);
+    /*
     var gangObj = extractGangInformation(tmp, "GANG");
     alert(JSON.stringify(gangObj));
     var level = extractLevelFromString(tmp);
@@ -48,6 +49,9 @@ function test(){
     alert("ID:" + id);
     var name = extractFighterName(tmp);
     alert("NAME:" + name);
+    */
+    var fihgtingAlly = isFightingEventPlayer(tmp, "Ballz");
+    alert("FightingAlly: " + fihgtingAlly);
 
 }
 
@@ -60,24 +64,11 @@ function testFightList(){
         alert(isAlreadyKilledToday(foundPlayer));
     }
 }
-function testUppdate(){
-    var object = getFighterObject("111", "XXX", 100);
-    object.gangId = "0";
-    object.gangName = "GANG";
-    object = addFighterV2(fighterObj, object);
-    updateIces(object);
-    writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
-    object = getFighterObject("111", "XXX", 100);
-    object = addFighterV2(fighterObj, object);
-    updateIces(object);
-    //writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
-}
-
 function createFightersIndexedArray(){
     fighterObj.fighters.forEach( function (fighter)
-        {
-            fighterArrayObj[fighter.id] = fighter;
-        });
+    {
+        fighterArrayObj[fighter.id] = fighter;
+    });
 }
 
 function startScript(){
@@ -1079,6 +1070,14 @@ function getFightList(){
                 }
                 var name = extractFighterName(txt).substring(0,100);
                 var level = extractLevelFromString(txt);
+                if (configMRObj.fight.fightingEvent){
+                    var ally = isFightingEventPlayer(txt, configMRObj.fight.fightingEventAlly);
+                    if (ally){
+                        logV2(INFO, "FIGHT", "Fighting Event Ally: " + name);
+                        // skip this player
+                        continue;
+                    }
+                }
                 var object = getFighterObject(id, name, level);
                 // MOD 15/11
                 var gangObj = extractGangInformation(txt);
@@ -1179,16 +1178,16 @@ function filterFightList(fightList){
                 }
             }
             if (findFighter(fightersToExclude.fighters, fighter.id)){
-                logV2(INFO, "FIGHTLIST", "Excluded Fighter Found: " + fighter.id);
+                logV2(INFO, "FIGHTLIST_FILTER", "Excluded Fighter Found: " + fighter.id);
             }
             else if (findFighter(friendObj.fighters, fighter.id)) {
-                logV2(INFO, "FIGHTLIST", "Friend Found: " + fighter.id);
+                logV2(INFO, "FIGHTLIST_FILTER", "Friend Found: " + fighter.id);
             }
             else if (fighter.level > maxLevel) {
-                logV2(INFO, "FIGHTLIST", "High Level: " + fighter.id + " / Level: " + fighter.level);
+                logV2(INFO, "FIGHTLIST_FILTER", "High Level: " + fighter.id + " / Level: " + fighter.level);
             }
             else if (isAllyGang(friendObj.gangs, fighter.gangId)){
-                logV2(INFO, "FIGHTLIST", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
+                logV2(INFO, "FIGHTLIST_FILTER", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
             }
             else {
                 filteredList.push(fighter);
@@ -1205,8 +1204,11 @@ function filterProfile(array){
         var item = array[i];
         if (isAlreadyKilledToday(item)) {
         }
+        else if (isAllyGang(friendObj.gangs, item.gangId)){
+            logV2(INFO, "FILTER_PROFILE", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
+        }
         else if (item.level >= 0 && item.level < configMRObj.fight.minLevel && !checkForPlayerinfoToUpdate(item)){
-            logV2(INFO, "FIGHT", "Low Level: " + item.id + "(Level: " + item.level + ")");
+            logV2(INFO, "FILTER_PROFILE", "Low Level: " + item.id + "(Level: " + item.level + ")");
         }
         else {
             filteredArray.push(item);
@@ -1857,7 +1859,7 @@ function startShakedownFight(){
                 logV2(INFO, "SHAKEDOWN", "Opponent is iced");
                 retCode = playMacro(FIGHT_FOLDER, "107_Shakedown_Continue.iim", MACRO_INFO_LOGGING);
                 if (retCode != SUCCESS){
-                  logV2(WARNING, "SHAKEDOWN", "Problem with Continue");
+                    logV2(WARNING, "SHAKEDOWN", "Problem with Continue");
                 }
                 retCode = SUCCESS;
             }

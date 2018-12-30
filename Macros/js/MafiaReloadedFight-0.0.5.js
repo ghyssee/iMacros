@@ -99,6 +99,16 @@ function extractGangInformation(text){
     return gangObj;
 }
 
+function isFightingEventPlayer(text, ally){
+    var regExp = "<span style=(?:.*)>" + ally + "</span>";
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return true;
+    }
+    return false;
+
+}
+
 function extractGangIdFromString(text){
     var regExp = "class=\"tag\" data-id=\"" + "([0-9]{1,20})\">";
     var matches = text.match(regExp);
