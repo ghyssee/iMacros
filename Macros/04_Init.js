@@ -14,7 +14,7 @@ LOG_FILE = new LogFile(LOG_DIR, "MRInit");
 init();
 
 
-
+/*
 setProfile();
 setNode();
 setAssassinProfile();
@@ -23,9 +23,10 @@ checkMRProperties(MR.MR_CONFIG_FILE);
 checkMRProperties(MR.MR_TEMP_SETTINGS_FILE);
 checkMRProperties(MR.MR_ASSASSIN_FILE);
 checkKills(MR.MR_KILLS_FILE);
-
-//checkFightersFile("02");
-//checkFightersFile("03");
+*/
+checkFightersFile("01");
+checkFightersFile("02");
+checkFightersFile("03");
 
 function checkFightersFile(profile){
     var file = getMRFileById(MR.MR_FIGHTERS_FILE, profile);

@@ -8,9 +8,7 @@ var LOG_FILE = LOG_DIR + "log.RECON.ACCEPTOLD." + getDateYYYYMMDD() + ".txt";
 var INFO = 0; var ERROR = 1; WARNING = 2;
 var PREFIX = "Work/Atos/";
 var SUCCESS = 1;
-var RECON_OBJ = {"total": 0, "tppns": ["3267", "3268", "3269", "3270", "3271", "3272", "3273", "3274", "3275", "3276", "3277", "3278", "3279",
-                                       "3280", "3281", "3282", "3283", "3284", "3285", "3286", "3287", "3288", "3289", "3290", "3291",
-                                       "3355", "3356", "3357", "3358"], "size": 200};
+var RECON_OBJ = {"total": 0, "tppns": ["3450"], "size": 200, "streamId": 57};
 
 String.prototype.lpad = function(padString, length) {
     var str = this;
@@ -43,11 +41,13 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 	RECON_OBJ.tppns.forEach(function (tppn) {
         logV2(INFO, "Processing TPPN: " + tppn);
         logV2(INFO, "=".repeat(100));
-        processTPPN(tppn);
+        logV2(INFO, "Stream Id: " + RECON_OBJ.streamId);
+        processTPPN(tppn, RECON_OBJ.streamId.toString());
     });
 
-    function processTPPN(tppn) {
+    function processTPPN(tppn, streamId) {
         RECON_OBJ.total = 0;
+        iimSet("STREAMID", streamId);
         var retCode = iimPlay(PREFIX + "01_Select_Stream");
         if (retCode == SUCCESS) {
             do {
