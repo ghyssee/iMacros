@@ -50,7 +50,6 @@ function songInit(){
 	}
 }
 
-
 function setupEnvrionment(oneDrivePath){
 	pathObject = initObject(oneDrivePath + "\\config\\Setup.json");
 	pathObject.computerName = getComputerName();
@@ -109,7 +108,7 @@ function getSongObject(){
 }
 
 function getAlbumObject(){
-		var albumObject = {"album":null,"tracks":null,"albumArtist":null,"total":0};
+		var albumObject = {"album":null,"tracks":null,"albumArtist":null,"total":0,"ignoreTrack":false};
 		return albumObject;
 }
 
@@ -136,6 +135,9 @@ function getTitle(folder, pos){
 	var retCode = simpleMacroPlayFolder(folder + "_15_GetTitle.iim", folder);
 	if (retCode == 1){
 		title = iimGetLastExtract(1);
+        if (!isNullOrBlank(title)){
+        	title = title.trim();
+        }
 	}
 	return title;
 }

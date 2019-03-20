@@ -1,9 +1,10 @@
 ﻿var ONEDRIVEPATH = getOneDrivePath();
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyUtils-0.0.1.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyFileUtils-0.0.3.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyConstants-0.0.2.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.3.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\SongUtils-0.0.2.js"));
+var MACROS_PATH = getMacrosPath();
+eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\SongUtils-0.0.3.js"));
 setupEnvrionment(getOneDrivePath());
 
 LOG_FILE = new LogFile(LOG_DIR, "Albums");
@@ -12,16 +13,19 @@ var MACRO_FOLDER = "Discogs";
 var ALBUM = "Album";
 
 var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
-//var albumArtist = selectArtist();
+//var albumArtist = selectArtist(); // 171
+
 processAlbum();
+
 
 function processAlbum(){
 	
 	var retCode = simpleMacroPlayFolder("Discogs_01_GetAlbum.iim", MACRO_FOLDER);
 	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
 	var albumObject = getAlbumObject();
-	albumObject.albumArtist = getLastExtract(1);
-	albumObject.album = getLastExtract(2);
+	albumObject.album = getLastExtract(1).trim();
+    albumObject.albumArtist = getLastExtract(2).trim();
+    albumObject.albumArtist = checkAlbumArtist(albumObject.albumArtist);
 	albumObject.tracks = [];
 	albumObject.total = 1;
 	var pos = 0;
@@ -29,22 +33,32 @@ function processAlbum(){
 	var exit = false;
 	do {
 		pos++;
+		/*
 		var validTrack = checkTrack(pos);
 		switch (validTrack){
 			case 1:
 				track++;
-				exit = !processTrack(albumObject, pos, track)
+				exit = !processTrack(albumObject, pos, track);
 				break;
 			case 2: // bonus track line:
 				break;
 			default :
 				exit = true;
 				break;
-		}
-		logV2("DEBUG", "CAT", "Pos = " + pos);
+		}*/
+        track++;
+        exit = !processTrack(albumObject, pos, track);
+		logV2(DEBUG, "CAT", "Pos = " + pos);
 	}
 	while (!exit);
 	writeObject(albumObject, FILENAME);
+}
+
+function checkAlbumArtist(albumArtist){
+	if (isNullOrBlank(albumArtist) || albumArtist.toUpperCase() == "VARIOUS"){
+		albumArtist = "Various Artists";
+	}
+	return albumArtist;
 }
 
 
@@ -64,18 +78,24 @@ function selectArtist(){
 function processTrack(albumObject, track, realTrack){
 	var pos = track.toString();
 	var songObject = getSongObject();
-	var trackObject = getTrack(pos);
-	songObject.track = trackObject.track;
-	if (isNullOrBlank(songObject.track)){
-		return false;
-	}
-	songObject.cd = trackObject.cd;
-	albumObject.total = trackObject.cd;
-	songObject.artist = getArtist(pos);
+	if (albumObject.ignoreTrack){
+        songObject.track = pos.toString();
+    }
+    else {
+        var trackObject = getTrackDiscogs(pos);
+        songObject.track = trackObject.track;
+        songObject.cd = trackObject.cd;
+        albumObject.ignoreTrack = trackObject.ignore;
+        albumObject.total = trackObject.cd;
+    }
+	songObject.artist = getArtistDiscogs(pos);
 	if (isNullOrBlank(songObject.artist)){
 		songObject.artist = albumObject.albumArtist;
 	}
-	songObject.title = getTitle(realTrack.toString());
+	songObject.title = getTitle(MACRO_FOLDER, realTrack.toString());
+    if (isNullOrBlank(songObject.title)){
+        return false;
+    }
 	songObject.extraArtists = getExtraArtist(pos);
 	albumObject.tracks.push(songObject);
 	return true;
@@ -96,14 +116,14 @@ function checkTrack(pos){
 	return (-1);
 }
 
-function getTrack(pos){
+function getTrackDiscogs(pos){
 	var track = null;
 	iimSet("pos", pos);
-	var trackObject = {"track":null,"cd":null};
+	var trackObject = {"track":null,"cd":null,"ignore":false};
 	var retCode = simpleMacroPlayFolder("Discogs_10_GetTrack.iim", MACRO_FOLDER);
 	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
 	if (retCode == 1){
-		track = iimGetLastExtract(1);
+        track = iimGetLastExtract(1);
 		if (!isNullOrBlank(track)){
 			if (track.indexOf("-") >= 0){
 				var trackInfo = track.split("-");
@@ -115,13 +135,14 @@ function getTrack(pos){
 			}
 		}
 		else {
-			trackObject.track = track;
+			trackObject.track = pos.toString();
+            trackObject.ignore = true;
 		}
 	}
 	return trackObject;
 }
 
-function getArtist(pos){
+function getArtistDiscogs(pos){
 	var artist = null;
 	iimSet("pos", pos);
 	var retCode = simpleMacroPlayFolder("Discogs_11_GetArtist.iim", MACRO_FOLDER);
@@ -134,17 +155,6 @@ function getArtist(pos){
             artist = artist.replace(/\*$/, "");		}
 	}
 	return artist.trim();
-}
-
-function getTitle(pos){
-	var title = null;
-	iimSet("pos", pos);
-	var retCode = simpleMacroPlayFolder("Discogs_15_GetTitle.iim", MACRO_FOLDER);
-	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
-	if (retCode == 1){
-		title = iimGetLastExtract(1);
-	}
-	return title;
 }
 
 function getExtraArtist(pos){
@@ -246,4 +256,20 @@ function getOneDrivePath(){
 		throw errorMsg;
 	}
 	return id;
+}
+
+function getMacrosPath(){
+    var value = getFirefoxSetting("extensions.imacros.",  "defsavepath");
+    if (value == null){
+        throw new Error("iMacros Probably not installed...");
+    }
+    return value;
+}
+
+function getFirefoxSetting(branch, key){
+
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch(branch);
+
+    var value = prefs.getCharPref(key, Components.interfaces.nsISupportsString);
+    return value;
 }
