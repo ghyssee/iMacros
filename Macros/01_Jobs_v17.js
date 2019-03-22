@@ -92,7 +92,7 @@ function start() {
             logV2(INFO, "JOB", "DummyBanking");
             dummyBank();
             checkIfLevelUp();
-            checkOptimization(newJobs);
+            //checkOptimization(newJobs);
             if (configMRObj.crimeEvent.enabled){
                 startCrimeEvent();
                 clearDistrict();
@@ -1243,7 +1243,7 @@ function getStoryEnergy(storyId, nodeId){
     if (retCode == SUCCESS) {
         var msg = getLastExtract(1, "STORY", "30");
         if (!isNullOrBlank(msg)){
-            energy = parseInt(msg);
+            energy = parseInt(msg.replace(/,/g, ''));
         }
         else {
             logV2(WARNING, "STORY", "Problem Extracting Story Energy");
@@ -1254,6 +1254,7 @@ function getStoryEnergy(storyId, nodeId){
         logV2(WARNING, "STORY", "Problem Story Energy");
         makeScreenShot("MRStoryEnergyProblem");
     }
+    logV2(INFO, "STORY", "Story Energy: " + energy);
     return energy;
 }
 
@@ -1337,7 +1338,8 @@ function doStoryTask(story){
             if (retCode == SUCCESS){
                 checkIfLevelUp();
                 resourceObj = getResources();
-                energy = getEnergyOrStamina("ENERGY", resourceObj);
+                energy = getEnergyOrStamina(storyObj.type, resourceObj);
+                logV2(INFO, "STORY", "Energy Available: " + energy);
                 percentCompleted = extractPercentCompleted("STORY", storyObj.id, storyObj.node2.id);
                 if (percentCompleted == 100) {
                     closePopup();

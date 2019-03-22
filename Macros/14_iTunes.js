@@ -47,6 +47,22 @@ function processAlbum(){
 function processTrack(albumObject, track){
 	var pos = track.toString();
 	var songObject = getSongObject();
+
+	songObject.track = trackObject.track.trim();
+	if (isNullOrBlank(songObject.track)){
+		return false;
+	}
+	songObject.cd = null;
+	songObject.artist = getArtist(MACRO_FOLDER, pos).trim();
+	songObject.title = getTitle(MACRO_FOLDER, pos).trim();
+	songObject.cd = albumObject.total;
+	albumObject.tracks.push(songObject);
+	return true;
+}
+
+function processTrack2(albumObject, track){
+	var pos = track.toString();
+	var songObject = getSongObject();
 	var trackObject = getTrack(MACRO_FOLDER, pos);
 	songObject.track = trackObject.track.trim();
 	if (isNullOrBlank(songObject.track)){
@@ -59,7 +75,6 @@ function processTrack(albumObject, track){
 	albumObject.tracks.push(songObject);
 	return true;
 }
-
 
 function readScript(filename){
 

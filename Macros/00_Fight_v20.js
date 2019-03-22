@@ -29,7 +29,8 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
 createFightersIndexedArray();
-startScript();
+//startScript();
+CheckHomefeedWhileWaiting();
 //doDowntownShakedown();
 //test();
 //CheckHomefeedWhileWaiting();
@@ -1781,9 +1782,9 @@ function checkStatusShakedown(){
     var retCode = playMacro(FIGHT_FOLDER, "102_Shakedown_Status.iim", MACRO_INFO_LOGGING);
     var status = FIGHTERCONSTANTS.SHAKEDOWN.PROBLEM;
     if (retCode == SUCCESS) {
-        var txt = getLastExtract(1, "Shakedown Status", "Choose A Business To Visit");
+        var txt = getLastExtract(1, "Shakedown Status", "Choose A");
         txt = txt.toUpperCase();
-        if (txt.startsWith("CHOOSE A BUSINESS")){
+        if (txt.startsWith("CHOOSE A")){
             status = FIGHTERCONSTANTS.SHAKEDOWN.CHOOSE_BUSINESS;
             //alert("Choose Business");
         }
@@ -1828,7 +1829,7 @@ function collectShakedown(){
 
 function chooseBusiness(){
     logV2(INFO, "SHAKEDOWN", "Choose Business");
-    var number = randomNumber(1, 3);
+    var number = randomNumber(1, settingsObj.downTown.nrOfBusinesses);
     logV2(INFO, "SHAKEDOWN", "Business choosen: " + number);
     //var paramsArray = [];
     //paramsArray.push(getParamObj("ID", number.toString()));
