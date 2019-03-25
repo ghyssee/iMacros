@@ -1,4 +1,4 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
 SET !TIMEOUT_STEP 1
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=shake&action=soop&pos=*
+TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=shake&action=so*&pos=*
 WAIT SECONDS=0.1

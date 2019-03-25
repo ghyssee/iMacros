@@ -31,7 +31,7 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
 createFightersIndexedArray();
 //startScript();
 CheckHomefeedWhileWaiting();
-//doDowntownShakedown();
+doDowntownShakedown();
 //test();
 //CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
@@ -1853,7 +1853,6 @@ function startShakedownFight(){
         staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, STOP_SCRIPT);
         if (staminaObj.leftOver >= 5) {
             healInShakedown(firstHeal);
-            firstHeal = false;
             playMacro(FIGHT_FOLDER, "106_Shakedown_Attack.iim", MACRO_INFO_LOGGING);
             var victimHealth = getVictimHealth(null, null);
             if (victimHealth == 0){
