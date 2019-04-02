@@ -44,7 +44,7 @@ function processAlbum(){
 	writeObject(albumObject, FILENAME);
 }
 
-function processTrack(albumObject, track){
+function processTrackOld(albumObject, track){
 	var pos = track.toString();
 	var songObject = getSongObject();
 
@@ -60,7 +60,7 @@ function processTrack(albumObject, track){
 	return true;
 }
 
-function processTrack2(albumObject, track){
+function processTrack(albumObject, track){
 	var pos = track.toString();
 	var songObject = getSongObject();
 	var trackObject = getTrack(MACRO_FOLDER, pos);
