@@ -6,7 +6,7 @@ eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.6.js"));
 eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 // 182-11 = 171
@@ -29,17 +29,19 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
 createFightersIndexedArray();
-startScript();
-//doDowntownShakedown();
-
+//startScript();
+CheckHomefeedWhileWaiting();
+doDowntownShakedown();
+//test();
 //CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 
 function test(){
-    addMacroSetting("pos", "10", ENABLE_LOGGING);
+    addMacroSetting("pos", "4", ENABLE_LOGGING);
     var retCode = playMacro(FIGHT_FOLDER, "21_ExtractV2.iim", MACRO_INFO_LOGGING);
     var tmp = getLastExtract(1, "Gang", "data-params=\"controller=gang&amp;action=view&amp;id=3985490\">*TBC*</a>");
     alert(tmp);
+    /*
     var gangObj = extractGangInformation(tmp, "GANG");
     alert(JSON.stringify(gangObj));
     var level = extractLevelFromString(tmp);
@@ -48,6 +50,9 @@ function test(){
     alert("ID:" + id);
     var name = extractFighterName(tmp);
     alert("NAME:" + name);
+    */
+    var fihgtingAlly = isFightingEventPlayer(tmp, "Ballz");
+    alert("FightingAlly: " + fihgtingAlly);
 
 }
 
@@ -60,24 +65,11 @@ function testFightList(){
         alert(isAlreadyKilledToday(foundPlayer));
     }
 }
-function testUppdate(){
-    var object = getFighterObject("111", "XXX", 100);
-    object.gangId = "0";
-    object.gangName = "GANG";
-    object = addFighterV2(fighterObj, object);
-    updateIces(object);
-    writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
-    object = getFighterObject("111", "XXX", 100);
-    object = addFighterV2(fighterObj, object);
-    updateIces(object);
-    //writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
-}
-
 function createFightersIndexedArray(){
     fighterObj.fighters.forEach( function (fighter)
-        {
-            fighterArrayObj[fighter.id] = fighter;
-        });
+    {
+        fighterArrayObj[fighter.id] = fighter;
+    });
 }
 
 function startScript(){
@@ -1079,6 +1071,14 @@ function getFightList(){
                 }
                 var name = extractFighterName(txt).substring(0,100);
                 var level = extractLevelFromString(txt);
+                if (configMRObj.fight.fightingEvent){
+                    var ally = isFightingEventPlayer(txt, configMRObj.fight.fightingEventAlly);
+                    if (ally){
+                        logV2(INFO, "FIGHT", "Fighting Event Ally: " + name);
+                        // skip this player
+                        continue;
+                    }
+                }
                 var object = getFighterObject(id, name, level);
                 // MOD 15/11
                 var gangObj = extractGangInformation(txt);
@@ -1179,16 +1179,16 @@ function filterFightList(fightList){
                 }
             }
             if (findFighter(fightersToExclude.fighters, fighter.id)){
-                logV2(INFO, "FIGHTLIST", "Excluded Fighter Found: " + fighter.id);
+                logV2(INFO, "FIGHTLIST_FILTER", "Excluded Fighter Found: " + fighter.id);
             }
             else if (findFighter(friendObj.fighters, fighter.id)) {
-                logV2(INFO, "FIGHTLIST", "Friend Found: " + fighter.id);
+                logV2(INFO, "FIGHTLIST_FILTER", "Friend Found: " + fighter.id);
             }
             else if (fighter.level > maxLevel) {
-                logV2(INFO, "FIGHTLIST", "High Level: " + fighter.id + " / Level: " + fighter.level);
+                logV2(INFO, "FIGHTLIST_FILTER", "High Level: " + fighter.id + " / Level: " + fighter.level);
             }
             else if (isAllyGang(friendObj.gangs, fighter.gangId)){
-                logV2(INFO, "FIGHTLIST", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
+                logV2(INFO, "FIGHTLIST_FILTER", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
             }
             else {
                 filteredList.push(fighter);
@@ -1205,8 +1205,11 @@ function filterProfile(array){
         var item = array[i];
         if (isAlreadyKilledToday(item)) {
         }
+        else if (isAllyGang(friendObj.gangs, item.gangId)){
+            logV2(INFO, "FILTER_PROFILE", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
+        }
         else if (item.level >= 0 && item.level < configMRObj.fight.minLevel && !checkForPlayerinfoToUpdate(item)){
-            logV2(INFO, "FIGHT", "Low Level: " + item.id + "(Level: " + item.level + ")");
+            logV2(INFO, "FILTER_PROFILE", "Low Level: " + item.id + "(Level: " + item.level + ")");
         }
         else {
             filteredArray.push(item);
@@ -1452,38 +1455,6 @@ function checkForPlayerinfoToUpdate(fighter){
     }
     logV2(INFO, "FIGHT", "checkForPlayerinfoToUpdate: " + chk);
     return chk;
-}
-
-function extractFighterinfo(fighter){
-    logV2(INFO, "FIGHT", "Update info for fighter " + fighter.id);
-    var retCode = playMacro(FIGHT_FOLDER, "85_Profile_GetInfo.iim", MACRO_INFO_LOGGING);
-    if (retCode == SUCCESS){
-        var lvlInfo = getLastExtract(1, "Level", "1,126");
-
-        var xtraInfo = getLastExtract(2, "Fighter Info", "");
-        if (!isNullOrBlank(lvlInfo)){
-            lvlInfo = removeComma(lvlInfo);
-            var level = parseInt(lvlInfo);
-            var pl = extractProfileFighterName(xtraInfo);
-            if (level > 0){
-                fighter.level = level;
-                var gangObj = extractGangInformation(xtraInfo);
-                fighter.gangId = gangObj.id;
-                fighter.gangName = gangObj.name;
-                fighter.name = pl;
-                fighter.lastChecked = formatDateToYYYYMMDDHHMISS();
-            }
-            else {
-                logV2(WARNING, "FIGHT", "Problem converting level for player " + fighter.id);
-            }
-        }
-        else {
-            logV2(WARNING, "FIGHT", "Problem extracting level for player " + fighter.id);
-        }
-    }
-    else {
-        logV2(WARNING, "FIGHT", "Problem updating player " + fighter.id);
-    }
 }
 
 function profileAttack(array, fighterType){
@@ -1779,9 +1750,9 @@ function checkStatusShakedown(){
     var retCode = playMacro(FIGHT_FOLDER, "102_Shakedown_Status.iim", MACRO_INFO_LOGGING);
     var status = FIGHTERCONSTANTS.SHAKEDOWN.PROBLEM;
     if (retCode == SUCCESS) {
-        var txt = getLastExtract(1, "Shakedown Status", "Choose A Business To Visit");
+        var txt = getLastExtract(1, "Shakedown Status", "Choose A");
         txt = txt.toUpperCase();
-        if (txt.startsWith("CHOOSE A BUSINESS")){
+        if (txt.startsWith("CHOOSE A")){
             status = FIGHTERCONSTANTS.SHAKEDOWN.CHOOSE_BUSINESS;
             //alert("Choose Business");
         }
@@ -1826,7 +1797,7 @@ function collectShakedown(){
 
 function chooseBusiness(){
     logV2(INFO, "SHAKEDOWN", "Choose Business");
-    var number = randomNumber(1, 3);
+    var number = randomNumber(1, settingsObj.downTown.nrOfBusinesses);
     logV2(INFO, "SHAKEDOWN", "Business choosen: " + number);
     //var paramsArray = [];
     //paramsArray.push(getParamObj("ID", number.toString()));
@@ -1850,14 +1821,13 @@ function startShakedownFight(){
         staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, STOP_SCRIPT);
         if (staminaObj.leftOver >= 5) {
             healInShakedown(firstHeal);
-            firstHeal = false;
             playMacro(FIGHT_FOLDER, "106_Shakedown_Attack.iim", MACRO_INFO_LOGGING);
             var victimHealth = getVictimHealth(null, null);
             if (victimHealth == 0){
                 logV2(INFO, "SHAKEDOWN", "Opponent is iced");
                 retCode = playMacro(FIGHT_FOLDER, "107_Shakedown_Continue.iim", MACRO_INFO_LOGGING);
                 if (retCode != SUCCESS){
-                  logV2(WARNING, "SHAKEDOWN", "Problem with Continue");
+                    logV2(WARNING, "SHAKEDOWN", "Problem with Continue");
                 }
                 retCode = SUCCESS;
             }
