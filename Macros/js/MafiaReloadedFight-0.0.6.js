@@ -55,6 +55,7 @@ function extractFighterInformation(text){
 }
 
 function unescape(text){
+    // underscore-min.js neede to be included for this to work
     return _.unescape(text);
 }
 
@@ -82,6 +83,9 @@ function extractFighterName(text){
 
 function extractProfileFighterName(text){
     var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">(?:[^<]*)<\/a>(.*)</h2>";
+    if (!contains(text, "class=\"tag\"")){
+        regExp = "class=\"ellipsis\">(.*)</h2>";
+    }
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         var name = unescape(matches[matches.length-1]);

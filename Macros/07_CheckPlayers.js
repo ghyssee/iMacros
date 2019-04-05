@@ -6,12 +6,14 @@ eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.3.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.6.js"));
+eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 // 182-11 = 171
 
 // Script to update player info from fighters / friends / fightersToExclude
 
+var LOW_LEVEL = 400;
 var localConfigObject = null;
 setMRPath("MRCheckPlayers");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
@@ -22,7 +24,6 @@ var fightersToExclude = initMRObject(MR.MR_FIGHTERS_EXCLUDE_FILE);
 var friendObj = initMRObject(MR.MR_FRIENDS_FILE);
 var fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
-var settingsObj = initObject(getMRRootFile(MR.MR_SETTINGS_FILE));
 var profileObj = initObject(MR_PROFILE_FILE);
 
 var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0,
@@ -30,23 +31,34 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
 startScript();
+//var tmp = extractProfileFighterName("<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\">Kimie</h2>");
+//alert(tmp);
+//checkIfFriend();
 
 function startScript(){
     try {
-        //startMafiaReloaded();
-//        do  {
+        startMafiaReloaded();
+        var counter = 0;
+        do  {
             //dummyBank();
             fighterObj.fighters.forEach( function (fighter)
             {
-                updatePlayerInfo(fighter);
+                if (updatePlayerInfo(fighter)){
+                    counter++;
+                    if ((counter % 50) == 0){
+                        logV2(INFO, "UPDATEFIGHTER", "File Updated");
+                        writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+                    }
+                }
+
             });
 
-//        }
-//        while (true);
+        }
+        while (true);
     }
     catch (ex) {
         if (ex instanceof UserCancelError){
-            //writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+            writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
             logV2(INFO, "CANCEL", ex.message);
             if (ex.name != USER_CANCEL){
                 alert(ex.message);
@@ -61,25 +73,81 @@ function startScript(){
 
 function updatePlayerInfo(fighter){
 
+    var updated = false;
     logV2(INFO, "UPDATEPLAYER", "Update Player Info: " + fighter.id);
-    var currentTime = "20190402202738"; //formatDateToYYYYMMDDHHMISS();
+    var currentTime = formatDateToYYYYMMDDHHMISS();
     if (propertyExistAndNotNull(fighter, "lastChecked") && currentTime.substring(0,8) == fighter.lastChecked.substring(0,8)){
         logV2(INFO, "UPDATEPLAYER", "Skipping. Already updated today");
     }
-    goToProfilePage(fighter);
+    else {
+        updated = true;
+        goToProfilePage(fighter);
+        if (checkIfFriend()){
+            addFriend(fighter);
+            removeItemFromArray(MR.MR_FIGHTERS_FILE, fighter.id);
+        }
+    }
+    if (fighter.level <= LOW_LEVEL){
+        logV2(INFO, "UPDATEPLAYER", "Remove Low Level Player: " + fighter.level);
+        removeItemFromArray(MR.MR_FIGHTERS_FILE, fighter.id);
+    }
     logV2(INFO, "UPDATEPLAYER", "=".repeat(100));
+    return updated;
+}
+
+function addFriend(fighter){
+    if (!findFighter(friendObj.fighters, fighter.id)){
+        friendObj.fighters.push(fighter);
+        writeMRObject(friendObj, MR.MR_FRIENDS_FILE);
+    }
+}
+
+function checkIfFriend(){
+    var isFriend = false;
+    var retCode = playMacro(FIGHT_FOLDER, "86_CheckIfFriend.iim", MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS) {
+        var msg = getLastExtract(1, "Remove Friend");
+        if (!isNullOrBlank(msg) && msg.toUpperCase() == "REMOVE FRIEND"){
+            logV2(INFO, "UPDATEPLAYER", "This player is a friend");
+            isFriend = true;
+        }
+    }
+    return isFriend;
+}
+
+function removeItemFromArray(file, id){
+    logV2(INFO, "FIGHT", "Save Current Fighters List");
+    logV2(INFO, "FIGHT", "Remove id: " + id);
+    writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+    waitV2("1");
+    var obj= initMRObject(file);
+    var index = -1;
+    for (var i=0; i < obj.fighters.length; i++){
+        var item = obj.fighters[i];
+        if (item.id == id){
+            index = i;
+            break;
+        }
+    }
+    if (index >= 0){
+        obj.fighters.splice(index, 1);
+        writeMRObject(obj, file);
+        fighterObj = initMRObject(file);
+    }
+    return index > -1;
 }
 
 function goToProfilePage(fighter){
     addMacroSetting("ID", fighter.id);
-    /*
+
     var retCode = playMacro(FIGHT_FOLDER, "80_Profile_Attack_Init.iim", MACRO_INFO_LOGGING);
     if (retCode == SUCCESS) {
        var retCode = extractFighterinfo(fighter);
        if (retCode == SUCCESS){
            logV2 (INFO, "UPDATEPLAYER", "Player Updated");
+           logV2 (INFO, "UPDATEPLAYER", JSON.stringify(fighter));
        }
-    }*/
+    }
 }
 
 function init(){
@@ -179,24 +247,4 @@ function getFirefoxSetting(branch, key){
 
     var value = prefs.getCharPref(key, Components.interfaces.nsISupportsString);
     return value;
-}
-
-function checkForPlayerinfoToUpdate(fighter){
-    var currDate = new Date();
-    var chk = false;
-    currDate = dateAdd(currDate, -1, "months");
-    var strDate = formatDateToYYYYMMDDHHMISS(currDate);
-    if (propertyExistAndNotNull(fighter, "lastChecked")){
-        if (fighter.lastChecked <= strDate){
-            chk = true;
-        }
-        else {
-            logV2(INFO, "FIGHT", "Player Info is up to date: " + fighter.id);
-        }
-    }
-    else {
-        chk = true;
-    }
-    logV2(INFO, "FIGHT", "checkForPlayerinfoToUpdate: " + chk);
-    return chk;
 }
