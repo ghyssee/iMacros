@@ -501,7 +501,10 @@ function attackRivals(){
 
 function startFightList(){
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-    if (configMRObj.fight.fightList) {
+    if (isWar() && continueFighting(status)) {
+        status = startWarAttack();
+    }
+    if (continueFighting(status) && configMRObj.fight.fightList) {
         logV2(INFO, "FIGHT", "Start Fightlist...");
         var fighters = getFightList();
         status = attackFightList(fighters, true);
@@ -542,9 +545,6 @@ function attackFightList(fighters, profileAttack){
     if (filteredFightersList.length >= minFightList) {
         logV2(INFO, "FIGHT", "Normal Fighters - Profile Attack");
         status = startNormalAttack(filteredFightersList);
-        if (isWar() && continueFighting(status)) {
-            status = startWarAttack();
-        }
     }
     else {
         if (profileAttack) {
@@ -569,9 +569,10 @@ function fight(){
     do {
         configMRObj = initMRObject(MR.MR_CONFIG_FILE);
         status = attackRivals();
+        /*
         if (continueFighting(status)) {
             status = startFightList2();
-        }
+        }*/
         if (continueFighting(status)) {
             status = startFightList();
         }
