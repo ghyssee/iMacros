@@ -29,9 +29,10 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
 createFightersIndexedArray();
-//startScript();
-CheckHomefeedWhileWaiting();
-doDowntownShakedown();
+var warList = getListOfFightersForWar();
+startScript();
+//CheckHomefeedWhileWaiting();
+//doDowntownShakedown();
 //test();
 //CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
@@ -70,6 +71,30 @@ function createFightersIndexedArray(){
     {
         fighterArrayObj[fighter.id] = fighter;
     });
+}
+
+function isWar(){
+    var warEnabled = configMRObj.fight.war.enabled && configMRObj.fight.war.gangId != null;
+    if (warEnabled){
+        logV2(INFO, "FIGHT", "War mode enabled");
+    }
+    return warEnabled;
+}
+
+function getListOfFightersForWar(){
+    var warList = [];
+    if (isWar()) {
+        fighterObj.fighters.forEach(function (fighter) {
+            if (fighter.gangId == configMRObj.fight.war.gangId) {
+                warList.push(fighter);
+                logV2(INFO, "FIGHTWAR", "Added Player: " + fighter.id + " " + fighter.name);
+            }
+            if (contains(fighter.name, configMRObj.fight.war.whiteTag)){
+                logV2(INFO, "FIGHTWAR", "Added White Tag Player: " + fighter.id + " " + fighter.name + " (Gang: " + fighter.gangId + " " + fighter.gangName + ")");
+            }
+        });
+    }
+    return warList;
 }
 
 function startScript(){
@@ -454,7 +479,7 @@ function attackRivals(){
         do {
             rival = extractRivalMobster();
             if (rival > 0) {
-                var fighter = getFighterObject("RIVAL", "RIVAL " + rival, "0");
+                var fighter = getFighterObject(FIGHTERCONSTANTS.RIVAL_ID, "RIVAL " + rival, "0");
                 var list = [fighter];
                 var rivalType = FIGHTERCONSTANTS.FIGHTERTPE.RIVAL;
                 if (rival == 9999){
@@ -517,6 +542,9 @@ function attackFightList(fighters, profileAttack){
     if (filteredFightersList.length >= minFightList) {
         logV2(INFO, "FIGHT", "Normal Fighters - Profile Attack");
         status = startNormalAttack(filteredFightersList);
+        if (isWar() && continueFighting(status)) {
+            status = startWarAttack();
+        }
     }
     else {
         if (profileAttack) {
@@ -674,6 +702,8 @@ function extractRivalMobster(){
     var retCode = goToFightPage();
     if (retCode == SUCCESS) {
         if (configMRObj.fight.wiseguy){
+            logV2(INFO, "FIGHT", "Wiseguy Name:" + configMRObj.fight.wiseguyName);
+            addMacroSetting("NAME", configMRObj.fight.wiseguyName, ENABLE_LOGGING);
             retCode = playMacro(FIGHT_FOLDER, "24_Extract_WiseGuy.iim", MACRO_INFO_LOGGING);
             if (retCode == SUCCESS) {
                 var msg = getLastExtract(1, "Wiseguy");
@@ -720,7 +750,6 @@ function attack(fighter, fighterType){
     logV2(INFO, "FIGHT", "Attacking " + fighter.id);
     // ADD 15/11
     var statusObj = getStatusObject();
-    //fighter.lastAttacked = formatDateToYYYYMMDDHHMISS(new Date());
     var retCode = SUCCESS;
     if (fighterType != FIGHTERCONSTANTS.FIGHTERTPE.PROFILE && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.NORMALPROFILE
         && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.RIVAL && fighterType != FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY) {
@@ -1331,22 +1360,19 @@ function getFirefoxSetting(branch, key){
 }
 
 function removeItemFromArray(file, id){
-    logV2(INFO, "FIGHT", "Save Current Fighters List");
-    writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
-    waitV2("1");
-    var obj= initMRObject(file);
     var index = -1;
-    for (var i=0; i < obj.fighters.length; i++){
-        var item = obj.fighters[i];
+    for (var i=0; i < fighterObj.fighters.length; i++){
+        var item = fighterObj.fighters[i];
         if (item.id == id){
+            logV2(INFO, "FIGHT", "Remove player " + fighter.id + " " + fighter.name);
             index = i;
             break;
         }
     }
     if (index >= 0){
-        obj.fighters.splice(index, 1);
-        writeMRObject(obj, file);
-        fighterObj = initMRObject(file);
+        fighterObj.fighters.splice(index, 1);
+        logV2(INFO, "FIGHT", "Updating fighters file");
+        writeMRObject(fighterObj, file);
     }
     return index > -1;
 }
@@ -1393,6 +1419,14 @@ function homeFeedAttack(){
         logV2(INFO, "FIGHT", "Nr of Homefeed Fighters Found: " + list.length);
         var status = profileAttack(list, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE);
     }
+    return status;
+}
+
+function startWarAttack(){
+    logHeader(INFO, "FIGHT", "War Attack", "*");
+    var newArray = filterFightList(warList);
+    logV2(INFO, "FIGHT", "Number of players found: " + newArray.length);
+    status = profileAttack(newArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE);
     return status;
 }
 
@@ -1461,20 +1495,19 @@ function profileAttack(array, fighterType){
     var exitLoop = false;
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
     if (!configMRObj.fight.profileAttack){
+        logV2(INFO, "FIGHT", "Profile Attack is disabled!");
         return status;
     }
     var filteredArray = filterProfile(array);
     logV2(INFO, "FIGHT", "Profile Fighting: Nr Of Players: " + filteredArray.length);
-    for (var i=0; i < filteredArray.length; i++) {
+    // start backwards, because a player can be removed (friend, stronger opponent)
+    var length = filteredArray.length;
+    for (var i=length-1; i >= 0; i--) {
         var arrayItem = filteredArray[i];
         if (arrayItem.skip){
             continue;
         }
         logV2(INFO, "PROFILE", JSON.stringify(arrayItem));
-        if (isAllyGang(friendObj.gangs, arrayItem.gangId)){
-            logV2(INFO, "FIGHT", "Profile Fighting: Friendly Gang Found for player " + arrayItem.id + " - " + arrayItem.name);
-            continue;
-        }
         addMacroSetting("ID", arrayItem.id);
         var retCode = playMacro(FIGHT_FOLDER, "80_Profile_Attack_Init.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {

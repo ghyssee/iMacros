@@ -55,7 +55,7 @@ function writeFileWrapper(fileName, data, overwrite){
                 sleep(1000);
             }
             if (counter >= 5) {
-                throw ("Problem writing to file: " + JSON.stringify(fileName));
+                throw ("Problem writing to file: " + fileName);
             }
         }
     }
@@ -419,33 +419,45 @@ function logHeader(type, id, outputText, token, logFile){
 }
 
 function log(outputText, logObj) {
-        //var filename = LOG_DIR + "log." + getDateYYYYMMDD() + ".txt";
-	var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
 	var logFile = null;
-	//try {
-		logFile = logObj == null ? null : logObj.fullPath();
-	//}
-	//catch (error){
-		//alert(logObj);
-	//}
+	logFile = logObj == null ? null : logObj.fullPath();
 	var tmpLogFile = LOG_FILE.fullPath();
 	if (logFile != null && logFile.trim() != ""){
 		tmpLogFile = logFile;
 	}
-	file.initWithPath(tmpLogFile);
-	if (file.exists() === false) {
-		file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 420);
-	}
-	var outputStream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
-	outputStream.init(file, 0x04 | 0x10, 420, 0);
-	if (outputText != null){
-		outputStream.write(outputText, outputText.length);
-	}
-	var newline = "\r\n";
-	outputStream.write(newline, newline.length);
-	outputStream.close();
-	outputStream = null; file = null;
+    outputText = outputText + "\r\n";
+	writeFileWrapper(tmpLogFile, outputText, false);
 	return true;
+}
+
+function logOld(outputText, logObj) {
+    //var filename = LOG_DIR + "log." + getDateYYYYMMDD() + ".txt";
+    var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
+    var logFile = null;
+    //try {
+    logFile = logObj == null ? null : logObj.fullPath();
+    //}
+    //catch (error){
+    //alert(logObj);
+    //}
+    var tmpLogFile = LOG_FILE.fullPath();
+    if (logFile != null && logFile.trim() != ""){
+        tmpLogFile = logFile;
+    }
+    file.initWithPath(tmpLogFile);
+    if (file.exists() === false) {
+        file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 420);
+    }
+    var outputStream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
+    outputStream.init(file, 0x04 | 0x10, 420, 0);
+    if (outputText != null){
+        outputStream.write(outputText, outputText.length);
+    }
+    var newline = "\r\n";
+    outputStream.write(newline, newline.length);
+    outputStream.close();
+    outputStream = null; file = null;
+    return true;
 }
 
 function getFirefoxProfilePath(){
