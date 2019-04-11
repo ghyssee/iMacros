@@ -2,18 +2,20 @@
 var ONEDRIVEPATH = getOneDrivePath();
 var MACROS_PATH = getMacrosPath();
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.4.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.6.js"));
 eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 var localConfigObject = null;
 LOG_FILE = new LogFile(LOG_DIR, "MRInit");
 
+var LAST_ATTACKED = "201901";
+
 init();
-
-
+// debugging start of line 171
 
 setProfile();
 setNode();
@@ -22,7 +24,8 @@ setAssassinAutoHeal();
 checkMRProperties(MR.MR_CONFIG_FILE);
 checkMRProperties(MR.MR_TEMP_SETTINGS_FILE);
 checkMRProperties(MR.MR_ASSASSIN_FILE);
-checkKills(MR.MR_KILLS_FILE);
+addFightersOfMini(MR.MR_FIGHTERS_FILE);
+//checkKills(MR.MR_KILLS_FILE);
 
 /*
 checkFightersFile("01");
@@ -36,7 +39,7 @@ function checkFightersFile(profile){
     fighterObj.fighters.forEach( function (fighter)
     {
         if (fighter.name.startsWith("<h2 style")){
-            logV2(INFO, "INIT", "Test: " + fighter.id);
+            logV2(INFO, "INIT", "Updating name for player: " + fighter.id);
             var name = extractFighterNameV1(fighter.name);
             if (name != null) {
                 logV2(INFO, "INIT", "New Fighter name V1: " + name);
@@ -63,7 +66,6 @@ function extractFighterNameV2(text){
     var regExp = "class=\"ellipsis\" ?>(.*)</h2>";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
-        logV2(INFO, "INIT", "matches.length: " + matches.length);
         var name = unescape(matches[matches.length-1]);
         return name.trim();
     }
@@ -78,6 +80,70 @@ function extractFighterNameV1(text){
         return name.trim();
     }
     return null;
+}
+
+function addFightersOfMini(configFileCode){
+    logV2(INFO, "INIT", "Add Fighers Of Mini");
+    var profileObj = initObject(MR_PROFILE_FILE);
+    var mainFightersFile = new ConfigFile(MR_DIR + "01" + '\\', configFileCode);
+    logV2(INFO, "INIT", "mainFightersFile: " + mainFightersFile.fullPath());
+    var mainFightersObj = initObject(mainFightersFile);
+    var mainFriendsFile = new ConfigFile(MR_DIR + "01" + '\\', MR.MR_FRIENDS_FILE);
+    logV2(INFO, "INIT", "mainFriendsFile: " + mainFriendsFile.fullPath());
+    var mainFriendsObj = initObject(mainFriendsFile);
+    var counter = 0;
+    var fighterArrayObj = {};
+    mainFightersObj.fighters.forEach( function (fighter)
+    {
+        fighterArrayObj[fighter.id] = fighter;
+    });
+    logV2(INFO, "INIT", "Number of players of main before: " + mainFightersObj.fighters.length);
+
+    profileObj.list.forEach(function (item) {
+        if (item.id != "01") {
+            var fightersFile = new ConfigFile(MR_DIR + item.id + '\\', configFileCode);
+            logV2(INFO, "INIT", "fightersFile: " + fightersFile.fullPath());
+            var fightersObj = initObject(fightersFile);
+            logV2(INFO, "INIT", "Profile:" + item.name);
+            fightersObj.fighters.forEach(function (playerObj) {
+                if (findFighterIndexed(fighterArrayObj, playerObj.id)){
+                    logV2(INFO, "INIT", "FOUND: " + playerObj.id + " " + playerObj.name);
+                }
+                else {
+                    if (isAllyGang(mainFriendsObj.gangs, playerObj.gangId)) {
+                        logV2(INFO, "INIT", "NOT FOUND BUT ALLY: " + playerObj.id + " " + playerObj.name);
+                    }
+                    else if (findFighter(mainFriendsObj.fighters, playerObj.id)) {
+                        logV2(INFO, "INIT", "NOT FOUND BUT FRIEND: " + playerObj.id + " " + playerObj.name);
+                    }
+                    else {
+                        if (playerObj.lastAttacked != null && playerObj.lastAttacked >= LAST_ATTACKED){
+                            logV2(INFO, "INIT", "ADD Player: " + playerObj.id + " " + playerObj.name);
+                            playerObj.lastAttacked = null;
+                            playerObj.iced = 0;
+                            playerObj.lastIced = null;
+                            playerObj.icesOfTheDay = 0;
+                            playerObj.alive = 0;
+                            playerObj.dead = 0;
+                            mainFightersObj.fighters.push(playerObj);
+                            fighterArrayObj[playerObj.id] = playerObj;
+                            counter++;
+                        }
+                        else {
+                            logV2(INFO, "INIT", "NOT Recently Attacked Player: " + playerObj.id + " " + playerObj.name + " / LastAttacked: " + playerObj.lastAttacked);
+                        }
+                    }
+                }
+            });
+        }
+    });
+    logV2(INFO, "INIT", "Number of players to add:" + counter);
+    mainFightersFile.file = mainFightersFile.file + ".NEW";
+    writeObject(mainFightersObj, mainFightersFile);
+}
+
+function findFighterIndexed(indexedObj, id){
+    return propertyExistAndNotNull(indexedObj, id);
 }
 
 

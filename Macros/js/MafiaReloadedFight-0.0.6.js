@@ -1,4 +1,5 @@
 var FIGHTERCONSTANTS = Object.freeze({
+    "RIVAL_ID": "RIVAL",
     "OPPONENT" : {
         "UNKNOWN": 0,
         "FRIEND": 1,
@@ -783,7 +784,7 @@ function checkIfIced(fighter, profileObj){
     }
     if (iced){
         logV2(INFO, "FIGHT", "Total Ices: " + ++globalSettings.iced);
-        if (fighter != null) {
+        if (fighter != null && fighter.id != FIGHTERCONSTANTS.RIVAL_ID) {
             addKill(originalMsg, fighter, profileObj);
             fighter.gangPoints = getGangPoints(msg);
             updateIces(fighter);
