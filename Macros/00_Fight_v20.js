@@ -29,9 +29,9 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
 createFightersIndexedArray();
-//startScript();
+startScript();
 CheckHomefeedWhileWaiting();
-doDowntownShakedown();
+//doDowntownShakedown();
 //test();
 //CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
@@ -450,7 +450,7 @@ function continueFighting(status){
 function attackRivals(){
     var rival = 0;
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-    if (configMRObj.fight.rivals) {
+    if (configMRObj.fight.rivals || configMRObj.fight.wiseguy) {
         do {
             rival = extractRivalMobster();
             if (rival > 0) {
@@ -686,17 +686,19 @@ function extractRivalMobster(){
                 logV2(WARNING, "FIGHT", "Problem extracting wiseguy");
             }
         }
-        retCode = playMacro(FIGHT_FOLDER, "22_Extract_Rival.iim", MACRO_INFO_LOGGING);
-        if (retCode == SUCCESS) {
-            var msg = getLastExtract(1, "Rival", "20 / 20");
-            logV2(INFO, "FIGHT", "MSG: " + msg);
-            msg = msg.toUpperCase().replace("RIVAL MOBSTERS ALIVE: ", "");
-            msg = msg.replace("/ 20", "").trim();
-            logV2(INFO, "FIGHT", "MSG PROCESSED: " + msg);
-            mob = parseInt(msg);
-        }
-        else {
-            logV2(WARNING, "FIGHT", "Problem extracting rival mobster info");
+        if (configMRObj.fight.rivals) {
+            retCode = playMacro(FIGHT_FOLDER, "22_Extract_Rival.iim", MACRO_INFO_LOGGING);
+            if (retCode == SUCCESS) {
+                var msg = getLastExtract(1, "Rival", "20 / 20");
+                logV2(INFO, "FIGHT", "MSG: " + msg);
+                msg = msg.toUpperCase().replace("RIVAL MOBSTERS ALIVE: ", "");
+                msg = msg.replace("/ 20", "").trim();
+                logV2(INFO, "FIGHT", "MSG PROCESSED: " + msg);
+                mob = parseInt(msg);
+            }
+            else {
+                logV2(WARNING, "FIGHT", "Problem extracting rival mobster info");
+            }
         }
     }
     else {
