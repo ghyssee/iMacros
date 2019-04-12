@@ -47,6 +47,23 @@ var FIGHTERCONSTANTS = Object.freeze({
         "PROBLEM": -1
     }
 });
+var PAGE_TYPE = Object.freeze({
+    "PROFILE": true,
+    "FIGHT": false
+});
+
+
+    function extractLevelFromString(text){
+    text = removeComma(text);
+    var regExp = "</a> Level (.*)<";
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        var level = matches[matches.length-1];
+        level = parseInt(level);
+        return level;
+    }
+    return text;
+}
 
 function extractFighterInformation(text){
     var obj = {id:null, name:null};
@@ -73,7 +90,6 @@ function extractFighterId(text){
 
 function extractFighterName(text){
     var regExp = "class=\"pro\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
-    //var regExp = /id=([0-9]{1,30})"/;
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         var name = unescape(matches[matches.length-1]);
@@ -859,4 +875,8 @@ function extractFighterinfo(fighter){
         logV2(WARNING, "FIGHT", "Problem updating player " + fighter.id);
     }
     return retCode;
+}
+
+function findIndexedArray(indexedObj, id){
+    return propertyExistAndNotNull(indexedObj, id);
 }

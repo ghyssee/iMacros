@@ -13,9 +13,8 @@ eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 // Script to update player info from fighters / friends / fightersToExclude
 
-var LOW_LEVEL = 400;
 var localConfigObject = null;
-setMRPath("MRCheckPlayers");
+setMRPath("MRGangInfo");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 
 init();
@@ -30,7 +29,8 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "skippedHealth": 0, "maxHealed": 0, "heals": 0, "stopOnLevelUp": false, "expReached": false,
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
-startScript();
+//startScript();
+extractGangInfo();
 //var tmp = extractProfileFighterName("<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\">Kimie</h2>");
 //alert(tmp);
 //checkIfFriend();
@@ -68,19 +68,102 @@ function getGangInfo(gangId){
     }
 }
 
+function processFightLine(txt, pageType){
+    var id = extractFighterId(txt);
+    var object = null;
+    if (id != null){
+        var name = null;
+        if (pageType == PAGE_TYPE.FIGHT){
+            name = extractProfileFighterName(txt).substring(0, 100);
+        }
+        else {
+            name = extractFighterName(txt).substring(0, 100);
+        }
+        var level = extractLevelFromString(txt);
+        var object = getFighterObject(id, name, level);
+        var gangObj = extractGangInformation(txt);
+        object.gangId = gangObj.id;
+        object.gangName = gangObj.name;
+        object.lastChecked = formatDateToYYYYMMDDHHMISS();
+        if (isAllyGang(friendObj.gangs, object.gangId)) {
+            logV2(INFO, "FIGHT", "Prefiltered: Is Ally Gang");
+            logObj(INFO, "FIGHT", object);
+            object = null;
+        }
+    }
+    else {
+        // skipping line / Red Rival or Other Non-Real Player
+    }
+    return object;
+}
+
+function isFriend(text){
+    var regExp = ">Remove Friend</a>(?:.*)";
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return true;
+    }
+    return false;
+
+}
+
+function isFighter(text){
+    var regExp = ">Attack</a>(?:.*)";
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return true;
+    }
+    return false;
+
+}
+
 function extractGangInfo(){
     var retCode = -1;
-    var counter = 0;
+    var counter = 1;
+    // to speed up search on fighters, create indexed array
+    var fighterArrayObj = {};
+    fighterObj.fighters.forEach( function (fighter)
+    {
+        fighterArrayObj[fighter.id] = fighter;
+    });
     do {
+        addMacroSetting("POS", counter.toString());
         retCode = playMacro(FIGHT_FOLDER, "88_ExtractGangMember.iim", MACRO_INFO_LOGGING);
         if (retCode == SUCCESS) {
-            var txt = getLastExtract(1, "Gang Member");
+            var txt = getLastExtract(1, "Gang Line", "Gang Line");
             if (!isNullOrBlank(txt)){
-                var gangObj = null;
-                var fighterObj = getFighterObject("10211065573218554", "Walter White", 100);
-                fighterObj.gangId = gangObj.id;
-                fighterObj.gangName = gangObj.name;
-                fighterObj.lastChecked = formatDateToYYYYMMDDHHMISS();
+                var fightObj = processFightLine(txt, PAGE_TYPE.PROFILE);
+                if (fightObj != null) {
+                    if (isFriend(txt)) {
+                        if (findFighter(friendObj.fighters, fightObj.id)) {
+                            logV2(INFO, "GANGINFO", "FRiEND but already in friend list: " + fightObj.id + " " + fightObj.name);
+                        }
+                        else {
+                            logV2(INFO, "GANGINFO", "Friend: " + fightObj.id + " " + fightObj.name);
+                        }
+                    }
+                    if (isFighter(txt)) {
+                        if (findIndexedArray(fighterArrayObj, fightObj.id)){
+                            logV2(INFO, "GANGINFO", "Already added: " + fightObj.id + " " + fightObj.name);
+                        }
+                        else if (findFighter(fightersToExclude.fighters, fightObj.id)) {
+                            logV2(INFO, "GANGINFO", "Excluded Player: " + fightObj.id + " " + fightObj.name);
+                        }
+                        else if (findFighter(friendObj.fighters, fightObj.id)) {
+                            logV2(INFO, "GANGINFO", "NOT FOUND BUT FRIEND: " + fightObj.id + " " + fightObj.name);
+                        }
+                        else {
+                            logV2(INFO, "GANGINFO", "Adding Player " + fightObj.id + " " + fightObj.name);
+                            logObj(INFO, "GANGINFO", fightObj);
+                        }
+                    }
+                    else {
+                        logV2(INFO, "GANGINFO", "Can't Add player " + fightObj.id + " " + fightObj.name);
+                    }
+                }
+            }
+            else {
+                retCode = -1;
             }
         }
         counter++;

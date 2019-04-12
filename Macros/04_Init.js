@@ -106,7 +106,7 @@ function addFightersOfMini(configFileCode){
             var fightersObj = initObject(fightersFile);
             logV2(INFO, "INIT", "Profile:" + item.name);
             fightersObj.fighters.forEach(function (playerObj) {
-                if (findFighterIndexed(fighterArrayObj, playerObj.id)){
+                if (findIndexedArray(fighterArrayObj, playerObj.id)){
                     logV2(INFO, "INIT", "FOUND: " + playerObj.id + " " + playerObj.name);
                 }
                 else {
@@ -142,9 +142,7 @@ function addFightersOfMini(configFileCode){
     writeObject(mainFightersObj, mainFightersFile);
 }
 
-function findFighterIndexed(indexedObj, id){
-    return propertyExistAndNotNull(indexedObj, id);
-}
+
 
 
 

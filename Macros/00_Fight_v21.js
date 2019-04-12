@@ -1248,19 +1248,6 @@ function filterProfile(array){
     return filteredArray;
 }
 
-function extractLevelFromString(text){
-    text = removeComma(text);
-    var regExp = "</a> Level (.*)<";
-    var matches = text.match(regExp);
-    if (matches != null && matches.length > 0){
-        var level = matches[matches.length-1];
-        level = parseInt(level);
-        return level;
-    }
-    return text;
-}
-
-
 function init(){
 
     localConfigObject = initObject(LOCAL_CONFIG_JSON_FILE);
