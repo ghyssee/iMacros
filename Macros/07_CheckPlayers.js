@@ -36,29 +36,18 @@ startScript();
 //checkIfFriend();
 
 function startScript(){
+    var currDate = new Date();
+    currDate = dateAdd(currDate, -5, "days");
+    var currentTime = formatDateToYYYYMMDDHHMISS(currDate);
+    logV2(INFO, "UPDATEFIGHTER", "Last Updated Time: " + currentTime);
     try {
         startMafiaReloaded();
-        var counter = 0;
-        do  {
             //dummyBank();
-            fighterObj.fighters.forEach( function (fighter)
-            {
-                if (updatePlayerInfo(fighter)){
-                    counter++;
-                    if ((counter % 50) == 0){
-                        logV2(INFO, "UPDATEFIGHTER", "File Updated");
-                        writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
-                    }
-                }
+            checkFighters(fighterObj, currentTime);
 
-            });
-
-        }
-        while (true);
     }
     catch (ex) {
         if (ex instanceof UserCancelError){
-            writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
             logV2(INFO, "CANCEL", ex.message);
             if (ex.name != USER_CANCEL){
                 alert(ex.message);
@@ -71,27 +60,45 @@ function startScript(){
     }
 }
 
-function updatePlayerInfo(fighter){
+function checkFighters(obj, currentTime){
+    var counter = 0;
+    var i=0;
+    var length = obj.fighters.length;
+    for (var pos = length-1; pos>=0; pos--){
+        fighter = obj.fighters[pos];
+        i++;
+        iimDisplay(i + "/" + length);
+        if (updatePlayerInfo(fighter, currentTime)){
+            counter++;
+            if ((counter % 50) == 0){
+                logV2(INFO, "UPDATEFIGHTER", "File Updated");
+                writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+            }
+        }
+    };
+    writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+}
+
+function updatePlayerInfo(fighter, currentTime){
 
     var updated = false;
-    logV2(INFO, "UPDATEPLAYER", "Update Player Info: " + fighter.id);
-    var currentTime = formatDateToYYYYMMDDHHMISS();
-    if (propertyExistAndNotNull(fighter, "lastChecked") && currentTime.substring(0,8) == fighter.lastChecked.substring(0,8)){
-        logV2(INFO, "UPDATEPLAYER", "Skipping. Already updated today");
+    if (propertyExistAndNotNull(fighter, "lastChecked") && currentTime.substring(0,8) <= fighter.lastChecked.substring(0,8)){
+        //logV2(INFO, "UPDATEPLAYER", "Skipping. Already updated today");
     }
     else {
+        logV2(INFO, "UPDATEPLAYER", "Update Player Info: " + fighter.id);
         updated = true;
         goToProfilePage(fighter);
         if (checkIfFriend()){
             addFriend(fighter);
             removeItemFromArray(MR.MR_FIGHTERS_FILE, fighter.id);
         }
+        if (fighter.level <= LOW_LEVEL){
+            logV2(INFO, "UPDATEPLAYER", "Remove Low Level Player: " + fighter.level);
+            removeItemFromArray(MR.MR_FIGHTERS_FILE, fighter.id);
+        }
+        logV2(INFO, "UPDATEPLAYER", "=".repeat(100));
     }
-    if (fighter.level <= LOW_LEVEL){
-        logV2(INFO, "UPDATEPLAYER", "Remove Low Level Player: " + fighter.level);
-        removeItemFromArray(MR.MR_FIGHTERS_FILE, fighter.id);
-    }
-    logV2(INFO, "UPDATEPLAYER", "=".repeat(100));
     return updated;
 }
 
@@ -99,6 +106,9 @@ function addFriend(fighter){
     if (!findFighter(friendObj.fighters, fighter.id)){
         friendObj.fighters.push(fighter);
         writeMRObject(friendObj, MR.MR_FRIENDS_FILE);
+    }
+    else {
+        logV2(INFO, "UPDATEPLAYER", fighter.id + ": Already a friend");
     }
 }
 
@@ -116,6 +126,26 @@ function checkIfFriend(){
 }
 
 function removeItemFromArray(file, id){
+    logV2(INFO, "FIGHT", "Save Current Fighters List");
+    logV2(INFO, "FIGHT", "Remove id: " + id);
+    writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+    waitV2("1");
+    var index = -1;
+    for (var i=0; i < fighterObj.fighters.length; i++){
+        var item = fighterObj.fighters[i];
+        if (item.id == id){
+            index = i;
+            break;
+        }
+    }
+    if (index >= 0){
+        fighterObj.fighters.splice(index, 1);
+        writeMRObject(fighterObj, file);
+    }
+    return index > -1;
+}
+
+function removeItemFromArrayold(file, id){
     logV2(INFO, "FIGHT", "Save Current Fighters List");
     logV2(INFO, "FIGHT", "Remove id: " + id);
     writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);

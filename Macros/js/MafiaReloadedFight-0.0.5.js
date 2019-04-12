@@ -243,9 +243,8 @@ function checkForAttackers(configMRObj, homefeedObj){
                 attackers[homefeedLine.fighterId] = {"name": homefeedLine.name, "count": 1};
             }
             if (homefeedLine.fighterId == "10212700280927276"){
-                alert("Our Famous Bully Is Busy. Waiting...");
+                waitV2("300");
             }
-
         }
         else {
             // list is sorted on most recent
