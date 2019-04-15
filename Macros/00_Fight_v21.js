@@ -31,6 +31,7 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
 createFightersIndexedArray();
 var warList = getListOfFightersForWar();
 
+/*
 warList[2].lastAttacked = formatDateToYYYYMMDDHHMISS();
 logHeader(INFO, "FIGHT", "BEFORE SHUFFLE 1", "*");
 logObjBeautify(INFO, "FIGHT", warList);
@@ -44,9 +45,9 @@ logObjBeautify(INFO, "FIGHT", newArray);
 logHeader(INFO, "FIGHT", "AFTER SHUFFLE 2", "*");
 newArray = getWarAliveTargets(warList);
 logObjBeautify(INFO, "FIGHT", newArray);
-
-//startScript();
-//CheckHomefeedWhileWaiting();
+*/
+startScript();
+CheckHomefeedWhileWaiting();
 //doDowntownShakedown();
 //test();
 //CheckHomefeedWhileWaiting();
