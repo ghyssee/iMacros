@@ -315,6 +315,12 @@ function logObj(logType, category, obj){
 	logV2(logType, category, jstr);
 }
 
+function logObjBeautify(logType, category, obj){
+    //var jstr = JSON.stringify(obj, null, "   ");
+    var jstr = JSON.stringify(obj, null, "    ");
+    logV2(logType, category, jstr);
+}
+
 function writeLineToCSV(filename, data, seperator){
    if (data == null || data.length == 0) return -1;
    var line = "";

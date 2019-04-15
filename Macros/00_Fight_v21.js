@@ -30,7 +30,22 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "boss": {"attacks": 0}};
 createFightersIndexedArray();
 var warList = getListOfFightersForWar();
-startScript();
+
+warList[2].lastAttacked = formatDateToYYYYMMDDHHMISS();
+logHeader(INFO, "FIGHT", "BEFORE SHUFFLE 1", "*");
+logObjBeautify(INFO, "FIGHT", warList);
+var newArray = shuffle(warList);
+warList[2].lastAttacked = formatDateToYYYYMMDDHHMISS();
+logObjBeautify(INFO, "FIGHT", newArray);
+logHeader(INFO, "FIGHT", "AFTER SHUFFLE 1", "*");
+newArray = shuffle(warList);
+warList[2].lastAttacked = formatDateToYYYYMMDDHHMISS();
+logObjBeautify(INFO, "FIGHT", newArray);
+logHeader(INFO, "FIGHT", "AFTER SHUFFLE 2", "*");
+newArray = getWarAliveTargets(warList);
+logObjBeautify(INFO, "FIGHT", newArray);
+
+//startScript();
 //CheckHomefeedWhileWaiting();
 //doDowntownShakedown();
 //test();
@@ -74,25 +89,69 @@ function createFightersIndexedArray(){
 }
 
 function isWar(){
-    var warEnabled = configMRObj.fight.war.enabled && configMRObj.fight.war.gangId != null;
+    var warEnabled = configMRObj.fight.war.enabled && configMRObj.fight.war.gangs != null;
     if (warEnabled){
         logV2(INFO, "FIGHT", "War mode enabled");
     }
     return warEnabled;
 }
 
+function isGangWar(gangId){
+    var enabled = false;
+    if ( configMRObj.fight.war.gangs != null) {
+        //logV2(INFO, "FIGHTWAR", "isGangWar");
+        for (var i = 0; i < configMRObj.fight.war.gangs.length; i++){
+            var gangObj = configMRObj.fight.war.gangs[i];
+            if (gangObj.id == gangId){
+                enabled = true;
+                break;
+            }
+        }
+    }
+    return enabled;
+}
+
+function isWhiteTagWar(fighterName){
+    var enabled = false;
+    if ( configMRObj.fight.war.gangs != null) {
+        //logV2(INFO, "FIGHTWAR", "isWhiteTagWar");
+        for (var i = 0; i < configMRObj.fight.war.whiteTags.length; i++){
+            var tagObj = configMRObj.fight.war.whiteTags[i];
+            if (contains(fighterName, tagObj.tag)){
+                enabled = true;
+                break;
+            }
+        }
+    }
+    return enabled;
+}
+
 function getListOfFightersForWar(){
     var warList = [];
     if (isWar()) {
+        logV2(INFO, "FIGHTWAR", "Filter players for war...");
         fighterObj.fighters.forEach(function (fighter) {
-            if (fighter.gangId == configMRObj.fight.war.gangId) {
-                warList.push(fighter);
-                logV2(INFO, "FIGHTWAR", "Added Player: " + fighter.id + " " + fighter.name);
+            var add = false;
+            var logPlayer = fighter.id + " " + fighter.name + " (Gang: " + fighter.gangId + " " + fighter.gangName + ")";
+            if (isGangWar(fighter.gangId)) {
+                add = true;
+                logV2(INFO, "FIGHTWAR", "Added Player: " + logPlayer);
             }
-            if (contains(fighter.name, configMRObj.fight.war.whiteTag)){
-                logV2(INFO, "FIGHTWAR", "Added White Tag Player: " + fighter.id + " " + fighter.name + " (Gang: " + fighter.gangId + " " + fighter.gangName + ")");
+            else if (isWhiteTagWar(fighter.name)){
+                add = true;
+                logV2(INFO, "FIGHTWAR", "Added White Tag Player: " + logPlayer);
+            }
+            if (add) {
+                if (isAllyGang(friendObj.gangs, fighter.gangId)) {
+                    logV2(INFO, "FIGHTWAR", "Ally Gang: " + logPlayer);
+                }
+                else {
+                    warList.push(fighter);
+                }
             }
         });
+        var warList = shuffle(warList);
+        logObjBeautify(INFO, "FIGHTWAR", warList);
     }
     return warList;
 }
@@ -501,8 +560,9 @@ function attackRivals(){
 
 function startFightList(){
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
-    if (isWar() && continueFighting(status)) {
-        status = startWarAttack();
+    if (isWar()) {
+        status = startWarAttack(warList);
+        logObjBeautify(INFO, warList);
     }
     if (continueFighting(status) && configMRObj.fight.fightList) {
         logV2(INFO, "FIGHT", "Start Fightlist...");
@@ -1348,11 +1408,11 @@ function getFirefoxSetting(branch, key){
 }
 
 function removeItemFromArray(file, id){
+    logV2(INFO, "FIGHT", "Remove player " + fighter.id + " " + fighter.name);
     var index = -1;
     for (var i=0; i < fighterObj.fighters.length; i++){
         var item = fighterObj.fighters[i];
         if (item.id == id){
-            logV2(INFO, "FIGHT", "Remove player " + fighter.id + " " + fighter.name);
             index = i;
             break;
         }
@@ -1410,12 +1470,37 @@ function homeFeedAttack(){
     return status;
 }
 
-function startWarAttack(){
+function startWarAttack(warList){
+
+    var number = Math.floor(Math.random() * 10) + 1;
+    var filteredArray = warList;
+    if (number < 7){
+        filteredArray = getWarAliveTargets(warList);
+    }
+    if (filteredArray.length < 2){
+        logV2(INFO, "FIGHT", "Not enough alive targets. Check full list");
+        filteredArray = warList;
+    }
     logHeader(INFO, "FIGHT", "War Attack", "*");
-    var newArray = filterFightList(warList);
-    logV2(INFO, "FIGHT", "Number of players found: " + newArray.length);
-    status = profileAttack(newArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE);
+    logV2(INFO, "FIGHT", "Number of players found: " + filteredArray.length);
+    status = profileAttack(filteredArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE);
+    logObj(INFO, "WAR", warList);
     return status;
+}
+
+function getWarAliveTargets(warList){
+    logHeader(INFO, "FIGHT", "War Attack (Alive today)", "*");
+    var strDate = formatDateToYYYYMMDDHHMISS();
+    logV2(INFO, "FIGHT", "Alive Date: " + strDate);
+    var filteredArray = [];
+    warList.forEach(function (fighter){
+        if (fighter.hasOwnProperty("lastAttacked") && fighter.lastAttacked >= strDate.substr(0,8)){
+            filteredArray.push(fighter);
+        }
+    });
+    logV2(INFO, "FIGHT", "Number of players alive found: " + filteredArray.length);
+    logObjBeautify(INFO, "WARALIVE", newArray);
+    return filteredArray;
 }
 
 function startProfileAttack(){
@@ -1539,8 +1624,8 @@ function profileAttack(array, fighterType){
         if (exitLoop) break;
     }
     // reload fighters list (because it's possible that fighters were removed => friend / stronger opponent
-    logV2(INFO, "FIGHT", "Reloading players list");
-    fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
+    //logV2(INFO, "FIGHT", "Reloading players list");
+    //fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
     return status;
 }
 

@@ -126,10 +126,7 @@ function checkIfFriend(){
 }
 
 function removeItemFromArray(file, id){
-    logV2(INFO, "FIGHT", "Save Current Fighters List");
     logV2(INFO, "FIGHT", "Remove id: " + id);
-    writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
-    waitV2("1");
     var index = -1;
     for (var i=0; i < fighterObj.fighters.length; i++){
         var item = fighterObj.fighters[i];

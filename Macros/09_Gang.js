@@ -126,6 +126,7 @@ function extractGangInfo(){
     {
         fighterArrayObj[fighter.id] = fighter;
     });
+    var save = false;
     do {
         addMacroSetting("POS", counter.toString());
         retCode = playMacro(FIGHT_FOLDER, "88_ExtractGangMember.iim", MACRO_INFO_LOGGING);
@@ -136,13 +137,15 @@ function extractGangInfo(){
                 if (fightObj != null) {
                     if (isFriend(txt)) {
                         if (findFighter(friendObj.fighters, fightObj.id)) {
-                            logV2(INFO, "GANGINFO", "FRiEND but already in friend list: " + fightObj.id + " " + fightObj.name);
+                            logV2(INFO, "GANGINFO", "FRIEND but already in friend list: " + fightObj.id + " " + fightObj.name);
                         }
                         else {
-                            logV2(INFO, "GANGINFO", "Friend: " + fightObj.id + " " + fightObj.name);
+                            logV2(INFO, "GANGINFO", "Add Friend: " + fightObj.id + " " + fightObj.name);
+                            friendObj.fighters.push(fightObj);
+                            save = true;
                         }
                     }
-                    if (isFighter(txt)) {
+                    else if (isFighter(txt)) {
                         if (findIndexedArray(fighterArrayObj, fightObj.id)){
                             logV2(INFO, "GANGINFO", "Already added: " + fightObj.id + " " + fightObj.name);
                         }
@@ -151,6 +154,8 @@ function extractGangInfo(){
                         }
                         else if (findFighter(friendObj.fighters, fightObj.id)) {
                             logV2(INFO, "GANGINFO", "NOT FOUND BUT FRIEND: " + fightObj.id + " " + fightObj.name);
+                            friendObj.fighters.push(fightObj);
+                            save = true;
                         }
                         else {
                             logV2(INFO, "GANGINFO", "Adding Player " + fightObj.id + " " + fightObj.name);
@@ -169,26 +174,9 @@ function extractGangInfo(){
         counter++;
     }
     while (retCode == SUCCESS);
-}
-
-function addFriend(fighter){
-    if (!findFighter(friendObj.fighters, fighter.id)){
-        friendObj.fighters.push(fighter);
+    if (save) {
         writeMRObject(friendObj, MR.MR_FRIENDS_FILE);
     }
-}
-
-function checkIfFriend(){
-    var isFriend = false;
-    var retCode = playMacro(FIGHT_FOLDER, "86_CheckIfFriend.iim", MACRO_INFO_LOGGING);
-    if (retCode == SUCCESS) {
-        var msg = getLastExtract(1, "Remove Friend");
-        if (!isNullOrBlank(msg) && msg.toUpperCase() == "REMOVE FRIEND"){
-            logV2(INFO, "UPDATEPLAYER", "This player is a friend");
-            isFriend = true;
-        }
-    }
-    return isFriend;
 }
 
 function removeItemFromArray(file, id){
