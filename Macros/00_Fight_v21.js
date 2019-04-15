@@ -1481,6 +1481,7 @@ function startWarAttack(warList){
         logV2(INFO, "FIGHT", "Not enough alive targets. Check full list");
         filteredArray = warList;
     }
+    filteredArray = shuffle(filteredArray);
     logHeader(INFO, "FIGHT", "War Attack", "*");
     logV2(INFO, "FIGHT", "Number of players found: " + filteredArray.length);
     status = profileAttack(filteredArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE);
