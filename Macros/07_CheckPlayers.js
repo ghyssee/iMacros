@@ -42,9 +42,8 @@ function startScript(){
     logV2(INFO, "UPDATEFIGHTER", "Last Updated Time: " + currentTime);
     try {
         startMafiaReloaded();
-            //dummyBank();
-            checkFighters(fighterObj, currentTime);
-
+        checkFighters(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.STRONGER);
+        //checkFighters(fighterObj, MR.MR_FIGHTERS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK);
     }
     catch (ex) {
         if (ex instanceof UserCancelError){
@@ -60,26 +59,27 @@ function startScript(){
     }
 }
 
-function checkFighters(obj, currentTime){
+function checkFighters(obj, file, currentTime, fighterType){
+    logV2(INFO, "UPDATEFIGHTER", "fighterType: " + fighterType);
     var counter = 0;
     var i=0;
     var length = obj.fighters.length;
     for (var pos = length-1; pos>=0; pos--){
-        fighter = obj.fighters[pos];
+        var fighter = obj.fighters[pos];
         i++;
         iimDisplay(i + "/" + length);
-        if (updatePlayerInfo(fighter, currentTime)){
+        if (updatePlayerInfo(obj, file, fighter, currentTime, fighterType)){
             counter++;
             if ((counter % 50) == 0){
                 logV2(INFO, "UPDATEFIGHTER", "File Updated");
-                writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+                writeMRObject(obj, file);
             }
         }
     };
-    writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+    writeMRObject(obj, file);
 }
 
-function updatePlayerInfo(fighter, currentTime){
+function updatePlayerInfo(obj, file, fighter, currentTime, fighterType){
 
     var updated = false;
     if (propertyExistAndNotNull(fighter, "lastChecked") && currentTime.substring(0,8) <= fighter.lastChecked.substring(0,8)){
@@ -90,12 +90,22 @@ function updatePlayerInfo(fighter, currentTime){
         updated = true;
         goToProfilePage(fighter);
         if (checkIfFriend()){
-            addFriend(fighter);
-            removeItemFromArray(MR.MR_FIGHTERS_FILE, fighter.id);
+            if (fighterType == FIGHTERCONSTANTS.FIGHTERSTATUS.FRIEND){
+                // everything ok
+            }
+            else {
+                addFriend(fighter);
+                removeItemFromArray(file, obj, fighter.id);
+            }
         }
-        if (fighter.level <= LOW_LEVEL){
+        else {
+            if (fighterType == FIGHTERCONSTANTS.FIGHTERSTATUS.FRIEND){
+                logV2(INFO, "UPDATEPLAYER", "Not a friend, but in friend list: " + fighter.id + " " + fighter.name);
+            }
+        }
+        if (fighter.level <= LOW_LEVEL && fighterType != FIGHTERCONSTANTS.FIGHTERSTATUS.FRIEND){
             logV2(INFO, "UPDATEPLAYER", "Remove Low Level Player: " + fighter.level);
-            removeItemFromArray(MR.MR_FIGHTERS_FILE, fighter.id);
+            removeItemFromArray(file, obj, fighter.id);
         }
         logV2(INFO, "UPDATEPLAYER", "=".repeat(100));
     }
@@ -125,19 +135,19 @@ function checkIfFriend(){
     return isFriend;
 }
 
-function removeItemFromArray(file, id){
+function removeItemFromArray(file, obj, id){
     logV2(INFO, "FIGHT", "Remove id: " + id);
     var index = -1;
-    for (var i=0; i < fighterObj.fighters.length; i++){
-        var item = fighterObj.fighters[i];
+    for (var i=0; i < obj.fighters.length; i++){
+        var item = obj.fighters[i];
         if (item.id == id){
             index = i;
             break;
         }
     }
     if (index >= 0){
-        fighterObj.fighters.splice(index, 1);
-        writeMRObject(fighterObj, file);
+        obj.fighters.splice(index, 1);
+        writeMRObject(obj, file);
     }
     return index > -1;
 }
