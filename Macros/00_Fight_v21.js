@@ -152,7 +152,7 @@ function getListOfFightersForWar(){
             }
         });
         var warList = shuffle(warList);
-        logObjBeautify(INFO, "FIGHTWAR", warList);
+        //logObjBeautify(INFO, "FIGHTWAR", warList);
     }
     return warList;
 }
@@ -563,7 +563,7 @@ function startFightList(){
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
     if (isWar()) {
         status = startWarAttack(warList);
-        logObjBeautify(INFO, warList);
+        //logObjBeautify(INFO, warList);
     }
     if (continueFighting(status) && configMRObj.fight.fightList) {
         logV2(INFO, "FIGHT", "Start Fightlist...");
@@ -1486,7 +1486,7 @@ function startWarAttack(warList){
     logHeader(INFO, "FIGHT", "War Attack", "*");
     logV2(INFO, "FIGHT", "Number of players found: " + filteredArray.length);
     status = profileAttack(filteredArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE);
-    logObj(INFO, "WAR", warList);
+    //logObj(INFO, "WAR", warList);
     return status;
 }
 
@@ -1501,7 +1501,7 @@ function getWarAliveTargets(warList){
         }
     });
     logV2(INFO, "FIGHT", "Number of players alive found: " + filteredArray.length);
-    logObjBeautify(INFO, "WARALIVE", newArray);
+    //logObjBeautify(INFO, "WARALIVE", filteredArray);
     return filteredArray;
 }
 
@@ -1762,7 +1762,7 @@ function goToFightPage(){
 function extractTime(msg, unit, plural){
     var regExp = " ([0-9]{1,2}) " + unit + plural + "?";
     logHeader(INFO, "TST", unit, "*");
-    logObj(INFO, "TST", regExp);
+    logV2(INFO, "TST", regExp);
     var matches = msg.match(regExp);
     logObj(INFO, "TST", matches);
     var intUnit = 0;
