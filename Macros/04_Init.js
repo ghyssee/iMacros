@@ -24,7 +24,7 @@ setAssassinAutoHeal();
 checkMRProperties(MR.MR_CONFIG_FILE);
 checkMRProperties(MR.MR_TEMP_SETTINGS_FILE);
 checkMRProperties(MR.MR_ASSASSIN_FILE);
-addFightersOfMini(MR.MR_FIGHTERS_FILE);
+//addFightersOfMini(MR.MR_FIGHTERS_FILE);
 //checkKills(MR.MR_KILLS_FILE);
 
 /*
