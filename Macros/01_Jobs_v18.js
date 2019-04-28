@@ -19,8 +19,7 @@ var JOBCONSTANTS = Object.freeze({
         "NOSTAMINA": 3,
         "COLLECT": 4,
         "FINISHED": 5,
-        "DOJOB": 6,
-        "END": 7,
+        "END": 6,
         "PROBLEM": -1
     }
 });
@@ -60,11 +59,14 @@ var settingsObj = initObject(getMRRootFile(MR.MR_SETTINGS_FILE));
 var globalSettings = {"jobsCompleted": 0, "money": 0, "currentLevel": 0,
                       "lastDistrict": null, "lastChapter": null, "lowestEnergy": null, "lowestStamina": null,
                       "resources": null, "profileId": getProfile(),
+                      "robbingStaminaCost": null,
                       "optimization": false
                      };
 
 //enableMacroPlaySimulation();
 start();
+//var txt = extractRobbingStaminaCost("You need 98 stamina to search the property.");
+//alert(txt);
 
 
 //test();
@@ -116,6 +118,7 @@ function start() {
                 }
             }
             if (configMRObj.robbing.enabled){
+                goToHomePage();
                 doRobbing();
             }
             if (configMRObj.storyEvent.enabled){
@@ -1138,6 +1141,13 @@ function restartStory(){
     obj.storyEvent.restart = false;
     configMRObj = obj;
     writeMRObject(obj, MR.MR_CONFIG_FILE);
+}
+
+function goToHomePage(){
+    var retCode = initAndCheckScript(COMMON_FOLDER, "30_Home.iim", "33_Home_Test.iim","feed", "STORY", "init Home");
+    if (retCode != SUCCESS) {
+            logV2(WARNING, "HOME", "Problem Going to home page");
+    }
 }
 
 function startStoryEvent(){
@@ -2280,11 +2290,12 @@ function doLevelUpJobV2(resourceType){
 }
 
 function doRobbing(){
+    //LOG_DEBUG = true;
     var retCode = initRobbing();
     if (retCode == SUCCESS) {
         do {
             var status = checkStatusRobbing();
-            logV2(INFO, "ROBBING", "status:" + status);
+            logV2(DEBUG, "ROBBING", "status:" + status);
             switch (status) {
                 case JOBCONSTANTS.ROBBING.CHOOSE_PROPERTY:
                     retCode = chooseProperty();
@@ -2292,7 +2303,7 @@ function doRobbing(){
                 case JOBCONSTANTS.ROBBING.START:
                     retCode = startRobbing();
                     if (retCode == JOBCONSTANTS.ROBBING.NOSTAMINA) {
-                        return retCode;
+                        status = JOBCONSTANTS.ROBBING.END;
                     }
                     break;
 
@@ -2323,13 +2334,13 @@ function initRobbing(){
 }
 
 function checkStatusRobbing(){
-    logV2(WARNING, "INFO", "checkStatusRobbing");
+    logV2(DEBUG, "INFO", "checkStatusRobbing");
     var retCode = playMacro(JOB_FOLDER, "62_Robbing_Status.iim", MACRO_INFO_LOGGING);
     var status = JOBCONSTANTS.ROBBING.PROBLEM;
     if (retCode == SUCCESS) {
         var txt = getLastExtract(1, "Robbing Status", "Choose A");
         txt = txt.toUpperCase();
-        logV2(INFO, "ROBBING", txt);
+        logV2(DEBUG, "ROBBING", txt);
         if (txt.startsWith("CHOOSE A")){
             status = JOBCONSTANTS.ROBBING.CHOOSE_PROPERTY;
         }
@@ -2337,23 +2348,11 @@ function checkStatusRobbing(){
             || txt.startsWith("COFFEE")){
             status = JOBCONSTANTS.ROBBING.START;
         }
-        else if (txt.startsWith("SUCCESSFUL")){
-            status = JOBCONSTANTS.ROBBING.SUCCESSFUL;
-            logV2(INFO, "SHAKEDOWN", "Successfull Takedown. Collect");
-            //alert("SUCCESSFUL Takedown");
-        }
         else if (txt.startsWith("ROBBERY COMPLETE")){
             status = JOBCONSTANTS.ROBBING.FINISHED;
             logV2(INFO, "ROBBING", "ROBBERY COMPLETE");
             collectRobbingStep2();
-            //closePopup();
         }
-        else if (txt.startsWith("EVENT COMPLETE")){
-            status = JOBCONSTANTS.ROBBING.FINISHED;
-            logV2(INFO, "SHAKEDOWN", "Completed");
-            closePopup();
-        }
-
     }
     else {
         logV2(WARNING, "ROBBINH", "Problem initializing robbinh");
@@ -2371,99 +2370,119 @@ function chooseProperty(){
     if (retCode != SUCCESS){
         logV2(WARNING, "ROBBING", "Problem choosing property");
     }
-    logV2(INFO, "ROBBING", "Choose Property - retCode: " + retCode);
+    logV2(DEBUG, "ROBBING", "Choose Property - retCode: " + retCode);
     return retCode;
 }
 
 function checkRobbing(){
-    logV2(INFO, "ROBBING", "checkRobbing");
+    logV2(DEBUG, "ROBBING", "checkRobbing");
     var retCode = playMacro(JOB_FOLDER, "67_Robbing_RobMessage.iim", MACRO_INFO_LOGGING);
     var status = JOBCONSTANTS.ROBBING.PROBLEM;
     if (retCode == SUCCESS) {
         var txt = getLastExtract(1, "Robbing Message", "Seach the property for cash and loot.");
         txt = txt.toUpperCase();
-        logV2(INFO, "ROBBING", "Check Robbing message: " + txt);
+        logV2(DEBUG, "ROBBING", "Check Robbing message: " + txt);
         if (txt.startsWith("SEACH") || txt.startsWith("SEACRH")){
-            status = JOBCONSTANTS.ROBBING.DOJOB;
-            doRobbingJob();
+            status = doRobbingJob();
         }
         else if (txt.startsWith("YOU SPENT")){
-            status = JOBCONSTANTS.ROBBING.START;
-            var ret = doRobbingJob();
-            if (ret != SUCCESS){
-                status = JOBCONSTANTS.ROBBING.FINISHED;
-                collectRobbing();
-                alert("COLLECT");
-            }
+            status = doRobbingJob();
+        }
+        else if (txt.startsWith("YOU NEED")){
+            status = JOBCONSTANTS.ROBBING.NOSTAMINA;
+            logV2(INFO, "ROBBING", "Not Enough Stamina");
         }
         else if (txt.startsWith("YOU FINISHED")){
             status = JOBCONSTANTS.ROBBING.FINISHED;
             logV2(INFO, "ROBBING", "Finished. Collect");
             collectRobbing();
-            alert("COLLECT");
         }
-        else if (txt.startsWith("THERE ARE COPS")){
-            status = JOBCONSTANTS.ROBBING.FINISHED;
-            logV2(INFO, "SHAKEDOWN", "There Are Cops Patrolling (maxed)");
-            closePopup();
-        }
-        else if (txt.startsWith("EVENT COMPLETE")){
-            status = JOBCONSTANTS.ROBBING.FINISHED;
-            logV2(INFO, "SHAKEDOWN", "Completed");
-            closePopup();
-        }
-
     }
     else {
         logV2(WARNING, "ROBBING", "Problem initializing robbing");
     }
+    logV2(DEBUG, "ROBBING", "checkRobbing exit: " + status);
     return status;
 }
 
 function startRobbing(){
-    logV2(INFO, "ROBBING", "Start Robbing");
+    logV2(DEBUG, "ROBBING", "Start Robbing");
     var staminaObj = null;
     var retCode = -1;
     var firstHeal = true;
     var victimHealth =  0;
-    status = JOBCONSTANTS.ROBBING.START;
+    var exitLoop = false;
+    var status = JOBCONSTANTS.ROBBING.START;
     do {
         staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, STOP_SCRIPT);
-        if (staminaObj.leftOver >= 200) {
-            status = checkRobbing();
-
-            /*
-            playMacro(JOB_FOLDER, "106_Shakedown_Attack.iim", MACRO_INFO_LOGGING);
-            var victimHealth = getVictimHealth(null, null);
-            if (victimHealth == 0){
-                logV2(INFO, "ROBBING", "Opponent is iced");
-                retCode = playMacro(JOB_FOLDER, "107_Shakedown_Continue.iim", MACRO_INFO_LOGGING);
-                if (retCode != SUCCESS){
-                    logV2(WARNING, "SHAKEDOWN", "Problem with Continue");
-                }
-                retCode = SUCCESS;
-            }*/
+        status = checkRobbing();
+        logV2(DEBUG, "ROBBING", "startRobbing status: " + status);
+        if (status == JOBCONSTANTS.ROBBING.FINISHED || status == JOBCONSTANTS.ROBBING.NOSTAMINA){
+            exitLoop = true;
         }
-        else {
-            logV2(INFO, "ROBBING", "Not Enough stamina");
-            retCode =  JOBCONSTANTS.ROBBING.NOSTAMINA;
-            break;
-        }
+        logV2(DEBUG, "ROBBING", "exitLoop: " + exitLoop);
     }
-    while (status != JOBCONSTANTS.ROBBING.FINISHED);
-    return retCode;
+    while (!exitLoop);
+    logV2(DEBUG, "ROBBING", "exit startRobbing: " + status);
+    return status;
 }
 
 function doRobbingJob(){
-    var retCode = playMacro(JOB_FOLDER, "66_Robbing_Search.iim", MACRO_INFO_LOGGING);
-    if (retCode != SUCCESS){
-        logV2(INFO, "ROBBING", "Robbing completed or there was a problem");
+    var status = JOBCONSTANTS.ROBBING.START;
+    logV2(DEBUG, "ROBBING", "globalSettings.robbingStaminaCost: " + globalSettings.robbingStaminaCost);
+    var staminaObj = getStaminaForFighting(configMRObj.global.stopWhenStaminaBelow, STOP_SCRIPT);
+    if (globalSettings.robbingStaminaCost == null || globalSettings.robbingStaminaCost <= staminaObj.leftOver){
+        var retCode = playMacro(JOB_FOLDER, "66_Robbing_Search.iim", MACRO_INFO_LOGGING);
+        if (retCode != SUCCESS){
+            logV2(INFO, "ROBBING", "Robbing completed or there was a problem");
+            status = JOBCONSTANTS.ROBBING.FINISHED;
+            collectRobbing();
+        }
+        else {
+            if (globalSettings.robbingStaminaCost == null){
+                logV2(INFO, "ROBBING", "Getting Robbing Stamina cost");
+                doRobbingStaminaCost("71_Robbing_StaminaCost.iim");
+            }
+            if (globalSettings.robbingStaminaCost == null){
+                logV2(INFO, "ROBBING", "Getting Robbing Stamina cost V2");
+                doRobbingStaminaCost("70_Robbing_StaminaWarning.iim");
+            }
+        }
     }
-    return retCode;
+    else {
+        logV2(INFO, "ROBBING", "Not enough stamina: needed: " + globalSettings.robbingStaminaCost);
+        status = JOBCONSTANTS.ROBBING.NOSTAMINA;
+    }
+    logV2(DEBUG, "ROBBING", "exit doRobbingJob: " + status);
+    return status;
+}
+
+function doRobbingStaminaCost(macroName){
+    var retCode = playMacro(JOB_FOLDER, macroName, MACRO_INFO_LOGGING);
+    if (retCode == SUCCESS){
+        var txt = getLastExtract(1, "Robbing Stamina Warning", "You need 98 stamina to search the property.");
+        if (!isNullOrBlank(txt)) {
+            var stamina = extractRobbingStaminaCost(txt);
+            if (stamina != null) {
+                globalSettings.robbingStaminaCost = parseInt(stamina);
+                logV2(INFO, "ROBBING", "Stamina Cost: " + stamina);
+            }
+        }
+    }
+}
+
+function extractRobbingStaminaCost(text){
+    var regExp = "You (?:.*) ([0-9]{1,10}) (?:stamina|searching)(?:.*)";
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return matches[matches.length-1];
+    }
+    return null;
 }
 
 function collectRobbing(){
     var retCode = playMacro(JOB_FOLDER, "68_Robbing_Collect.iim", MACRO_INFO_LOGGING);
+    logV2(INFO, "ROBBING", "Robbing collected - step 1");
     if (retCode != SUCCESS){
         logV2(ERROR, "ROBBING", "There was a problem collecting from property");
     }
@@ -2476,6 +2495,7 @@ function collectRobbing(){
 
 function collectRobbingStep2(){
     var retCode = playMacro(JOB_FOLDER, "69_Robbing_Collect2.iim", MACRO_INFO_LOGGING);
+    logV2(INFO, "ROBBING", "Robbing collected - step 2");
     if (retCode != SUCCESS){
         logV2(ERROR, "ROBBING", "There was a problem with step 2 for collecting from property");
     }
