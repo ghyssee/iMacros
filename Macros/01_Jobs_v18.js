@@ -2290,7 +2290,7 @@ function doLevelUpJobV2(resourceType){
 }
 
 function doRobbing(){
-    //LOG_DEBUG = true;
+    LOG_DEBUG = true;
     var retCode = initRobbing();
     if (retCode == SUCCESS) {
         do {
@@ -2317,7 +2317,7 @@ function doRobbing(){
             }
         }
         while (status != JOBCONSTANTS.ROBBING.END);
-        var closed = closePopupByText("Loot Bag");
+        var closed = closePopupByTextV2("Stolen Goods");
         if (!closed) {
             logV2(WARNING, "ROBBING", "Problem Closing Robbing Screen");
         }
@@ -2345,8 +2345,13 @@ function checkStatusRobbing(){
             status = JOBCONSTANTS.ROBBING.CHOOSE_PROPERTY;
         }
         else if (txt.startsWith("POOL")
-            || txt.startsWith("COFFEE")){
+            || txt.startsWith("COFFEE")
+            || txt.startsWith("GENERAL")
+        ){
             status = JOBCONSTANTS.ROBBING.START;
+        }
+        if (txt.startsWith("THERE ARE COPS")){
+            status = JOBCONSTANTS.ROBBING.END;
         }
         else if (txt.startsWith("ROBBERY COMPLETE")){
             status = JOBCONSTANTS.ROBBING.FINISHED;
