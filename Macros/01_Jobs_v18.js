@@ -2409,8 +2409,6 @@ function startRobbing(){
     logV2(DEBUG, "ROBBING", "Start Robbing");
     var staminaObj = null;
     var retCode = -1;
-    var firstHeal = true;
-    var victimHealth =  0;
     var exitLoop = false;
     var status = JOBCONSTANTS.ROBBING.START;
     do {
