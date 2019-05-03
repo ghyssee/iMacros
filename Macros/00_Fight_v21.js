@@ -764,8 +764,8 @@ function extractRivalMobster(){
     var retCode = goToFightPage();
     if (retCode == SUCCESS) {
         if (configMRObj.fight.wiseguy){
-            logV2(INFO, "FIGHT", "Wiseguy Name:" + configMRObj.fight.wiseguyName);
-            addMacroSetting("NAME", configMRObj.fight.wiseguyName, ENABLE_LOGGING);
+            logV2(INFO, "FIGHT", "Wiseguy Name:" + settingsObj.fighting.riva);
+            addMacroSetting("NAME", settingsObj.fighting.rival, ENABLE_LOGGING);
             retCode = playMacro(FIGHT_FOLDER, "24_Extract_WiseGuy.iim", MACRO_INFO_LOGGING);
             if (retCode == SUCCESS) {
                 var msg = getLastExtract(1, "Wiseguy");

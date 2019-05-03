@@ -2344,9 +2344,7 @@ function checkStatusRobbing(){
         if (txt.startsWith("CHOOSE A")){
             status = JOBCONSTANTS.ROBBING.CHOOSE_PROPERTY;
         }
-        else if (txt.startsWith("POOL")
-            || txt.startsWith("COFFEE")
-            || txt.startsWith("GENERAL")
+        else if (isRobbingProperty(txt)
         ){
             status = JOBCONSTANTS.ROBBING.START;
         }
@@ -2503,4 +2501,19 @@ function collectRobbingStep2(){
         logV2(ERROR, "ROBBING", "There was a problem with step 2 for collecting from property");
     }
     return retCode;
+}
+
+function isRobbingProperty(text){
+    var ret = false;
+    if (!isNullOrBlank(settingsObj.robbing.properties)){
+        var items = settingsObj.robbing.properties.toUpperCase().split(";");
+        for (var i=0; i < items.length; i++){
+            logV2(DEBUG, "ROBBING", "Property to check: " + text + " / Property Item: " + items[i]);
+            if (text.startsWith(items[i])){
+                ret = true;
+                break;
+            }
+        }
+    }
+    return ret;
 }
