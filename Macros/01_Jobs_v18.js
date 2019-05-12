@@ -2344,11 +2344,7 @@ function checkStatusRobbing(){
         if (txt.startsWith("CHOOSE A")){
             status = JOBCONSTANTS.ROBBING.CHOOSE_PROPERTY;
         }
-<<<<<<< HEAD
-        else if (txt.startsWith("POOL") || txt.startsWith("COFFEE") || txt.startsWith("GENERAL")
-=======
         else if (isRobbingProperty(txt)
->>>>>>> 5686224e424a208a01767f96c44c4b4a3ee65113
         ){
             status = JOBCONSTANTS.ROBBING.START;
         }
