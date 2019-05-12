@@ -206,7 +206,7 @@ function macroPlay(macroName, logError, onErrorRetry, logging){
 			throw new UserCancelError();
 		}
 		if (ret != 1 && (logError == null || logError == true)){
-			log("ERROR: (" + ret + ") retries = " + retries + " " + iimGetLastError(1));
+            logV2(ERROR, "PLAY", "Problem: (" + ret + ") retries = " + retries + " " + iimGetLastError(1));
 		}
 		if (ret == 1 || ret == -933){
 			ok = true;
