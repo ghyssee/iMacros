@@ -2343,7 +2343,7 @@ function checkStatusRobbing(){
         logV2(DEBUG, "ROBBING", txt);
         if (txt.startsWith("CHOOSE A")){
             status = JOBCONSTANTS.ROBBING.CHOOSE_PROPERTY;
-        }
+       }
         else if (isRobbingProperty(txt)
         ){
             status = JOBCONSTANTS.ROBBING.START;
