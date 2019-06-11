@@ -28,14 +28,16 @@ checkMRProperties(MR.MR_ASSASSIN_FILE);
 //checkKills(MR.MR_KILLS_FILE);
 
 /*
-checkFightersFile("01");
-checkFightersFile("02");
-checkFightersFile("03");
+checkFightersFile(MR.MR_FIGHTERS_FILE, "01");
+checkFightersFile(MR.MR_FIGHTERS_FILE, "02");
+checkFightersFile(MR.MR_FIGHTERS_FILE, "03");
 */
 
-function checkFightersFile(profile){
-    var file = getMRFileById(MR.MR_FIGHTERS_FILE, profile);
+function checkFightersFile(file, profile){
+    logV2(INFO, "INIT", "checkFightersFile: " + file + " for profile: " + profile);
+    var file = getMRFileById(file, profile);
     var fighterObj = initObject(file);
+    var update = false;
     fighterObj.fighters.forEach( function (fighter)
     {
         if (fighter.name.startsWith("<h2 style")){
@@ -44,17 +46,22 @@ function checkFightersFile(profile){
             if (name != null) {
                 logV2(INFO, "INIT", "New Fighter name V1: " + name);
                 fighter.name = name;
+                update = true;
                 return;
             }
             name = extractFighterNameV2(fighter.name);
             if (name != null) {
                 logV2(INFO, "INIT", "New Fighter name V2: " + name);
                 fighter.name = name;
+                update = true;
                 return;
             }
         }
     });
-    writeObject(fighterObj, file);
+    if (update){
+        logV2(INFO, "INIT", "Update file: " + file);
+        writeObject(fighterObj, file);
+    }
 
 }
 

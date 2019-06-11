@@ -13,7 +13,7 @@ eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 // Script to update player info from fighters / friends / fightersToExclude
 
-var LOW_LEVEL = 400;
+var LOW_LEVEL = 1000;
 var localConfigObject = null;
 setMRPath("MRCheckPlayers");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
@@ -37,13 +37,14 @@ startScript();
 
 function startScript(){
     var currDate = new Date();
-    currDate = dateAdd(currDate, -5, "days");
+    currDate = dateAdd(currDate, -30, "days");
     var currentTime = formatDateToYYYYMMDDHHMISS(currDate);
     logV2(INFO, "UPDATEFIGHTER", "Last Updated Time: " + currentTime);
     try {
         startMafiaReloaded();
-        checkFighters(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.STRONGER);
-        //checkFighters(fighterObj, MR.MR_FIGHTERS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK);
+        //checkFighters(friendObj, MR.MR_FRIENDS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.FRIEND);
+        //checkFighters(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.OPPONENT);
+        checkFighters(fighterObj, MR.MR_FIGHTERS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK);
     }
     catch (ex) {
         if (ex instanceof UserCancelError){
@@ -70,7 +71,7 @@ function checkFighters(obj, file, currentTime, fighterType){
         iimDisplay(i + "/" + length);
         if (updatePlayerInfo(obj, file, fighter, currentTime, fighterType)){
             counter++;
-            if ((counter % 50) == 0){
+            if ((counter % 10) == 0){
                 logV2(INFO, "UPDATEFIGHTER", "File Updated");
                 writeMRObject(obj, file);
             }
@@ -83,9 +84,10 @@ function updatePlayerInfo(obj, file, fighter, currentTime, fighterType){
 
     var updated = false;
     if (propertyExistAndNotNull(fighter, "lastChecked") && currentTime.substring(0,8) <= fighter.lastChecked.substring(0,8)){
-        //logV2(INFO, "UPDATEPLAYER", "Skipping. Already updated today");
+        //logV2(INFO, "UPDATEPLAYER", "Skipping " + fighter.id + ". Already updated recently");
     }
     else {
+        var oldFighter = JSON.parse(JSON.stringify(fighter));
         logV2(INFO, "UPDATEPLAYER", "Update Player Info: " + fighter.id);
         updated = true;
         goToProfilePage(fighter);
@@ -106,6 +108,12 @@ function updatePlayerInfo(obj, file, fighter, currentTime, fighterType){
         if (fighter.level <= LOW_LEVEL && fighterType != FIGHTERCONSTANTS.FIGHTERSTATUS.FRIEND){
             logV2(INFO, "UPDATEPLAYER", "Remove Low Level Player: " + fighter.level);
             removeItemFromArray(file, obj, fighter.id);
+        }
+        else if (oldFighter.level == fighter.level){
+            logHeader(INFO, "UPDATEPLAYER", "Player not leveled last " + "30" + " days: " + fighter.id + " " + fighter.name);
+            fighter.lastChecked = oldFighter.lastChecked;
+            updated = false;
+
         }
         logV2(INFO, "UPDATEPLAYER", "=".repeat(100));
     }

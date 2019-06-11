@@ -29,17 +29,16 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "skippedHealth": 0, "maxHealed": 0, "heals": 0, "stopOnLevelUp": false, "expReached": false,
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
-//startScript();
-extractGangInfo();
+startScript();
+//extractGangInfo();
 //var tmp = extractProfileFighterName("<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\">Kimie</h2>");
 //alert(tmp);
 //checkIfFriend();
 
 function startScript(){
-    if (configMRObj.war.gangId != null) {
         try {
             startMafiaReloaded();
-            getGangInfo(configMRObj.war.gangId);
+            getGangInfo("8281861");
         }
         catch (ex) {
             if (ex instanceof UserCancelError) {
@@ -54,16 +53,12 @@ function startScript(){
                 logError(ex);
             }
         }
-    }
-    else {
-        alert("No Gang Id Defined in config file");
-    }
 }
 
 function getGangInfo(gangId){
 
     logV2(INFO, "GANGINFO", "Get gang Info: " + gangId);
-    if (goToGangPage(fighter) == SUCCESS){
+    if (goToGangPage(gangId) == SUCCESS){
         extractGangInfo();
     }
 }
@@ -98,7 +93,7 @@ function processFightLine(txt, pageType){
 }
 
 function isFriend(text){
-    var regExp = ">Remove Friend</a>(?:.*)";
+    var regExp = ">You cannot attack<br>your friends</span>(?:.*)";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         return true;
@@ -159,7 +154,9 @@ function extractGangInfo(){
                         }
                         else {
                             logV2(INFO, "GANGINFO", "Adding Player " + fightObj.id + " " + fightObj.name);
+                            fighterObj.fighters.push(fightObj);
                             logObj(INFO, "GANGINFO", fightObj);
+                            save = true;
                         }
                     }
                     else {
@@ -175,7 +172,10 @@ function extractGangInfo(){
     }
     while (retCode == SUCCESS);
     if (save) {
+        logV2(INFO, "GANGINFO", "Updating files");
         writeMRObject(friendObj, MR.MR_FRIENDS_FILE);
+        writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
+        logV2(INFO, "GANGINFO", "Finished Updating files");
     }
 }
 
