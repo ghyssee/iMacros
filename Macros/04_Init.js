@@ -1,6 +1,11 @@
 // 788
 var ONEDRIVEPATH = getOneDrivePath();
 var MACROS_PATH = getMacrosPath();
+
+var DATATYPE_STRING = "string";
+var DATATYPE_INT    = "number";
+var DATATYPE_BOOLEAN= "boolean";
+
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.5.js"));
@@ -17,13 +22,17 @@ var LAST_ATTACKED = "201901";
 init();
 // debugging start of line 171
 
-setProfile();
-setNode();
-setAssassinProfile();
+//setProfile();
+//setNode();
+//setAssassinProfile();
 setAssassinAutoHeal();
+/*
 checkMRProperties(MR.MR_CONFIG_FILE);
 checkMRProperties(MR.MR_TEMP_SETTINGS_FILE);
 checkMRProperties(MR.MR_ASSASSIN_FILE);
+*/
+
+
 //addFightersOfMini(MR.MR_FIGHTERS_FILE);
 //checkKills(MR.MR_KILLS_FILE);
 
@@ -267,10 +276,7 @@ function setNode(){
 
 function setAssassinAutoHeal(){
     logV2(INFO, "INIT", "Mafia Reloaded Set Assassin Profile");
-    var autoHeal = getFirefoxSetting(MR_BRANCH_ASSASSIN,  MR_ASSASSIN_AUTOHEAL);
-    if (isNullOrBlank(autoHeal)){
-        autoHeal = "";
-    }
+    var autoHeal = getFirefoxSetting(MR_BRANCH_ASSASSIN,  MR_ASSASSIN_AUTOHEAL, DATATYPE_STRING);
     var clear = false;
     var inputTxt = prompt("Set AutoHeal (Allowed Values: true, false. Any other value will clear this setting", autoHeal);
     if (inputTxt == null) {
@@ -410,10 +416,28 @@ function getMacrosPath(){
     return value;
 }
 
-function getFirefoxSetting(branch, key){
+
+function getFirefoxSetting(branch, key, type){
 
     var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch(branch);
-
-    var value = prefs.getCharPref(key, Components.interfaces.nsISupportsString);
+    if (type == null){
+      type = DATATYPE_STRING;
+    }
+    var value = null;
+    try {
+        switch (type) {
+            case DATATYPE_STRING:
+                value = prefs.getCharPref(key, Components.interfaces.nsISupportsString);
+                break;
+            case DATATYPE_INT:
+                value = prefs.getIntPref(key, Components.interfaces.nsISupportsString);
+                break;
+            case DATATYPE_BOOLEAN:
+                value = prefs.getBoolPref(key, Components.interfaces.nsISupportsString);
+                alert(value);
+                break;
+        }
+    }
+    catch (err) { } // key not found
     return value;
 }

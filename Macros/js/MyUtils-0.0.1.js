@@ -280,13 +280,13 @@ function getFirefoxSetting(branch, key, type){
 	try {
 		switch (type) {
 			case DATATYPE_STRING:
-				value = prefs.getCharPref(key, Components.interfaces.nsISupportsString);
+				value = prefs.getCharPref(key, "");
 				break;
 			case DATATYPE_INT:
-				value = prefs.getIntPref(key, Components.interfaces.nsISupportsString);
+				value = prefs.getIntPref(key, 0);
 				break;
 			case DATATYPE_BOOLEAN:
-				value = prefs.getBoolPref(key, Components.interfaces.nsISupportsString);
+				value = prefs.getBoolPref(key, false);
 				break;
 		}
 	}
