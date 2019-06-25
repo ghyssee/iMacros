@@ -241,6 +241,27 @@ function isAllyGang(list, gangId){
     return found;
 }
 
+function isAlly(list, fighter){
+    var found = false;
+    if (propertyExistAndNotNull(fighter, "gangId")) {
+        for (var i = 0; i < list.length; i++) {
+            var gangObj = list[i];
+            if (gangObj.active) {
+                if (gangObj.id == fighter.gangId) {
+                    found = true;
+                    break;
+                }
+                if (propertyExistAndNotNull(gangObj, "whiteTag") && contains(fighter.name, gangObj.whiteTag)){
+                    logV2(INFO, "Friendly White Tagged Player: " + fighter.id + " " + fighter.name);
+                    found = true;
+                    break;
+                }
+            }
+        }
+    }
+    return found;
+}
+
 function getHomeFeedObj(time, feed){
     var obj = {"timeMsg": time, "feedMsg": feed, "timeStamp": null, "currentTime": null, "name": null, "fighterId": null,
         "gangId": null, "gangName": null, "id":UUID()};

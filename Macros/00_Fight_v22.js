@@ -13,6 +13,7 @@ eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 var localConfigObject = null;
 setMRPath("MRFight");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
+var WAR_ENABLED = true;
 
 init();
 
@@ -26,7 +27,7 @@ var profileObj = initObject(MR_PROFILE_FILE);
 
 var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 0, "nrOfAttacks": 0, "stolenIces": 0,
     "skippedHealth": 0, "maxHealed": 0, "heals": 0, "stopOnLevelUp": false, "expReached": false,
-    "forceHealing": false, "profile": getProfileObject((getProfile())),
+    "forceHealing": false, "profile": getProfileObject((getProfile())), "firstAttackForWar" : true,
     "boss": {"attacks": 0}};
 createFightersIndexedArray();
 var warList = getListOfFightersForWar();
@@ -50,6 +51,7 @@ startScript();
 CheckHomefeedWhileWaiting();
 //doDowntownShakedown();
 //test();
+
 //CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 
@@ -1411,7 +1413,7 @@ function getFirefoxSetting(branch, key){
 }
 
 function removeItemFromArray(file, id){
-    logV2(INFO, "FIGHT", "Remove player " + fighter.id + " " + fighter.name);
+    logV2(INFO, "FIGHT", "Remove player " + id);
     var index = -1;
     for (var i=0; i < fighterObj.fighters.length; i++){
         var item = fighterObj.fighters[i];
@@ -1430,7 +1432,7 @@ function removeItemFromArray(file, id){
 
 function startNormalAttack(fighters){
     logV2(INFO, "FIGHT", "Start Fight List Using Profile Page");
-    status = profileAttack(fighters, FIGHTERCONSTANTS.FIGHTERTPE.NORMALPROFILE);
+    status = profileAttack(fighters, FIGHTERCONSTANTS.FIGHTERTPE.NORMALPROFILE, !WAR_ENABLED);
     return status;
 }
 
@@ -1468,7 +1470,7 @@ function homeFeedAttack(){
         });
 
         logV2(INFO, "FIGHT", "Nr of Homefeed Fighters Found: " + list.length);
-        var status = profileAttack(list, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE);
+        var status = profileAttack(list, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE, !WAR_ENABLED);
     }
     return status;
 }
@@ -1477,17 +1479,19 @@ function startWarAttack(warList){
 
     var number = Math.floor(Math.random() * 10) + 1;
     var filteredArray = warList;
-    if (number < 7){
+    if (!globalSettings.firstAttackForWar && number < 7) {
         filteredArray = getWarAliveTargets(warList);
     }
-    if (filteredArray.length < 1){
+    globalSettings.firstAttackForWar = false;
+
+    if (filteredArray.length < 2){
         logV2(INFO, "FIGHT", "Not enough alive targets. Check full list");
         filteredArray = warList;
     }
     filteredArray = shuffle(filteredArray);
     logHeader(INFO, "FIGHT", "War Attack", "*");
     logV2(INFO, "FIGHT", "Number of players found: " + filteredArray.length);
-    status = profileAttack(filteredArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE);
+    status = profileAttack(filteredArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE, WAR_ENABLED);
     //logObj(INFO, "WAR", warList);
     return status;
 }
@@ -1519,7 +1523,7 @@ function startProfileAttack(){
     logV2(INFO, "FIGHT", "Random End Position: " + max);
     var newArray = fighterObj.fighters.slice(start, max);
     newArray = filterFightList(newArray);
-    status = profileAttack(newArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE);
+    status = profileAttack(newArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE, !WAR_ENABLED);
     return status;
 }
 
@@ -1544,7 +1548,7 @@ function startProfileAttackRecentlyIced(){
             filteredArray.push(fighter);
         }
     });
-    status = profileAttack(filteredArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE);
+    status = profileAttack(filteredArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE, !WAR_ENABLED);
     return status;
 }
 
@@ -1568,14 +1572,17 @@ function checkForPlayerinfoToUpdate(fighter){
     return chk;
 }
 
-function profileAttack(array, fighterType){
+function profileAttack(array, fighterType, isWarEnabled){
     var exitLoop = false;
     var status = FIGHTERCONSTANTS.ATTACKSTATUS.OK;
     if (!configMRObj.fight.profileAttack){
         logV2(INFO, "FIGHT", "Profile Attack is disabled!");
         return status;
     }
-    var filteredArray = filterProfile(array);
+    var filteredArray = array;
+    if (!isWarEnabled) {
+        filteredArray = filterProfile(array);
+    }
     logV2(INFO, "FIGHT", "Profile Fighting: Nr Of Players: " + filteredArray.length);
     // start backwards, because a player can be removed (friend, stronger opponent)
     var length = filteredArray.length;
