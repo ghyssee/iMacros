@@ -83,11 +83,15 @@ function processTrack(albumObject, track, realTrack){
     }
     else {
         var trackObject = getTrackDiscogs(pos);
+        if (trackObject == null){
+        	return false;
+		}
         songObject.track = trackObject.track;
         songObject.cd = trackObject.cd;
         albumObject.ignoreTrack = trackObject.ignore;
         albumObject.total = trackObject.cd;
     }
+    	//alert(JSON.stringify(albumObject));
 	songObject.artist = getArtistDiscogs(pos);
 	if (isNullOrBlank(songObject.artist)){
 		songObject.artist = albumObject.albumArtist;
@@ -124,7 +128,7 @@ function getTrackDiscogs(pos){
 	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
 	if (retCode == 1){
         track = iimGetLastExtract(1);
-		if (!isNullOrBlank(track)){
+        if (!isNullOrBlank(track)){
 			if (track.indexOf("-") >= 0){
 				var trackInfo = track.split("-");
 				trackObject.track = trackInfo[1];
@@ -135,8 +139,7 @@ function getTrackDiscogs(pos){
 			}
 		}
 		else {
-			trackObject.track = pos.toString();
-            trackObject.ignore = true;
+			trackObject = null;
 		}
 	}
 	return trackObject;
