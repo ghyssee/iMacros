@@ -145,7 +145,7 @@ function getListOfFightersForWar(){
                 logV2(INFO, "FIGHTWAR", "Added White Tag Player: " + logPlayer);
             }
             if (add) {
-                if (isAllyGang(friendObj.gangs, fighter.gangId)) {
+                if (isAlly(friendObj.gangs, fighter)) {
                     logV2(INFO, "FIGHTWAR", "Ally Gang: " + logPlayer);
                 }
                 else {
@@ -1180,7 +1180,7 @@ function getFightList(){
                 object.gangId = gangObj.id;
                 object.gangName = gangObj.name;
                 object.lastChecked = formatDateToYYYYMMDDHHMISS();
-                if (isAllyGang(friendObj.gangs, object.gangId)) {
+                if (isAlly(friendObj.gangs, object)) {
                     logV2(INFO, "FIGHT", "Prefiltered: Is Ally Gang");
                     logObj(INFO, "FIGHT", object);
                 }
@@ -1282,7 +1282,7 @@ function filterFightList(fightList){
             else if (fighter.level > maxLevel) {
                 logV2(INFO, "FIGHTLIST_FILTER", "High Level: " + fighter.id + " / Level: " + fighter.level);
             }
-            else if (isAllyGang(friendObj.gangs, fighter.gangId)){
+            else if (isAlly(friendObj.gangs, fighter)){
                 logV2(INFO, "FIGHTLIST_FILTER", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
             }
             else {
@@ -1300,7 +1300,7 @@ function filterProfile(array){
         var item = array[i];
         if (isAlreadyKilledToday(item)) {
         }
-        else if (isAllyGang(friendObj.gangs, item.gangId)){
+        else if (isAlly(friendObj.gangs, item)){
             logV2(INFO, "FILTER_PROFILE", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
         }
         else if (item.level >= 0 && item.level < configMRObj.fight.minLevel && !checkForPlayerinfoToUpdate(item)){
