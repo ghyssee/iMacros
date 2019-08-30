@@ -13,7 +13,7 @@ eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 // Script to update player info from fighters / friends / fightersToExclude
 
-var LOW_LEVEL = 1000;
+var LOW_LEVEL = 2000;
 var localConfigObject = null;
 setMRPath("MRCheckPlayers");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
@@ -44,7 +44,9 @@ function startScript(){
         startMafiaReloaded();
         //checkFighters(friendObj, MR.MR_FRIENDS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.FRIEND);
         //checkFighters(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.OPPONENT);
-        checkFighters(fighterObj, MR.MR_FIGHTERS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK);
+        //checkFighters(fighterObj, MR.MR_FIGHTERS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK);
+        cleanupDeleteCandidates(fighterObj, MR.MR_FIGHTERS_FILE);
+        //cleanupDeleteCandidates(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE);
     }
     catch (ex) {
         if (ex instanceof UserCancelError){
@@ -58,6 +60,26 @@ function startScript(){
             logError(ex);
         }
     }
+}
+
+function cleanupDeleteCandidates(obj, file){
+    logV2(INFO, "UPDATEFIGHTER", "Cleanup Delete Candidates");
+    var save = false;
+    var counter = 0;
+    var length = obj.fighters.length;
+    for (var pos = length-1; pos>=0; pos--){
+        var fighter = obj.fighters[pos];
+        if (propertyExistAndEqualTo(fighter, "candidateForDelete", true)){
+            save = true;
+            counter++;
+            removeItemFromArray(file, obj, fighter.id);
+        }
+    };
+    logV2(INFO, "UPDATEFIGHTER", "Total Deleted: " + counter);
+    if (save) {
+        writeMRObject(obj, file);
+    }
+
 }
 
 function checkFighters(obj, file, currentTime, fighterType){
@@ -110,9 +132,10 @@ function updatePlayerInfo(obj, file, fighter, currentTime, fighterType){
             removeItemFromArray(file, obj, fighter.id);
         }
         else if (oldFighter.level == fighter.level){
-            logHeader(INFO, "UPDATEPLAYER", "Player not leveled last " + "30" + " days: " + fighter.id + " " + fighter.name);
+            logHeader(INFO, "UPDATEPLAYER", "Player not leveled recently: " + fighter.id + " " + fighter.name);
             fighter.lastChecked = oldFighter.lastChecked;
-            updated = false;
+            fighter.candidateForDelete = true;
+            updated = true;
 
         }
         logV2(INFO, "UPDATEPLAYER", "=".repeat(100));
