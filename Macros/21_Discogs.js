@@ -17,7 +17,6 @@ var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
 
 processAlbum();
 
-
 function processAlbum(){
 	
 	var retCode = simpleMacroPlayFolder("Discogs_01_GetAlbum.iim", MACRO_FOLDER);
@@ -171,9 +170,9 @@ function getExtraArtist(pos){
 		if (!isNullOrBlank(extraArtistHTML)){
 			var regex = /<blockquote>(.*)<\/blockquote>/;
 			var matches = extraArtistHTML.match(regex);
-			if (!isNullOrBlank(matches)){
+			if (matches != null){
 				logV2(DEBUG, "MP3", "Match " + matches[0]);
-			var strippedExtraArtistHTML = matches[0];
+				var strippedExtraArtistHTML = matches[0];
 
 				var oDiv = window.content.document.createElement('div');
 				oDiv.innerHTML=strippedExtraArtistHTML;
