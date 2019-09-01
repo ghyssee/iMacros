@@ -46,7 +46,7 @@ function startScript(){
         //checkFighters(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.OPPONENT);
         //checkFighters(fighterObj, MR.MR_FIGHTERS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK);
         cleanupDeleteCandidates(fighterObj, MR.MR_FIGHTERS_FILE);
-        //cleanupDeleteCandidates(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE);
+        cleanupDeleteCandidates(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE);
     }
     catch (ex) {
         if (ex instanceof UserCancelError){

@@ -153,7 +153,7 @@ function getArtistDiscogs(pos){
 		artist = iimGetLastExtract(1);
 		if (!isNullOrBlank(artist)){
 			artist = artist.replace("–", "");
-            artist = artist.replace(/\([0-9]{1,2}\)/g, "");
+            artist = artist.replace(/\([0-9]{1,3}\)/g, "");
             artist = artist.replace(/\*$/, "");		}
 	}
 	return artist.trim();
