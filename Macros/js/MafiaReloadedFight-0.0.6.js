@@ -78,9 +78,10 @@ function unescape(text){
 }
 
 function extractFighterId(text){
-    var regExp = "CLASS=\"PRO\" DATA-ID=\"" + "([0-9]{1,30})\">";
+    //var regExp = "CLASS=\"PRO\" DATA-ID=\"" + "([0-9]{1,30})\">";
+    var regExp = "<a href=\"/game/player/([0-9]{1,30})\"";
     //var regExp = /id=([0-9]{1,30})"/;
-    text = text.toUpperCase();
+    text = text.toLowerCase();
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         return matches[matches.length-1];
@@ -89,7 +90,8 @@ function extractFighterId(text){
 }
 
 function extractFighterName(text){
-    var regExp = "class=\"pro\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
+    //var regExp = "class=\"pro\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
+    var regExp = "class=\"pro\">(.*)<\/a>(?:.*)";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         var name = unescape(matches[matches.length-1]);
@@ -131,7 +133,8 @@ function isFightingEventPlayer(text, ally){
 }
 
 function extractGangIdFromString(text){
-    var regExp = "class=\"tag\" data-id=\"" + "([0-9]{1,20})\">";
+    //var regExp = "class=\"tag\" data-id=\"" + "([0-9]{1,20})\">";
+    var regExp = "<a href=\"/game/gang/([0-9]{1,30})\"";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         return matches[matches.length-1];
@@ -140,7 +143,8 @@ function extractGangIdFromString(text){
 }
 
 function extractGangNameFromString(text){
-    var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
+    var regExp = "class=\"tag\">(.*)</a> <a href=";
+    //var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         var name = unescape(matches[matches.length-1]);
@@ -374,6 +378,7 @@ function getHomeFeed(configMRObj, homefeedObj){
     if (retCode == SUCCESS){
         for (var i=1; i <= configMRObj.homefeedLines; i++) {
             addMacroSetting("POS", i.toString());
+
             retCode = playMacro(COMMON_FOLDER, "31_HomeFeedLine.iim", MACRO_INFO_LOGGING);
             if (retCode == SUCCESS){
                 var timeMsg = getLastExtract(1, "Home Feed Time", "1 hour, 34 minutes ago:");
@@ -382,10 +387,10 @@ function getHomeFeed(configMRObj, homefeedObj){
                 var line = getHomeFeedObj(timeMsg, txtMsg);
                 //txtMsg = txtMsg.toLowerCase();
                 //var msg = originalMsg.toLowerCase();
-                var gangObj = extractGangInformation(originalMsg);
+                var gangObj = extractHomeGangInformation(originalMsg);
                 line.gangId = gangObj.id;
                 line.gangName = gangObj.name;
-                var fighterObj = extractFighterInformation(originalMsg);
+                var fighterObj = extractHomeFighterInformation(originalMsg);
                 if (fighterObj.id == null){
                     logV2(WARNING, "HOMEFEED", "Problem with homefeed line: " + originalMsg);
                     continue;
@@ -900,4 +905,64 @@ function extractFighterinfo(fighter){
 
 function findIndexedArray(indexedObj, id){
     return propertyExistAndNotNull(indexedObj, id);
+}
+
+function extractHomeGangInformation(text){
+    var gangObj = {id:null, name:null};
+    if (contains(text, "class=\"tag\"")){
+        gangObj.id = extractHomeGangIdFromString(text);
+        gangObj.name = extractHomeGangNameFromString(text);
+    }
+    return gangObj;
+}
+
+function extractHomeGangIdFromString(text){
+    //var regExp = "class=\"tag\" data-id=\"" + "([0-9]{1,20})\">";
+    var regExp = "<a href=\"/game/gang/([0-9]{1,30})\"";
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return matches[matches.length-1];
+    }
+    return text;
+}
+
+function extractHomeGangNameFromString(text){
+    var regExp = "class=\"tag\">(.*)</a> <a href=";
+    //var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        var name = unescape(matches[matches.length-1]);
+        return name.trim();
+    }
+    return unescape(text);
+}
+
+function extractHomeFighterId(text){
+//<div style="outline: 1px solid blue;">You were killed by <a href="/game/gang/3239260" class="tag">M+</a> <a href="/game/player/10209710235625552" class="pro">Riki</a>! Your cats sharpen their claws menacingly…</div>
+
+    var regExp = "<a href=\"/game/player/([0-9]{1,30})\"";
+    //var regExp = "CLASS=\"PRO\" DATA-ID=\"" + "([0-9]{1,30})\">";
+    text = text.toLowerCase();
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        return matches[matches.length-1];
+    }
+    return null;
+}
+
+function extractHomeFighterName(text){
+    var regExp = "class=\"pro\">(.*)<\/a>(?:.*)";
+    var matches = text.match(regExp);
+    if (matches != null && matches.length > 0){
+        var name = unescape(matches[matches.length-1]);
+        return name.trim();
+    }
+    return unescape(text);
+}
+
+function extractHomeFighterInformation(text){
+    var obj = {id:null, name:null};
+    obj.id = extractHomeFighterId(text);
+    obj.name = extractHomeFighterName(text);
+    return obj;
 }
