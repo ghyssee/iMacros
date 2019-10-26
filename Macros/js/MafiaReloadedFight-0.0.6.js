@@ -196,12 +196,12 @@ function getHealthV2(globalSettings){
             break;
         }
         if (counter > 1){
-            logV2(INFO, "HEALTH", "Health Retries: " + counter);
+            logV2(DEBUG, "HEALTH", "Health Retries: " + counter);
             dummyBank();
         }
     }
     while (counter <= 10 && (health == -1 || health == oldHealth));
-    logV2(INFO, "HEALTH", "oldHealth:" + oldHealth);
+    logV2(DEBUG, "HEALTH", "oldHealth:" + oldHealth);
     globalSettings.oldHealth = health;
     return health;
 }
@@ -223,7 +223,7 @@ function getHealthObj(){
 
 function heal(){
     var retCode = playMacro(FIGHT_FOLDER, "10_Heal.iim", MACRO_INFO_LOGGING);
-    logV2(INFO, "HEAL", "Healing...");
+    logV2(DEBUG, "HEAL", "Healing...");
     var healed = false;
     if (retCode == SUCCESS) {
         healed = closePopup();
@@ -622,6 +622,7 @@ function performAttackInit(fighterType){
             macro = "32_AttackRivalMobster_start.iim";
             break;
         case FIGHTERCONSTANTS.FIGHTERTPE.WISEGUY:
+            addMacroSetting("CONTROLLER", settingsObj.fighting.rivalController, "ENABLE_LOGGING");
             macro = "37_AttackWiseGuy_start.iim";
             break;
         case FIGHTERCONSTANTS.FIGHTERTPE.NORMALPROFILE:
@@ -634,7 +635,7 @@ function performAttackInit(fighterType){
             macro = "81_Profile_Attack_Start.iim";
             break;
     }
-    logV2(INFO, "MACRO", macro);
+    logV2(DEBUG, "MACRO", macro);
     var retCode = initAndCheckScript(FIGHT_FOLDER, macro, "34_Attack_Start_Test.iim", "power attack", "INITATTACK", "Init Attack Step 1");
     if (retCode == SUCCESS) {
         var counter = 0;
@@ -673,14 +674,14 @@ function getVictimHealth(fighter, profileObj){
         var healthMsg = getLastExtract(1, "Victim Health", "50%");
         if (!isNullOrBlank(healthMsg)) {
             healthMsg = healthMsg.replace("%", "");
-            logV2(INFO, "ATTACK", "Victim Health: " + healthMsg);
+            logV2(DEBUG, "ATTACK", "Victim Health: " + healthMsg);
             health = parseInt(healthMsg);
             if (health == 0){
                 waitV2("0.2");
                 // MOD 15/11
                 var iced = checkIfIced(fighter, profileObj);
                 if (!iced){
-                    logV2(INFO, "ATTACK", "Victim Health is 0, but is not killed yet");
+                    logV2(DEBUG, "ATTACK", "Victim Health is 0, but is not killed yet");
                     health = 1;
                 }
             }
@@ -700,7 +701,7 @@ function checkForAttackButton(){
     if (retCode == SUCCESS && !isNullOrBlank(btn)){
         btnAvailable = true;
     }
-    logV2(INFO, "ATTACK", "Check Attack Button: " + btnAvailable);
+    logV2(DEBUG, "ATTACK", "Check Attack Button: " + btnAvailable);
     return btnAvailable;
 
 }
@@ -854,7 +855,7 @@ function getStaminaCost(){
     if (retCode == SUCCESS){
         var originalMsg = getLastExtract(1, "Ice Status", "BlaBlaBla just Killed blabla. Your Kill Count is now 777");
         var msg = originalMsg.toUpperCase();
-        logV2(INFO, "FIGHT", "Check Stamina Cost: " + msg);
+        logV2(DEBUG, "FIGHT", "Check Stamina Cost: " + msg);
         var regExp = "USING ([0-9]{1,3})";
         var matches = msg.match(regExp);
         if (matches != null && matches.length > 0){
@@ -864,7 +865,7 @@ function getStaminaCost(){
     else {
         logV2(INFO, "FIGHT", "Problem getting stamina cost: " + retCode);
     }
-    logV2(INFO, "FIGHT", "staminaCost: " + staminaCost);
+    logV2(DEBUG, "FIGHT", "staminaCost: " + staminaCost);
     return staminaCost;
 }
 
@@ -951,7 +952,9 @@ function extractHomeFighterId(text){
 }
 
 function extractHomeFighterName(text){
-    var regExp = "class=\"pro\">(.*)<\/a>(?:.*)";
+    //.* or .*?. The first one is greedy and will match till the last "sentence" in your string,
+    // the second one is lazy and will match till the next "sentence" in your string.
+    var regExp = "class=\"pro\">(.*?)<\/a>(?:.*)";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         var name = unescape(matches[matches.length-1]);

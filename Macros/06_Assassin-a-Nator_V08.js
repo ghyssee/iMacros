@@ -6,15 +6,15 @@ eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.6.js"));
 eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 var localConfigObject = null;
 var globalSettings = {"kills": 0, "heals": 0, "autoHealWait": false, "expReached": false, "oldHealth": -1, "assassinProfile": null,
-    "autoHeal": false, "node": null,
+    "autoHeal": false, "node": '',
     "profile": null
 };
-setMRPath(getLogFile());
+setMRPath("MRAssassin-a-Nator");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
 // 185 - 14 = 171
 
@@ -42,16 +42,6 @@ function initScript(){
     globalSettings.profile = getProfileObject(getProfile());
     logV2(INFO, "INIT", "AutoHeal: " + globalSettings.autoHeal);
 
-}
-
-function getLogFile(){
-    var value = getFirefoxSetting(MR_BRANCH,  MR_NODE, DATATYPE_STRING);
-    var file = "MRAssassin-a-Nator";
-    if (value != null){
-        globalSettings.node = value;
-        file += ".Node" + value;
-    }
-    return file;
 }
 
 function activateTempSettings(){

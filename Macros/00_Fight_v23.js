@@ -47,11 +47,11 @@ logHeader(INFO, "FIGHT", "AFTER SHUFFLE 2", "*");
 newArray = getWarAliveTargets(warList);
 logObjBeautify(INFO, "FIGHT", newArray);
 */
-//startScript();
+startScript();
 CheckHomefeedWhileWaiting();
-doDowntownShakedown();
-//alert(extractHomeFighterName("class=\"pro\">The Fallen</a> in their brawl with <a href=\"/game/gang/8519102\" class=\"tag\">https</a> <a href=\"/game/player/108755756957461\" class=\"pro\">Paprika 🌶️"));
+//doDowntownShakedown();
 //test();
+
 //CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 
@@ -145,7 +145,7 @@ function getListOfFightersForWar(){
                 logV2(INFO, "FIGHTWAR", "Added White Tag Player: " + logPlayer);
             }
             if (add) {
-                if (isAllyGang(friendObj.gangs, fighter.gangId)) {
+                if (isAlly(friendObj.gangs, fighter)) {
                     logV2(INFO, "FIGHTWAR", "Ally Gang: " + logPlayer);
                 }
                 else {
@@ -766,8 +766,8 @@ function extractRivalMobster(){
     var retCode = goToFightPage();
     if (retCode == SUCCESS) {
         if (configMRObj.fight.wiseguy){
-            logV2(INFO, "FIGHT", "Wiseguy Name:" + settingsObj.fighting.riva);
-            addMacroSetting("NAME", settingsObj.fighting.rival, ENABLE_LOGGING);
+            logV2(INFO, "FIGHT", "Wiseguy Color Code:" + settingsObj.fighting.rivalColorCode);
+            addMacroSetting("COLORCODE", settingsObj.fighting.rivalColorCode, ENABLE_LOGGING);
             retCode = playMacro(FIGHT_FOLDER, "24_Extract_WiseGuy.iim", MACRO_INFO_LOGGING);
             if (retCode == SUCCESS) {
                 var msg = getLastExtract(1, "Wiseguy");
@@ -1152,7 +1152,7 @@ function getFightList(){
     logV2(INFO, "FIGHTLIST", "Getting Fight List Info");
     var list = [];
     var retCode = playMacro(FIGHT_FOLDER, "20_Extract_Start.iim", MACRO_INFO_LOGGING);
-    logV2(INFO, "FIGHTLIST", "Extract_Start Return Code: " + retCode);
+    logV2(DEBUG, "FIGHTLIST", "Extract_Start Return Code: " + retCode);
     if (retCode == SUCCESS){
         for (var i=1; i<= configMRObj.fight.listLength; i++){
             addMacroSetting("pos", i.toString(), ENABLE_LOGGING);
@@ -1180,7 +1180,7 @@ function getFightList(){
                 object.gangId = gangObj.id;
                 object.gangName = gangObj.name;
                 object.lastChecked = formatDateToYYYYMMDDHHMISS();
-                if (isAllyGang(friendObj.gangs, object.gangId)) {
+                if (isAlly(friendObj.gangs, object)) {
                     logV2(INFO, "FIGHT", "Prefiltered: Is Ally Gang");
                     logObj(INFO, "FIGHT", object);
                 }
@@ -1190,7 +1190,7 @@ function getFightList(){
             }
             else {
                 // ignore this line on the fight list
-                logV2(INFO, "FIGHTLIST", "Last Line reached: " + i);
+                logV2(DEBUG, "FIGHTLIST", "Last Line reached: " + i);
                 break;
             }
         }
@@ -1282,7 +1282,7 @@ function filterFightList(fightList){
             else if (fighter.level > maxLevel) {
                 logV2(INFO, "FIGHTLIST_FILTER", "High Level: " + fighter.id + " / Level: " + fighter.level);
             }
-            else if (isAllyGang(friendObj.gangs, fighter.gangId)){
+            else if (isAlly(friendObj.gangs, fighter)){
                 logV2(INFO, "FIGHTLIST_FILTER", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
             }
             else {
@@ -1300,7 +1300,7 @@ function filterProfile(array){
         var item = array[i];
         if (isAlreadyKilledToday(item)) {
         }
-        else if (isAllyGang(friendObj.gangs, item.gangId)){
+        else if (isAlly(friendObj.gangs, item)){
             logV2(INFO, "FILTER_PROFILE", "Friendly Gang Found: " + fighter.gangId + " / " + fighter.gangName + " / Fighter ID: " + fighter.id);
         }
         else if (item.level >= 0 && item.level < configMRObj.fight.minLevel && !checkForPlayerinfoToUpdate(item)){
@@ -1413,7 +1413,7 @@ function getFirefoxSetting(branch, key){
 }
 
 function removeItemFromArray(file, id){
-    logV2(INFO, "FIGHT", "Remove player " + fighter.id + " " + fighter.name);
+    logV2(INFO, "FIGHT", "Remove player " + id);
     var index = -1;
     for (var i=0; i < fighterObj.fighters.length; i++){
         var item = fighterObj.fighters[i];
@@ -1519,8 +1519,8 @@ function startProfileAttack(){
     logV2(INFO, "FIGHT", "Total:" + nr);
     var start = randomIntFromInterval(0, nr - profileAttackLength);
     var max = Math.min(start+profileAttackLength, nr-1);
-    logV2(INFO, "FIGHT", "Random Start Position: " + start);
-    logV2(INFO, "FIGHT", "Random End Position: " + max);
+    logV2(DEBUG, "FIGHT", "Random Start Position: " + start);
+    logV2(DEBUG, "FIGHT", "Random End Position: " + max);
     var newArray = fighterObj.fighters.slice(start, max);
     newArray = filterFightList(newArray);
     status = profileAttack(newArray, FIGHTERCONSTANTS.FIGHTERTPE.PROFILE, !WAR_ENABLED);
@@ -1562,13 +1562,13 @@ function checkForPlayerinfoToUpdate(fighter){
             chk = true;
         }
         else {
-            logV2(INFO, "FIGHT", "Player Info is up to date: " + fighter.id);
+            logV2(DEBUG, "FIGHT", "Player Info is up to date: " + fighter.id);
         }
     }
     else {
         chk = true;
     }
-    logV2(INFO, "FIGHT", "checkForPlayerinfoToUpdate: " + chk);
+    logV2(DEBUG, "FIGHT", "checkForPlayerinfoToUpdate: " + chk);
     return chk;
 }
 
@@ -1669,16 +1669,16 @@ function performHealthCheck(message, autoHeal, stamina){
                 }
             }
             if (stamina >= configMRObj.fight.minStaminaToHeal) {
-                logV2(INFO, "HEAL", "health: " + health);
+                logV2(DEBUG, "HEAL", "health: " + health);
                 heal();
             }
             else {
-                logV2(INFO, "HEAL", "Not Enough Stamina To Heal");
+                logV2(DEBUG, "HEAL", "Not Enough Stamina To Heal");
                 break;
             }
             tries++;
             if (tries > 2){
-                logV2(INFO, "HEAL", "Retries: " + tries);
+                logV2(DEBUG, "HEAL", "Retries: " + tries);
                 //waitV2("0.5");
             }
             dummyBank();
@@ -1711,7 +1711,7 @@ function performHealthCheck(message, autoHeal, stamina){
     }
     globalSettings.forceHealing = false;
     healthObj.health = health;
-    logObj(INFO, "HEALTH", healthObj);
+    logObj(DEBUG, "HEALTH", healthObj);
     return healthObj;
 }
 
@@ -1770,10 +1770,10 @@ function goToFightPage(){
 
 function extractTime(msg, unit, plural){
     var regExp = " ([0-9]{1,2}) " + unit + plural + "?";
-    logHeader(INFO, "TST", unit, "*");
-    logV2(INFO, "TST", regExp);
+    logHeader(DEBUG, "TST", unit, "*");
+    logV2(DEBUG, "TST", regExp);
     var matches = msg.match(regExp);
-    logObj(INFO, "TST", matches);
+    logObj(DEBUG, "TST", matches);
     var intUnit = 0;
     if (matches != null && matches.length > 1){
         intUnit = parseInt(matches[1]);
@@ -1967,13 +1967,13 @@ function healInShakedown(firstHeal){
         logV2(INFO, "SHAKEDOWN", "Heal in Shakedown");
         var tries = 1;
         do {
-            logV2(INFO, "SHAKEDOWN", "Health: " + healthObj.leftOver);
+            logV2(DEBUG, "SHAKEDOWN", "Health: " + healthObj.leftOver);
             if (!firstHeal && healthObj.leftOver == 0){
                 // killed by somebody
                 logV2(INFO, "SHAKEDOWN", "Killed By someebody");
                 waitV2("30");
             }
-            logV2(INFO, "SHAKEDOWN", "Healing " + tries + " time(s)");
+            logV2(DEBUG, "SHAKEDOWN", "Healing " + tries + " time(s)");
             tries++;
             retCode = playMacro(FIGHT_FOLDER, "105_Shakedown_Heal.iim", MACRO_INFO_LOGGING);
             if (retCode != SUCCESS) {
