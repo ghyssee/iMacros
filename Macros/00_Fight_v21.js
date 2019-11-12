@@ -49,7 +49,7 @@ logObjBeautify(INFO, "FIGHT", newArray);
 */
 //startScript();
 CheckHomefeedWhileWaiting();
-doDowntownShakedown();
+//doDowntownShakedown();
 //alert(extractHomeFighterName("class=\"pro\">The Fallen</a> in their brawl with <a href=\"/game/gang/8519102\" class=\"tag\">https</a> <a href=\"/game/player/108755756957461\" class=\"pro\">Paprika 🌶️"));
 //test();
 //CheckHomefeedWhileWaiting();

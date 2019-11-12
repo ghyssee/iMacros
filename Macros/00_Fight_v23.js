@@ -48,11 +48,17 @@ newArray = getWarAliveTargets(warList);
 logObjBeautify(INFO, "FIGHT", newArray);
 */
 startScript();
-CheckHomefeedWhileWaiting();
+//var txt="<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\"><a href=\"/game/gang/4628075\" class=\"tag\">icecool</a> Tony \"Tossed\" Salads</h2>";
+//txt="<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\">lion</h2>";
+//alert(extractProfileFighterName(txt));
+//txt="<div class=\"feed_row\" style=\"outline: 1px solid blue;\"><div><a href=\"/game/gang/9847625\" class=\"tag\">Ŧคภคtเςร</a> <a href=\"/game/player/1683273635126011\" class=\"pro\">hawk</a> Level 5,772</div><div style=\"text-align:right;\"><a href=\"#\" class=\"ajax_request css_button red\" data-params=\"controller=fight&amp;action=attackview&amp;id=1683273635126011\"><span class=\"stamina ibtn\"></span>Attack</a></div></div>";
+//alert(extractFighterName(txt));
+
+//CheckHomefeedWhileWaiting();
 //doDowntownShakedown();
 //test();
 
-//CheckHomefeedWhileWaiting();
+CheckHomefeedWhileWaiting();
 //var retCode = initAndCheckScript(FIGHT_FOLDER, "20_Extract_Start.iim", "23_Fight_Test.iim", "fight list", "INITFIGHT", "Init Fight List");
 
 function test(){
