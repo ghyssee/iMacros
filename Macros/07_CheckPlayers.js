@@ -31,6 +31,12 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
 startScript();
+//var fighter = getFighterObject();
+//extractFighterinfo(fighter);
+//alert(JSON.stringify(fighter));
+//var txt = "<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\"><a href=\"/game/gang/3007870\" class=\"tag\">{FF&amp;BB}</a> Will Capone</h2>";
+//var tmp = extractGangNameFromString(txt);
+//alert(tmp);
 //var tmp = extractProfileFighterName("<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\">Kimie</h2>");
 //alert(tmp);
 //checkIfFriend();
@@ -42,11 +48,11 @@ function startScript(){
     logV2(INFO, "UPDATEFIGHTER", "Last Updated Time: " + currentTime);
     try {
         startMafiaReloaded();
-        //checkFighters(friendObj, MR.MR_FRIENDS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.FRIEND);
-        //checkFighters(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.OPPONENT);
-        //checkFighters(fighterObj, MR.MR_FIGHTERS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK);
-        cleanupDeleteCandidates(fighterObj, MR.MR_FIGHTERS_FILE);
-        cleanupDeleteCandidates(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE);
+        checkFighters(fighterObj, MR.MR_FIGHTERS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK);
+        checkFighters(friendObj, MR.MR_FRIENDS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.FRIEND);
+        checkFighters(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.OPPONENT);
+        //cleanupDeleteCandidates(fighterObj, MR.MR_FIGHTERS_FILE);
+        //cleanupDeleteCandidates(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE);
     }
     catch (ex) {
         if (ex instanceof UserCancelError){
@@ -105,7 +111,8 @@ function checkFighters(obj, file, currentTime, fighterType){
 function updatePlayerInfo(obj, file, fighter, currentTime, fighterType){
 
     var updated = false;
-    if (propertyExistAndNotNull(fighter, "lastChecked") && currentTime.substring(0,8) <= fighter.lastChecked.substring(0,8)){
+    if (false) {
+    //(propertyExistAndNotNull(fighter, "lastChecked") && currentTime.substring(0,8) <= fighter.lastChecked.substring(0,8)){
         //logV2(INFO, "UPDATEPLAYER", "Skipping " + fighter.id + ". Already updated recently");
     }
     else {
