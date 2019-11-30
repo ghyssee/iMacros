@@ -48,9 +48,9 @@ newArray = getWarAliveTargets(warList);
 logObjBeautify(INFO, "FIGHT", newArray);
 */
 startScript();
-//var txt="<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\"><a href=\"/game/gang/4628075\" class=\"tag\">icecool</a> Tony \"Tossed\" Salads</h2>";
+//var txt="<div class=\\\"feed_row\\\" style=\"outline: 1px solid blue;\"><div><a href=\"/game/gang/8281861\" class=\"tag\">𝔊𝑘𝔰</a> <a href=\"/game/player/111041246940511\" class=\"pro\">🐎Countryboy🤠 虎</a> Level 4,751</div><div style=\"text-align:right;\"><a href=\"#\" class=\"ajax_request css_button red\\\" data-params=\"controller=fight&action=attackview&id=111041246940511\"><span class=\"stamina ibtn\"></span>Attack</a></div></div>";
 //txt="<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\">lion</h2>";
-//alert(extractProfileFighterName(txt));
+//alert(extractGangNameFromString(txt));
 //txt="<div class=\"feed_row\" style=\"outline: 1px solid blue;\"><div><a href=\"/game/gang/9847625\" class=\"tag\">Ŧคภคtเςร</a> <a href=\"/game/player/1683273635126011\" class=\"pro\">hawk</a> Level 5,772</div><div style=\"text-align:right;\"><a href=\"#\" class=\"ajax_request css_button red\" data-params=\"controller=fight&amp;action=attackview&amp;id=1683273635126011\"><span class=\"stamina ibtn\"></span>Attack</a></div></div>";
 //alert(extractFighterName(txt));
 
@@ -136,6 +136,39 @@ function isWhiteTagWar(fighterName){
 }
 
 function getListOfFightersForWar(){
+    var warList = [];
+    if (isWar()) {
+        logV2(INFO, "FIGHTWAR", "Filter players for war...");
+        fighterObj.fighters.forEach(function (fighter) {
+            var add = false;
+            var logPlayer = fighter.id + " " + fighter.name + " (Gang: " + fighter.gangId + " " + fighter.gangName + ")";
+            var tmpName = fighter.name.toLowerCase();
+            if (tmpName.contains("crazy") || tmpName.contains("psycho") || tmpName.contains("loco") || tmpName.contains("whack")
+                || tmpName.contains("cr@zy") || tmpName.contains("derange") || tmpName.contains("lunatic") || tmpName.contains("disturbed")
+                || tmpName.contains("mental") || tmpName.contains("mental")  || tmpName.contains("gaga")  || tmpName.contains("nuts")
+                || tmpName.contains("wacko") || tmpName.contains("gonzo")){
+                add = true;
+                logV2(INFO, "FIGHTWAR", "Added Player: " + logPlayer);
+            }
+            else if (isWhiteTagWar(fighter.name)){
+                add = true;
+                logV2(INFO, "FIGHTWAR", "Added White Tag Player: " + logPlayer);
+            }
+            if (add) {
+                if (isAlly(friendObj.gangs, fighter)) {
+                    logV2(INFO, "FIGHTWAR", "Ally Gang: " + logPlayer);
+                }
+                else {
+                    warList.push(fighter);
+                }
+            }
+        });
+        var warList = shuffle(warList);
+        //logObjBeautify(INFO, "FIGHTWAR", warList);
+    }
+    return warList;
+}
+function getListOfFightersForWarOld(){
     var warList = [];
     if (isWar()) {
         logV2(INFO, "FIGHTWAR", "Filter players for war...");

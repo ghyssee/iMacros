@@ -144,7 +144,8 @@ function extractGangIdFromString(text){
 }
 
 function extractGangNameFromString(text){
-    var regExp = "class=\"tag\">(.*)</a>(?:.*)</h2>";
+    var regExp = "class=\"tag\">(.*)</a>(?:.*) ?<a href=\"/game/player/";
+    alert("tst");
     //var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
@@ -493,7 +494,7 @@ function updateFighterInfo(fighterToUpdate, fighter){
 function getFighterObject(id, name, level){
     return {"id":id, "name":name, "level": level, "skip": false,
         "gangId": null, "gangName": null, "bigHealth": false, "lastAttacked": null, "lastIced": null, "lastChecked": null,
-        "iced": 0, "alive": 0, "dead": 0, "homefeed": null, "staminaCost": null
+        "iced": 0, "alive": 0, "dead": 0, "homefeed": null, "staminaCost": null, "attackType": null
     };
 }
 
