@@ -1173,6 +1173,12 @@ function evaluateAttackMessage(msg){
     else if (msg.startsWith("YOU WON")){
         return FIGHTERCONSTANTS.OPPONENT.WON;
     }
+    else if (msg.startsWith("YOU HIT")){
+        return FIGHTERCONSTANTS.OPPONENT.WON;
+    }
+    else if (msg.startsWith("YOU BLASTED")){
+        return FIGHTERCONSTANTS.OPPONENT.WON;
+    }
     else if (msg.startsWith("YOU CANNOT ATTACK YOUR FRIEND")){
         return FIGHTERCONSTANTS.OPPONENT.FRIEND;
     }
