@@ -31,7 +31,9 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
 startScript();
-//var tmp = extractProfileFighterName("<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\">Kimie</h2>");
+//var tmp = extractGangNameFromString("<div class=\"feed_row\" style=\"outline: 1px solid blue;\"><div><a href=\"/game/gang/2511984\" class=\"tag\">_SSS_</a> <a href=\"/game/player/1396130527068955\" class=\"pro\">CRAZZY PERRY</a> Level 4,559</div><div style=\"text-align:right;\"><a href=\"#\" class=\"ajax_request css_button red\" data-params=\"controller=fight&action=attackview&id=1396130527068955\"><span class=\"stamina ibtn\"></span>Attack</a></div></div>");
+//alert(tmp);
+//var tmp = extractGangNameFromString("<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\"><a href=\"/game/gang/2923723\" class=\"tag\">SPOCK</a> <</h2>");
 //alert(tmp);
 //checkIfFriend();
 
@@ -41,12 +43,16 @@ function startScript(){
     var currentTime = formatDateToYYYYMMDDHHMISS(currDate);
     logV2(INFO, "UPDATEFIGHTER", "Last Updated Time: " + currentTime);
     try {
-        startMafiaReloaded();
+        //startMafiaReloaded();
         //checkFighters(friendObj, MR.MR_FRIENDS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.FRIEND);
         //checkFighters(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.OPPONENT);
         //checkFighters(fighterObj, MR.MR_FIGHTERS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK);
-        cleanupDeleteCandidates(fighterObj, MR.MR_FIGHTERS_FILE);
-        cleanupDeleteCandidates(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE);
+        //cleanupDeleteCandidates(fighterObj, MR.MR_FIGHTERS_FILE);
+        //cleanupDeleteCandidates(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE);
+        //updateKillsInfo();
+        //updateFightersInfo();
+        //updateFightersExcludeInfo();
+        //updateFriendsInfo();
     }
     catch (ex) {
         if (ex instanceof UserCancelError){
@@ -59,6 +65,82 @@ function startScript(){
         else {
             logError(ex);
         }
+    }
+}
+
+function updateFightersInfo(){
+    var obj = initMRObject(MR.MR_FIGHTERS_FILE);
+    var length = obj.fighters.length;
+    var updated = false;
+    for (var pos = 0; pos<length; pos++){
+        var rec = obj.fighters[pos];
+        if (rec.gangName != null && rec.gangName.contains("class=\"tag\"")) {
+            //logV2(INFO, "UPDATEKILLS", rec.gangName);
+            updated = true;
+            var newName = extractGangNameFromString(rec.gangName);
+            logV2(INFO, "UPDATEFIGHTERS", "NewName: " + newName);
+            rec.gangName = newName;
+        }
+    }
+    if (updated){
+        writeMRObject(obj, MR.MR_FIGHTERS_FILE);
+    }
+}
+
+function updateFightersExcludeInfo(){
+    var obj = initMRObject(MR.MR_FIGHTERS_EXCLUDE_FILE);
+    var length = obj.fighters.length;
+    var updated = false;
+    for (var pos = 0; pos<length; pos++){
+        var rec = obj.fighters[pos];
+        if (rec.gangName != null && rec.gangName.contains("class=\"tag\"")) {
+            //logV2(INFO, "UPDATEKILLS", rec.gangName);
+            updated = true;
+            var newName = extractGangNameFromString(rec.gangName);
+            logV2(INFO, "UPDATEFIGHTERSEXCLUDE", "NewName: " + newName);
+            rec.gangName = newName;
+        }
+    }
+    if (updated){
+        writeMRObject(obj, MR.MR_FIGHTERS_EXCLUDE_FILE);
+    }
+}
+
+function updateFriendsInfo(){
+    var obj = initMRObject(MR.MR_FRIENDS_FILE);
+    var length = obj.fighters.length;
+    var updated = false;
+    for (var pos = 0; pos<length; pos++){
+        var rec = obj.fighters[pos];
+        if (rec.gangName != null && rec.gangName.contains("class=\"tag\"")) {
+            //logV2(INFO, "UPDATEKILLS", rec.gangName);
+            updated = true;
+            var newName = extractGangNameFromString(rec.gangName);
+            logV2(INFO, "UPDATEFRIENDS", "NewName: " + newName);
+            rec.gangName = newName;
+        }
+    }
+    if (updated){
+        writeMRObject(obj, MR.MR_FRIENDS_FILE);
+    }
+}
+
+function updateKillsInfo(){
+    var obj = initMRObject(MR.MR_KILLS_FILE);
+    var length = obj.list.length;
+    var updated = false;
+    for (var pos = 0; pos<length; pos++){
+        var rec = obj.list[pos];
+        if (rec.gangName != null && rec.gangName.contains("class=\"tag\"")) {
+            //logV2(INFO, "UPDATEKILLS", rec.gangName);
+            updated = true;
+            var newName = extractGangNameFromString(rec.gangName);
+            logV2(INFO, "UPDATEKILLS", "NewName: " + newName);
+            rec.gangName = newName;
+        }
+    }
+    if (updated){
+        writeMRObject(obj, MR.MR_KILLS_FILE);
     }
 }
 
