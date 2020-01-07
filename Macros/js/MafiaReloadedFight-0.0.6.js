@@ -91,7 +91,7 @@ function extractFighterId(text){
 
 function extractFighterName(text){
     //var regExp = "class=\"pro\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
-    var regExp = "class=\"pro\">(.*)<\/a>(?:.*)";
+    var regExp = "class=\"pro\">(.*)</a> Level(?:.*)";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         var name = unescape(matches[matches.length-1]);
@@ -101,7 +101,8 @@ function extractFighterName(text){
 }
 
 function extractProfileFighterName(text){
-    var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">(?:[^<]*)<\/a>(.*)</h2>";
+    //var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">(?:[^<]*)<\/a>(.*)</h2>";
+    var regExp = "class=\"tag\">(?:.*)<\/a> (.*)</h2>";
     if (!contains(text, "class=\"tag\"")){
         regExp = "class=\"ellipsis\">(.*)</h2>";
     }
@@ -492,7 +493,7 @@ function updateFighterInfo(fighterToUpdate, fighter){
 function getFighterObject(id, name, level){
     return {"id":id, "name":name, "level": level, "skip": false,
         "gangId": null, "gangName": null, "bigHealth": false, "lastAttacked": null, "lastIced": null, "lastChecked": null,
-        "iced": 0, "alive": 0, "dead": 0, "homefeed": null, "staminaCost": null
+        "iced": 0, "alive": 0, "dead": 0, "homefeed": null, "staminaCost": null, "attackType": null
     };
 }
 

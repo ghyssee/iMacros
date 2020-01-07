@@ -31,9 +31,9 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
 startScript();
-//var tmp = extractGangNameFromString("<div class=\"feed_row\" style=\"outline: 1px solid blue;\"><div><a href=\"/game/gang/2511984\" class=\"tag\">_SSS_</a> <a href=\"/game/player/1396130527068955\" class=\"pro\">CRAZZY PERRY</a> Level 4,559</div><div style=\"text-align:right;\"><a href=\"#\" class=\"ajax_request css_button red\" data-params=\"controller=fight&action=attackview&id=1396130527068955\"><span class=\"stamina ibtn\"></span>Attack</a></div></div>");
+//var txt = "<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\"><a href=\"/game/gang/3007870\" class=\"tag\">{FF&amp;BB}</a> Will Capone</h2>";
+//var tmp = extractGangNameFromString(txt);
 //alert(tmp);
-//var tmp = extractGangNameFromString("<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\"><a href=\"/game/gang/2923723\" class=\"tag\">SPOCK</a> <</h2>");
 //alert(tmp);
 //checkIfFriend();
 
@@ -44,9 +44,9 @@ function startScript(){
     logV2(INFO, "UPDATEFIGHTER", "Last Updated Time: " + currentTime);
     try {
         //startMafiaReloaded();
-        //checkFighters(friendObj, MR.MR_FRIENDS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.FRIEND);
-        //checkFighters(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.OPPONENT);
-        //checkFighters(fighterObj, MR.MR_FIGHTERS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK);
+        checkFighters(fighterObj, MR.MR_FIGHTERS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.ATTACK);
+        checkFighters(friendObj, MR.MR_FRIENDS_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.FRIEND);
+        checkFighters(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE, currentTime, FIGHTERCONSTANTS.FIGHTERSTATUS.OPPONENT);
         //cleanupDeleteCandidates(fighterObj, MR.MR_FIGHTERS_FILE);
         //cleanupDeleteCandidates(fightersToExclude, MR.MR_FIGHTERS_EXCLUDE_FILE);
         //updateKillsInfo();
@@ -187,7 +187,8 @@ function checkFighters(obj, file, currentTime, fighterType){
 function updatePlayerInfo(obj, file, fighter, currentTime, fighterType){
 
     var updated = false;
-    if (propertyExistAndNotNull(fighter, "lastChecked") && currentTime.substring(0,8) <= fighter.lastChecked.substring(0,8)){
+    if (false) {
+    //(propertyExistAndNotNull(fighter, "lastChecked") && currentTime.substring(0,8) <= fighter.lastChecked.substring(0,8)){
         //logV2(INFO, "UPDATEPLAYER", "Skipping " + fighter.id + ". Already updated recently");
     }
     else {
