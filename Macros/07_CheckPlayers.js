@@ -192,6 +192,7 @@ function updatePlayerInfo(obj, file, fighter, currentTime, fighterType){
         //logV2(INFO, "UPDATEPLAYER", "Skipping " + fighter.id + ". Already updated recently");
     }
     else {
+        delete fighter.candidateForDelete;
         var oldFighter = JSON.parse(JSON.stringify(fighter));
         logV2(INFO, "UPDATEPLAYER", "Update Player Info: " + fighter.id);
         updated = true;
@@ -262,28 +263,6 @@ function removeItemFromArray(file, obj, id){
     if (index >= 0){
         obj.fighters.splice(index, 1);
         writeMRObject(obj, file);
-    }
-    return index > -1;
-}
-
-function removeItemFromArrayold(file, id){
-    logV2(INFO, "FIGHT", "Save Current Fighters List");
-    logV2(INFO, "FIGHT", "Remove id: " + id);
-    writeMRObject(fighterObj, MR.MR_FIGHTERS_FILE);
-    waitV2("1");
-    var obj= initMRObject(file);
-    var index = -1;
-    for (var i=0; i < obj.fighters.length; i++){
-        var item = obj.fighters[i];
-        if (item.id == id){
-            index = i;
-            break;
-        }
-    }
-    if (index >= 0){
-        obj.fighters.splice(index, 1);
-        writeMRObject(obj, file);
-        fighterObj = initMRObject(file);
     }
     return index > -1;
 }
