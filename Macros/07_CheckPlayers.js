@@ -32,10 +32,11 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "boss": {"attacks": 0}};
 startScript();
 //var txt = "<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\"><a href=\"/game/gang/3007870\" class=\"tag\">{FF&amp;BB}</a> Will Capone</h2>";
+//txt = "< TS ></a> <a href=\"/game/player/104466633823524\" class=\"pro\">☯✞IrishBabyBabyHulk✞☯</a> in their brawl with <a href=\"/game/gang/4017616\" class=\"tag\">[я↑ϟ℮]";
 //var tmp = extractGangNameFromString(txt);
 //alert(tmp);
 //alert(tmp);
-//checkIfFriend();
+//updateHomefeednfo();
 
 function startScript(){
     var currDate = new Date();
@@ -141,6 +142,25 @@ function updateKillsInfo(){
     }
     if (updated){
         writeMRObject(obj, MR.MR_KILLS_FILE);
+    }
+}
+
+function updateHomefeednfo(){
+    logV2(INFO, "UPDATEHOMEFEED", "Start");
+    var obj = initMRObject(MR.MR_HOMEFEED_FILE);
+    var length = obj.lines.length;
+    var updated = false;
+    for (var pos = 0; pos<length; pos++){
+        var rec = obj.lines[pos];
+        if (rec.gangName != null && rec.gangName.contains("class=\"tag\"")) {
+            updated = true;
+            var newName = extractGangNameFromString(rec.gangName);
+            logV2(INFO, "UPDATEHOMEFEED", "NewName: " + newName);
+            rec.gangName = newName;
+        }
+    }
+    if (updated){
+        writeMRObject(obj, MR.MR_HOMEFEED_FILE);
     }
 }
 

@@ -144,12 +144,21 @@ function extractGangIdFromString(text){
 }
 
 function extractGangNameFromString(text){
-    var regExp = "class=\"tag\">(.*)</a>(?:.*)(?:</h2>|<a href=\"/game/player)";
+    var regExp = "class=\"tag\">(.*)</a>(?:.*)(?:</h2>|<a href=\"/game/player)?";
+    //var regExp = "class=\"tag\">(.*)</a>(?:.*)(?:</h2>|<a href=\"/game/player)?";
     //var regExp = "class=\"tag\">(.*)</a> <a href=";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
         var name = unescape(matches[matches.length-1]);
         return name.trim();
+    }
+    else {
+        regExp = "class=\"tag\">(.*)$";
+        matches = text.match(regExp);
+        if (matches != null && matches.length > 0){
+            var name = unescape(matches[matches.length-1]);
+            return name.trim();
+        }
     }
     return unescape(text);
 }
@@ -929,7 +938,7 @@ function extractHomeGangIdFromString(text){
 }
 
 function extractHomeGangNameFromString(text){
-    var regExp = "class=\"tag\">(.*)$";
+    var regExp = "class=\"tag\">(.*)(?:</a> <a href=)?$";
     //var regExp = "class=\"tag\">(.*)</a> <a href=";
     //var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
     var matches = text.match(regExp);
