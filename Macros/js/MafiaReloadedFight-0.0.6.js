@@ -388,7 +388,7 @@ function getHomeFeed(configMRObj, homefeedObj){
                 var line = getHomeFeedObj(timeMsg, txtMsg);
                 //txtMsg = txtMsg.toLowerCase();
                 //var msg = originalMsg.toLowerCase();
-                var gangObj = extractHomeGangInformation(originalMsg);
+                var gangObj = extractGangInformation(originalMsg);
                 line.gangId = gangObj.id;
                 line.gangName = gangObj.name;
                 var fighterObj = extractHomeFighterInformation(originalMsg);
@@ -929,7 +929,8 @@ function extractHomeGangIdFromString(text){
 }
 
 function extractHomeGangNameFromString(text){
-    var regExp = "class=\"tag\">(.*)</a> <a href=";
+    var regExp = "class=\"tag\">(.*)$";
+    //var regExp = "class=\"tag\">(.*)</a> <a href=";
     //var regExp = "class=\"tag\" data-id=\"" + "(?:[0-9]{1,20})\">([^<]*)<\/a>(?:.*)";
     var matches = text.match(regExp);
     if (matches != null && matches.length > 0){
