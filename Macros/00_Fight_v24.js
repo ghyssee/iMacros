@@ -1255,6 +1255,11 @@ function getStatusObject(){
 function isAlreadyKilledToday(player){
     var killedToday = false;
     var strDate = getDateYYYYMMDD();
+    if (propertyExistAndNotNull(player, "ignoreIceLimit")) {
+        if (player.ignoreIceLimit){
+            logV2(INFO, "CHECK", "Ignore Ice Limit for " + player.id);
+        }
+    }
     if (propertyExistAndNotNull(player, "lastIced")){
         if (player.lastIced.substr(0, 8) == strDate) {
             if (valueNotNullAndGreaterThan(player.icesOfTheDay, configMRObj.fight.maxKillsDay-1)) {
