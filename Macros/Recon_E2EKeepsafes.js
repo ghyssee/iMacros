@@ -51,14 +51,14 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 	var lines = readFile(E2E_FILE);
 	var counter = 0;
 	lines.forEach(function (line) {
-		if (counter > 5){
-			return;
-		}
-		else {
+		//if (counter > 5){
+		//	return;
+		//}
+		//else {
 			counter++;
-		}
+		//}
 		if (!isNullOrBlank(line)){
-			var fields = addRecord(line);
+			var fields = addRecord(line, counter);
 			writeLineToCSV(E2E_NEW_FILE, fields, ";");
 			//logV2(INFO, line);
 			//logV2(INFO, "field 1:" + fields[CONSTANTS.E2E_REC.ID]);
@@ -68,20 +68,20 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 	});
 
 
-    function addRecord(line) {
+    function addRecord(line, counter) {
 		var fields = line.split(";");
         iimSet("METHOD", fields[CONSTANTS.E2E_REC.METHOD]);
 		iimSet("ID", fields[CONSTANTS.E2E_REC.ID]);
 		iimSet("COMMENT", fields[CONSTANTS.E2E_REC.COMMENT]);
         var retCode = iimPlay(PREFIX + "01_NewEntry.iim");
         if (retCode == SUCCESS) {
-			logV2(INFO, "Adding " + fields[CONSTANTS.E2E_REC.ID]);
+			logV2(INFO, "Adding Line " + counter + " - ID: " + fields[CONSTANTS.E2E_REC.ID]);
         	if (checkForError()) {
 				logV2(INFO, "ERROR adding record");
 				fields.push(getError());
 			}
         	else {
-				logV2(INFO, fields[CONSTANTS.E2E_REC.ID] + "Added");
+				logV2(INFO, fields[CONSTANTS.E2E_REC.ID] + " Added");
 				fields.push("OK");
 			}
         }

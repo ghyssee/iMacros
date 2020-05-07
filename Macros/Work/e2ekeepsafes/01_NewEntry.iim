@@ -1,5 +1,5 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
-URL GOTO=http://far-dv2.netpost/recon/endtoendkeepsafes/getExcludeFromEndToEndKeepsafesReportList.do?method=list&be.post.jkt.ui.menu.MenuBase.SELECTED=root.header1.endtoendkeepsafes
+URL GOTO=http://far-pr.netpost/recon/endtoendkeepsafes/getExcludeFromEndToEndKeepsafesReportList.do?method=list&be.post.jkt.ui.menu.MenuBase.SELECTED=root.header1.endtoendkeepsafes
 WAIT SECONDS=0.5
 TAG POS=1 TYPE=A ATTR=TXT:Nieuwe<SP>entry
 TAG POS=1 TYPE=SELECT FORM=NAME:ExcludeFromEndToEndKeepsafesReportForm ATTR=ID:loadMethod CONTENT=%{{METHOD}}
