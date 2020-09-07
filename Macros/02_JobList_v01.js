@@ -524,8 +524,8 @@ function isChapterSelected(districtId, chapter){
         var selectInfo = getLastExtract(1, "Chapter Selected", "<a href=\"#\" class=\"ajax_request tab_button selected\" style=\"padding: 6px 2px; outline: 1px solid blue;\" data-params=\"controller=job&amp;action=hip&amp;loc=2&amp;tab=19\">Chapter 9</a>");
         if (!isNullOrBlank(selectInfo)) {
             selectInfo = selectInfo.toLowerCase();
-            if (contains(selectInfo, "tab_button selected")) {
-                logV2(INFO, "JOB", "Wright Chapter Selected: " + districtId + "/" + chapter);
+            if (contains(selectInfo, " selected")) {
+                logV2(INFO, "JOB", "Right Chapter Selected: " + districtId + "/" + chapter);
                 return true;
             }
         }
