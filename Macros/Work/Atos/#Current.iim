@@ -1,4 +1,0 @@
-﻿VERSION BUILD=8970419 RECORDER=FX
-TAB T=1
-URL GOTO=http://far-pr.netpost/recon/matcher/AcceptErrorQueryAction.do
-TAG POS=1 TYPE=DIV ATTR=ID:streamTable
