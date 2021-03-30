@@ -1,4 +1,5 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
 TAB T=1
-URL GOTO=http://far-pr.netpost/recon/matcher/AcceptErrorQueryAction.do
-TAG POS=1 TYPE=DIV ATTR=ID:streamTable
+URL GOTO=http://far-dv2.netpost/recon/endtoendkeepsafes/excludeFromEndToEndKeepsafesReportAction.do
+TAG POS=1 TYPE=FONT ATTR=TXT:Foutieve<SP>ingave,<SP>corrigeer<SP>onderstaande<SP>fouten
+TAG POS=1 TYPE=LI ATTR=TXT:Keepsafe<SP>could<SP>not<SP>be<SP>found<SP>in<SP>the<SP>end*

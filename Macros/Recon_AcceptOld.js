@@ -8,7 +8,15 @@ var LOG_FILE = LOG_DIR + "log.RECON.ACCEPTOLD." + getDateYYYYMMDD() + ".txt";
 var INFO = 0; var ERROR = 1; WARNING = 2;
 var PREFIX = "Work/Atos/";
 var SUCCESS = 1;
-var RECON_OBJ = {"total": 0, "tppns": ["3450"], "size": 200, "streamId": 57};
+var RECON_OBJ = {
+    "total": 0, 
+	"tppns": [
+		"13/11/2020",
+		"14/11/2020",
+		"15/11/2020"
+	], 
+	"size": 200, 
+	"streamId": 58};
 
 String.prototype.lpad = function(padString, length) {
     var str = this;
@@ -39,7 +47,7 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 	var found = false;
 
 	RECON_OBJ.tppns.forEach(function (tppn) {
-        logV2(INFO, "Processing TPPN: " + tppn);
+        logV2(INFO, "Processing Dat: " + tppn);
         logV2(INFO, "=".repeat(100));
         logV2(INFO, "Stream Id: " + RECON_OBJ.streamId);
         processTPPN(tppn, RECON_OBJ.streamId.toString());
