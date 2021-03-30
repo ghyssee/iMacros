@@ -2290,7 +2290,6 @@ function doLevelUpJobV2(resourceType){
 }
 
 function doRobbing(){
-    LOG_DEBUG = true;
     var retCode = initRobbing();
     if (retCode == SUCCESS) {
         do {

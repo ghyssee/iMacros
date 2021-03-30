@@ -81,8 +81,8 @@ function watchFighters(fighter){
 	];
 	for (var j=0; j < fightersToWatch.length; j++){
 		if (fightersToWatch[j].id == fighter.id){
-			logV2(INFO, "FIGHTLIST", fightListObj.list[i].id + " " + fightListObj.list[i].name, watchFile);
-			logV2(INFO, "FIGHTLIST", fightListObj.list[i].gangId + " " + fightListObj.list[i].gangName, watchFile);
+			logV2(INFO, "FIGHTLIST", fighter.id + " " + fighter.name, watchFile);
+			logV2(INFO, "FIGHTLIST", fighter.gangId + " " + fighter.gangName, watchFile);
 			logV2(INFO, "FIGHTLIST", "==================================================", watchFile);
 			break;
 		}
@@ -99,7 +99,10 @@ function startFightList(){
 		logV2(INFO, "FIGHTLIST", "Checking " + formatDateYYYYMMDDHHMISS(), watchFile);
 		for (var i=0; i < fightListObj.list.length; i++){
 			watchFighters(fightListObj.list[i]);
+			// logV2(INFO, "FIGHTLIST", fightListObj.list[i].id + " " + fightListObj.list[i].name);
+			// logV2(INFO, "FIGHTLIST", fightListObj.list[i].gangId + " " + fightListObj.list[i].gangName);
 		}
+		// logV2(INFO, "FIGHTLIST", "==================================================");
 		
 //        writeObject(fightListObj, fileObj);
     }
