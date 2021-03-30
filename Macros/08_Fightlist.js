@@ -6,17 +6,18 @@ eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\DateAdd.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
-eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloadedFight-0.0.6.js"));
 eval(readScript(MACROS_PATH + "\\js\\underscore-min.js"));
 
 // 182-11 = 171
 var localConfigObject = null;
 setMRPath("MRFight");
 var MACRO_INFO_LOGGING = LOG_INFO_DISABLED;
+var watchFile = new LogFile(LOG_DIR, "Watch");
 
 init();
 
-var fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
+//var fighterObj = initMRObject(MR.MR_FIGHTERS_FILE);
 var fighterArrayObj = {};
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var settingsObj = initObject(getMRRootFile(MR.MR_SETTINGS_FILE));
@@ -24,8 +25,10 @@ var profileObj = initObject(MR_PROFILE_FILE);
 
 var globalSettings = {"profile": getProfileObject((getProfile()))};
 //createFightersIndexedArray();
+//var txt="<div class=\"feed_row\" style=\"outline: 1px solid blue;\"><div><a href=\"/game/gang/5963946\" class=\"tag\">≋𝐒𝐓≋</a> <a href=\"/game/player/1143458102342837\" class=\"pro\">the Alien💫</a> Level 11,464</div><div style=\"text-align:right;\"><a href=\"#\" class=\"ajax_request css_button red\" data-params=\"controller=fight&amp;action=attackview&amp;id=1143458102342837\"><span class=\"stamina ibtn\"></span>Attack</a></div></div>";
+//var id = extractFighterId(txt);
+//alert(id);
 startScript();
-//startFightList();
 
 function createFightersIndexedArray(){
     fighterObj.fighters.forEach( function (fighter)
@@ -36,11 +39,11 @@ function createFightersIndexedArray(){
 
 function startScript(){
     try {
-        startMafiaReloaded();
-        do  {
+		startMafiaReloaded();        
+		do  {
             configMRObj = initMRObject(MR.MR_CONFIG_FILE);
             startFightList();
-            waitV2("60");
+            waitV2("30");
         }
         while (true);
     }
@@ -64,14 +67,41 @@ function goToFightPage(){
     return retCode;
 }
 
+function watchFighters(fighter){
+	var fightersToWatch = [
+	{"id": "1285983768080939", "name": "≡SЯБ≡ {|nWo|} Goran"},
+	{"id": "2069963439901170", "name": "≡SЯБ≡{|nWo|} Lopatar jug"},
+	{"id": "10154922098149196", "name": "нσηєувєє"},
+	{"id": "10208024289142193", "name": "☿ReW☿ 𝔻✦𝔼 Old Guy 👴"},
+	{"id": "102787323542590", "name": "☿ReW☿ 𝔻✦𝔼 Dog 👴"},
+	{"id": "10206499839455202", "name": "☿ReW☿ 𝔻✦𝔼 Bird 👴"},
+	{"id": "127513661225330", "name": "☿ReW☿ 𝔻✦𝔼 Slow Dog 👴"},
+	{"id": "100258397454180", "name": "☿ReW☿ 𝔻✦𝔼 Slow Dog 👴"},
+	{"id": "10208272951484897", "name": "𝕋ℍ𝔼 𝕆𝕝𝕕 𝔽𝕒𝕣𝕥"}
+	];
+	for (var j=0; j < fightersToWatch.length; j++){
+		if (fightersToWatch[j].id == fighter.id){
+			logV2(INFO, "FIGHTLIST", fightListObj.list[i].id + " " + fightListObj.list[i].name, watchFile);
+			logV2(INFO, "FIGHTLIST", fightListObj.list[i].gangId + " " + fightListObj.list[i].gangName, watchFile);
+			logV2(INFO, "FIGHTLIST", "==================================================", watchFile);
+			break;
+		}
+	}
+}
+
 function startFightList(){
     var retCode = goToFightPage();
     if (retCode == SUCCESS) {
         var fightListObj = {"list": null, "lastDate": null};
-        var fileObj = getMRFileById(MR.MR_FIGHTLIST_FILE, "01");
+//        var fileObj = initMRObject(MR.MR_FIGHTLIST_FILE);
         fightListObj.lastDate = getDateYYYYMMDDHHMISS();
-        //fightListObj.list = getFightList();
-        writeObject(fightListObj, fileObj);
+        fightListObj.list = getFightList();
+		logV2(INFO, "FIGHTLIST", "Checking " + formatDateYYYYMMDDHHMISS(), watchFile);
+		for (var i=0; i < fightListObj.list.length; i++){
+			watchFighters(fightListObj.list[i]);
+		}
+		
+//        writeObject(fightListObj, fileObj);
     }
     else {
         logV2(WARNING, "FIGHTLIST", "Problem going to fightpage");
