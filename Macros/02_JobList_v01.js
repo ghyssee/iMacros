@@ -525,7 +525,7 @@ function isChapterSelected(districtId, chapter){
         if (!isNullOrBlank(selectInfo)) {
             selectInfo = selectInfo.toLowerCase();
             if (contains(selectInfo, " selected")) {
-                logV2(INFO, "JOB", "Wright Chapter Selected: " + districtId + "/" + chapter);
+                logV2(INFO, "JOB", "Right Chapter Selected: " + districtId + "/" + chapter);
                 return true;
             }
         }

@@ -30,13 +30,15 @@ var globalSettings = {"maxLevel": 20000, "iced": 0, "money": 0, "currentLevel": 
     "skippedHealth": 0, "maxHealed": 0, "heals": 0, "stopOnLevelUp": false, "expReached": false,
     "forceHealing": false, "profile": getProfileObject((getProfile())),
     "boss": {"attacks": 0}};
-startScript();
+//startScript();
 //var txt = "<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\"><a href=\"/game/gang/3007870\" class=\"tag\">{FF&amp;BB}</a> Will Capone</h2>";
 //txt = "< TS ></a> <a href=\"/game/player/104466633823524\" class=\"pro\">☯✞IrishBabyBabyHulk✞☯</a> in their brawl with <a href=\"/game/gang/4017616\" class=\"tag\">[я↑ϟ℮]";
+//var txt="<div class=\"feed_row\" style=\"outline: 1px solid blue;\"><div><a href=\"/game/gang/5698879\" class=\"tag\">{{BIT}}</a> <a href=\"/game/player/1238902956187259\" class=\"pro\">TheLegend</a> Level 7,246</div><div style=\"text-align:right;\"><a href=\"#\" class=\"ajax_request css_button red\" data-params=\"controller=fight&action=attackview&id=1238902956187259\"><span class=\"stamina ibtn\"></span>Attack</a></div></div>";
 //var tmp = extractGangNameFromString(txt);
 //alert(tmp);
 //alert(tmp);
 //updateHomefeednfo();
+updateFightersExcludeInfo();
 
 function startScript(){
     var currDate = new Date();

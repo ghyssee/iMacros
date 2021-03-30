@@ -2,7 +2,7 @@
 var MACROS_PATH = getMacrosPath();
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.2.js"));
 eval(readScript(MACROS_PATH + "\\js\\MRJobSelect.js"));
@@ -415,7 +415,7 @@ function isChapterSelected(jobItem){
         var selectInfo = getLastExtract(1, "Chapter Selected", "<a href=\"#\" class=\"ajax_request tab_button selected\" style=\"padding: 6px 2px; outline: 1px solid blue;\" data-params=\"controller=job&amp;action=hip&amp;loc=2&amp;tab=19\">Chapter 9</a>");
         if (!isNullOrBlank(selectInfo)) {
             selectInfo = selectInfo.toLowerCase();
-            if (contains(selectInfo, "tab_button selected")) {
+            if (contains(selectInfo, " selected")) {
                 logV2(INFO, "JOB", "Wright Chapter Selected: " + districtId + "/" + chapter);
                 return true;
             }
@@ -2290,7 +2290,7 @@ function doLevelUpJobV2(resourceType){
 }
 
 function doRobbing(){
-    LOG_DEBUG = false;
+    LOG_DEBUG = true;
     var retCode = initRobbing();
     if (retCode == SUCCESS) {
         do {
@@ -2386,7 +2386,7 @@ function checkRobbing(){
         var txt = getLastExtract(1, "Robbing Message", "Seach the property for cash and loot.");
         txt = txt.toUpperCase();
         logV2(DEBUG, "ROBBING", "Check Robbing message: " + txt);
-        if (txt.startsWith("SEACH") || txt.startsWith("SEACRH")){
+        if (txt.startsWith("SEARCH") || txt.startsWith("SEACRH")){
             status = doRobbingJob();
         }
         else if (txt.startsWith("YOU SPENT")){
