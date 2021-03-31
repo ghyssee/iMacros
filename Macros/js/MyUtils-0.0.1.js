@@ -167,6 +167,13 @@ function isNullOrBlank(param){
    return true;
 }
 
+function isNull(param){
+    if (param != null && param.toUpperCase() != "#EANF#"){
+        return false;
+    }
+    return true;
+}
+
 function isNumeric(param){
 	if (param == null || isNaN(Number(param))){
 		return false;
