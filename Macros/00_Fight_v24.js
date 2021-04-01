@@ -1843,7 +1843,7 @@ function doDowntownShakedown(){
 }
 
 function startShakedown(){
-    var retCode = initAndCheckScript(FIGHT_FOLDER, "100_Shakedown_Start.iim", "101_Shakedown_Test.iim", "?", "INITSHAKEDOWN", "Init Shakedown");
+    var retCode = initAndCheckScript(FIGHT_FOLDER, "100_Shakedown_Start.iim", "101_Shakedown_Test.iim", "*", "INITSHAKEDOWN", "Init Shakedown");
     if (retCode != SUCCESS){
         logV2(WARNING, "SHAKEDOWN", "Problem initializing shakedown");
     }
