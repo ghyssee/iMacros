@@ -144,7 +144,7 @@ function extractGangIdFromString(text){
 }
 
 function extractGangNameFromString(text){
-    logV2(INFO, "extractGangNameFromString", text);
+    // logV2(INFO, "extractGangNameFromString", text);
     var regExp = "class=\"tag\">(.*)</a>(?:.*)(?:</h2>|<a href=\"/game/player)";
     //var regExp = "class=\"tag\">(.*)</a>(?:.*)(?:</h2>|<a href=\"/game/player)?";
     //var regExp = "class=\"tag\">(.*)</a> <a href=";

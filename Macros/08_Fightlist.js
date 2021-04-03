@@ -22,6 +22,7 @@ var fighterArrayObj = {};
 var configMRObj = initMRObject(MR.MR_CONFIG_FILE);
 var settingsObj = initObject(getMRRootFile(MR.MR_SETTINGS_FILE));
 var profileObj = initObject(MR_PROFILE_FILE);
+var watchObj = initObject(getMRRootFile(MR.MR_WATCH_FILE));
 
 var globalSettings = {"profile": getProfileObject((getProfile()))};
 //createFightersIndexedArray();
@@ -42,6 +43,7 @@ function startScript(){
 		startMafiaReloaded();        
 		do  {
             configMRObj = initMRObject(MR.MR_CONFIG_FILE);
+            watchObj = initObject(getMRRootFile(MR.MR_WATCH_FILE));
             startFightList();
             waitV2("30");
         }
@@ -68,7 +70,8 @@ function goToFightPage(){
 }
 
 function watchFighters(fighter){
-	var fightersToWatch = [
+
+    var fightersToWatch = [
 	{"id": "1285983768080939", "name": "≡SЯБ≡ {|nWo|} Goran"},
 	{"id": "2069963439901170", "name": "≡SЯБ≡{|nWo|} Lopatar jug"},
 	{"id": "10154922098149196", "name": "нσηєувєє"},
@@ -83,8 +86,8 @@ function watchFighters(fighter){
     {"id": "10209527806418129", "name": "Hookedagain4sureGM💜🦋💜"},
 	{"id": "10208272951484897", "name": "𝕋ℍ𝔼 𝕆𝕝𝕕 𝔽𝕒𝕣𝕥"}
 	];
-	for (var j=0; j < fightersToWatch.length; j++){
-		if (fightersToWatch[j].id == fighter.id){
+	for (var j=0; j < watchObj.length; j++){
+		if (watchObj[j].id == fighter.id){
 			logV2(INFO, "FIGHTLIST", fighter.id + " " + fighter.name, watchFile);
 			logV2(INFO, "FIGHTLIST", fighter.gangId + " " + fighter.gangName, watchFile);
 			logV2(INFO, "FIGHTLIST", "==================================================", watchFile);

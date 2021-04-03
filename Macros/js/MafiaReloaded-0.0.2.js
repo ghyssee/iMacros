@@ -19,6 +19,7 @@ var MR_HOMEFEED_FILE = new ConfigFile(MR_DIR, "Homefeed.json");
 var MR_PROFILE_FILE = new ConfigFile(MR_DIR, "profile.json");
 var MR_ASSASSIN_FILE = new ConfigFile(MR_DIR, "Assassin-a-Nator.json");
 var MR_SETTINGS_FILE = new ConfigFile(MR_DIR, "Settings.json");
+var MR_WATCH_FILE = new ConfigFile(MR_DIR, "PlayersToWatch.json");
 
 var MR_PROFILE_ERIC = 1;
 var MR_PROFILE_MALIN = 2;
@@ -44,6 +45,7 @@ var MR = Object.freeze({
     "MR_ASSASSIN_FILE": "Assassin-a-Nator.json",
     "MR_TEMP_SETTINGS_FILE" : "TempSettings.json",
     "MR_FIGHTLIST_FILE" : "Fightlist.json",
+    "MR_WATCH_FILE" : "PlayersToWatch.json",
     "MR_KILLS_FILE": "Kills.json"
     }
 );
