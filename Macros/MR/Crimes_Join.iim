@@ -1,0 +1,9 @@
+﻿VERSION BUILD=8970419 RECORDER=FX
+SET !TIMEOUT_STEP 1
+SET !ERRORIGNORE YES
+TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=crime&action=view&tab=3
+TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=crime&action=join&id=*task=3
+'WAIT SECONDS=0.1
+TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=crime&action=join&id=*task=2
+
+
