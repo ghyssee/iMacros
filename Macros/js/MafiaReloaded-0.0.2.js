@@ -31,6 +31,7 @@ var MR_PROFILE_JORIS_ID = "03";
 var FIGHT_FOLDER = "MR/Fight";
 var COMMON_FOLDER = "MR/Common";
 var JOB_FOLDER = "MR/Jobs";
+var CRIMES_FOLDER = "MR/Crimes";
 
 var STOP_SCRIPT = true;
 
