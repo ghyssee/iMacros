@@ -406,7 +406,6 @@ function initAndCheckScriptParameters(folder, initMacro, listParameters, initTes
         }
         retCode = playMacro(folder, initTestMacro, MACRO_INFO_LOGGING);
         var _value = getLastExtract(1, "Test Value", "Test Value");
-        logV2(WARNING, "_value: " + _value);
         if (isNull(_value)){
             logV2(WARNING, category, "Problem with " + logMessage + ". Value is null, but should be " + testValue);
             retCode = -1;
