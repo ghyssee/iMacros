@@ -47,7 +47,7 @@ logHeader(INFO, "FIGHT", "AFTER SHUFFLE 2", "*");
 newArray = getWarAliveTargets(warList);
 logObjBeautify(INFO, "FIGHT", newArray);
 */
-startScript();
+//startScript();
 //var txt="<div class=\\\"feed_row\\\" style=\"outline: 1px solid blue;\"><div><a href=\"/game/gang/8281861\" class=\"tag\">𝔊𝑘𝔰</a> <a href=\"/game/player/111041246940511\" class=\"pro\">🐎Countryboy🤠 虎</a> Level 4,751</div><div style=\"text-align:right;\"><a href=\"#\" class=\"ajax_request css_button red\\\" data-params=\"controller=fight&action=attackview&id=111041246940511\"><span class=\"stamina ibtn\"></span>Attack</a></div></div>";
 //txt="<h2 style=\"margin: 10px 0px; outline: 1px solid blue;\" class=\"ellipsis\">lion</h2>";
 //alert(extractGangNameFromString(txt));
@@ -55,7 +55,7 @@ startScript();
 //alert(extractFighterName(txt));
 
 //CheckHomefeedWhileWaiting();
-//doDowntownShakedown();
+doDowntownShakedown();
 //test();
 
 CheckHomefeedWhileWaiting();
