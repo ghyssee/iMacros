@@ -15,7 +15,7 @@ var RECON_OBJ = {
 		"14/11/2020",
 		"15/11/2020"
 	], 
-	"size": 200, 
+	"size": 400, 
 	"streamId": 58};
 
 String.prototype.lpad = function(padString, length) {
@@ -46,20 +46,33 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
     logV2(INFO, "*".repeat(100));
 	var found = false;
 
+	/*
 	RECON_OBJ.tppns.forEach(function (tppn) {
         logV2(INFO, "Processing Dat: " + tppn);
         logV2(INFO, "=".repeat(100));
         logV2(INFO, "Stream Id: " + RECON_OBJ.streamId);
         processTPPN(tppn, RECON_OBJ.streamId.toString());
-    });
+    });*/
+	var startDate = new Date(2015, 04, 05);
+	var endDate = new Date(2016, 00, 01);
+	var days = daysBetween(startDate, endDate);
+	logV2(INFO, "Days Between: " + days);
+	for (i=0; i <= days; i++){
+        var newDate =  new Date(startDate.getTime() + 86400000*i); // + 1 day in ms
+		logV2(INFO, "Processing Dat: " + newDate);
+		logV2(INFO, "Formatted Date: " + getFormattedDateDDMMYYY(newDate));
+        logV2(INFO, "=".repeat(100));
+		processTPPN(newDate, RECON_OBJ.streamId.toString());
+	}
 
-    function processTPPN(tppn, streamId) {
+    function processTPPN(newDate, streamId) {
         RECON_OBJ.total = 0;
-        iimSet("STREAMID", streamId);
+		var formatDate = getFormattedDateDDMMYYY(newDate);
+        iimSet("DATE", formatDate);
         var retCode = iimPlay(PREFIX + "01_Select_Stream");
         if (retCode == SUCCESS) {
             do {
-                var found = doAcceptOld(tppn);
+                var found = doAcceptOld(formatDate);
                 if (found) {
                     logV2(INFO, "Number Of Times Confirmed: " + RECON_OBJ.total);
                 }
@@ -92,16 +105,16 @@ function checkIfDataFound(){
     return found;
 }
 
-function doAcceptOld(tppn){
+function doAcceptOld(newDate){
 	logV2(INFO, "Accept Old");
 	var dataFound = false;
     dataFound = checkIfDataFound();
     if (dataFound){
         logV2(INFO, "Data found. No need to search again");
-        retCode = confirmAcceptOld(tppn);
+        retCode = confirmAcceptOld(newDate);
     }
     else {
-        iimSet("TPPN", tppn);
+        iimSet("DATE", newDate);
         iimSet("SIZE", RECON_OBJ.size);
         retCode = iimPlay(PREFIX + "02_Search_Records");
         if (retCode == SUCCESS) {
@@ -110,7 +123,7 @@ function doAcceptOld(tppn){
                 logV2(INFO, "No data found");
             }
             else {
-                retCode = confirmAcceptOld(tppn);
+                retCode = confirmAcceptOld(newDate);
             }
         }
 	}
@@ -122,10 +135,10 @@ function logException(message){
     throw new Error(message);
 }
 
-function confirmAcceptOld(tppn){
+function confirmAcceptOld(date){
     var retCode = iimPlay(PREFIX + "03_Select_Records.iim");
 	if (retCode == SUCCESS){
-        iimSet("TPPN", tppn);
+        iimSet("DATE", date);
 		retCode = iimPlay(PREFIX + "04_Confirm.iim");
 		if (retCode == SUCCESS) {
 		  RECON_OBJ.total++;
@@ -184,6 +197,10 @@ function renameFile(oldFileName, directory, newFileName) {
         return true;
 }
 
+function daysBetween(startDate, endDate) {
+    return Math.floor((endDate - startDate ) / 86400000); 
+}
+
 function getDateYYYYMMDD(){
 //   var d1=new Date();
 //   return d1.toString('yyyyMMdd');
@@ -196,6 +213,19 @@ function getDateYYYYMMDD(){
 	return ("" + curr_year + pad(curr_month,2) + pad(curr_date,2));
 	   
 }
+
+function getFormattedDateDDMMYYY(origDate){
+//   var d1=new Date();
+//   return d1.toString('yyyyMMdd');
+   
+	var curr_date = origDate.getDate();
+	var curr_month = origDate.getMonth();
+	curr_month++;
+	var curr_year = origDate.getFullYear();
+	return ("" + pad(curr_date,2) + "/" + pad(curr_month,2) + "/" + curr_year);
+	   
+}
+
 
 function pad(number, length) {
    
