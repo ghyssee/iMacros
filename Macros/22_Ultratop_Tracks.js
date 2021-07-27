@@ -3,41 +3,19 @@ eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyUtils-0.0.1.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyFileUtils-0.0.3.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MyConstants-0.0.2.js"));
 eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\MacroUtils-0.0.3.js"));
-eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\SongUtils-0.0.2.js"));
+eval(readScript(ONEDRIVEPATH + "\\iMacros\\js\\SongUtils-0.0.3.js"));
 setupEnvrionment(getOneDrivePath());
 
 LOG_FILE = new LogFile(LOG_DIR, "Albums");
 songInit();
 var MACRO_FOLDER = "Ultratop";
 var ALBUM = "Album";
+// debug: 171
 
 var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
 
 var artist = selectArtist();
 processAlbum(artist);
-
-function selectType(){
-	var type = null;
-	var msg = "0 - Met Artist" + NEWLINE +
-	          "1 - Zonder Artist";
-	var inputTxt = prompt(msg, "0");
-	if (inputTxt != null){
-		if (inputTxt != ""){
-			var result = parseInt(inputTxt);
-			alert(result);
-			if (result >= 0 && result <= 1){
-				type = inputTxt;
-			}
-			else {
-				alert("Verkeerde keuze!");
-			}
-		}
-	}
-	else {
-		alert("Geen keuze gemaakt. Script wordt nu gestopt!");
-	}
-	return type;
-}
 
 function selectArtist(){
 	var artist = null;
@@ -57,7 +35,7 @@ function processAlbum(artist){
 	var albumObject = getAlbumObject();
 	albumObject.album = getLastExtract(1);
 	albumObject.total = 1;
-	
+
 	albumObject.tracks = [];
 	var track = 0;
 	var exitLoop = false;
@@ -81,11 +59,12 @@ function processAlbum(artist){
 function processTrack(albumObject, track, artist){
 	var pos = track.toString();
 	var songObject = getSongObject();
-	songObject.track = getTrack(pos);
+	songObject.track = getTrackUltratop(track);
+	logV2(INFO, "ULTRATOP", "songObject.track: " + songObject.track);
 	if (isNullOrBlank(songObject.track)){
 		return false;
 	}
-	var artistTitle = getArtist(pos);
+	var artistTitle = getArtistUltratop(pos);
 	var array = artistTitle.split(" - ");
 	if (array.length == 1){
 		songObject.artist = artist;
@@ -97,34 +76,38 @@ function processTrack(albumObject, track, artist){
 	}
 	songObject.extraArtists = [];
 	songObject.cd = albumObject.total;
+	logV2(INFO, "ULTRATOP", "songObject: " + JSON.stringify(songObject));
 	albumObject.tracks.push(songObject);
 	return true;
 }
 
-function getTrack(pos){
-	var track = null;
+function getTrackUltratop(track){
+	var pos = (((track-1)*4)+2).toString();
+	logV2(INFO, "ULTRATOP", "track: " + track);
+	logV2(INFO, "ULTRATOP", "pos: " + pos);
+	var extractTrack = null;
 	iimSet("pos", pos);
 	var retCode = simpleMacroPlayFolder("Ultratop_10_GetTrack.iim", MACRO_FOLDER);
-	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
+	logV2(INFO, "ULTRATOP", "getTrackUltratop ReturnCode: " + retCode);
 	if (retCode == 1){
-		track = iimGetLastExtract(1);
-		logV2(DEBUG, "MP3", "track: " + track);
-		if (!isNullOrBlank(track)){
-			track = track.replace(".", "").trim();
+		extractTrack = iimGetLastExtract(1);
+		logV2(INFO, "ULTRATOP", "track: " + extractTrack);
+		if (!isNullOrBlank(extractTrack)){
+			extractTrack = extractTrack.replace(".", "").trim();
 		}
 	}
-	return track;
+	return extractTrack;
 }
 
-function getArtist(pos){
+function getArtistUltratop(pos){
 	var artist = null;
 	iimSet("pos", pos);
-	var retCode = simpleMacroPlayFolder("Ultratop_11_GetArtist_2.iim", MACRO_FOLDER);
-	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
+	var retCode = simpleMacroPlayFolder("Ultratop_11_GetArtist.iim", MACRO_FOLDER);
+	logV2(INFO, "ULTRATOP", "getArtistUltratop ReturnCode: " + retCode);
 	if (retCode == 1){
 		artist = iimGetLastExtract(1);
 		if (!isNullOrBlank(artist)){
-			artist = artist.replace("–", "");
+			artist = artist.replace("–", "-"); // replace special seperator with "-"
 		}
 	}
 	return artist;
