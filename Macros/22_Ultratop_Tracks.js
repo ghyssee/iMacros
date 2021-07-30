@@ -57,14 +57,14 @@ function processAlbum(artist){
 }
 
 function processTrack(albumObject, track, artist){
-	var pos = track.toString();
+	var pos = (((track-1)*4)+2).toString();
 	var songObject = getSongObject();
-	songObject.track = getTrackUltratop(track);
-	logV2(INFO, "ULTRATOP", "songObject.track: " + songObject.track);
+	songObject.track = getTrackUltratop(pos);
 	if (isNullOrBlank(songObject.track)){
 		return false;
 	}
 	var artistTitle = getArtistUltratop(pos);
+	logV2(INFO, "ULTRATOP", "artistTitle: " + artistTitle);
 	var array = artistTitle.split(" - ");
 	if (array.length == 1){
 		songObject.artist = artist;
@@ -81,17 +81,14 @@ function processTrack(albumObject, track, artist){
 	return true;
 }
 
-function getTrackUltratop(track){
-	var pos = (((track-1)*4)+2).toString();
-	logV2(INFO, "ULTRATOP", "track: " + track);
+function getTrackUltratop(pos){
 	logV2(INFO, "ULTRATOP", "pos: " + pos);
 	var extractTrack = null;
 	iimSet("pos", pos);
 	var retCode = simpleMacroPlayFolder("Ultratop_10_GetTrack.iim", MACRO_FOLDER);
-	logV2(INFO, "ULTRATOP", "getTrackUltratop ReturnCode: " + retCode);
 	if (retCode == 1){
 		extractTrack = iimGetLastExtract(1);
-		logV2(INFO, "ULTRATOP", "track: " + extractTrack);
+		logV2(INFO, "ULTRATOP", "extractTrack: " + extractTrack);
 		if (!isNullOrBlank(extractTrack)){
 			extractTrack = extractTrack.replace(".", "").trim();
 		}
@@ -103,7 +100,6 @@ function getArtistUltratop(pos){
 	var artist = null;
 	iimSet("pos", pos);
 	var retCode = simpleMacroPlayFolder("Ultratop_11_GetArtist.iim", MACRO_FOLDER);
-	logV2(INFO, "ULTRATOP", "getArtistUltratop ReturnCode: " + retCode);
 	if (retCode == 1){
 		artist = iimGetLastExtract(1);
 		if (!isNullOrBlank(artist)){
