@@ -18,57 +18,63 @@ var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
 processAlbum();
 
 function processAlbum(){
-
-	var albumObject = getAlbumObject();
+	
 	var retCode = simpleMacroPlayFolder("Discogs_01_GetAlbum.iim", MACRO_FOLDER);
 	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
-	var titleArtist = null;
-	titleArtist = getLastExtract(1);
-	if (!isNullOrBlank(titleArtist)){
-		logV2(INFO, "DISCOGS", "titleArtist: " + titleArtist);
-		getAlbumTitleArtist(albumObject, titleArtist);
-	}
-	else {
-		albumObject.ignoreTrack = true;
-		retCode = simpleMacroPlayFolder("Discogs_02_GetAlbumV2.iim", MACRO_FOLDER);
-		albumObject.albumArtist = getLastExtract(1);
-		albumObject.album = getLastExtract(2);
-	}
-	logV2(INFO, "DISCOGS", "albumObject.albumArtist: " + albumObject.albumArtist);
-	logV2(INFO, "DISCOGS", "albumObject.album: " + albumObject.album);
+	var albumObject = getAlbumObject();
+	albumObject.album = getLastExtract(1).trim();
+    albumObject.albumArtist = getLastExtract(2).trim();
+    albumObject.albumArtist = checkAlbumArtist(albumObject.albumArtist);
 	albumObject.tracks = [];
 	albumObject.total = 1;
 	var pos = 0;
 	var track = pos;
 	var exit = false;
-
 	do {
 		pos++;
+		/*
+		var validTrack = checkTrack(pos);
+		switch (validTrack){
+			case 1:
+				track++;
+				exit = !processTrack(albumObject, pos, track);
+				break;
+			case 2: // bonus track line:
+				break;
+			default :
+				exit = true;
+				break;
+		}*/
         track++;
-        exit = !processTrack(albumObject, pos);
+        exit = !processTrack(albumObject, pos, track);
 		logV2(DEBUG, "CAT", "Pos = " + pos);
 	}
 	while (!exit);
 	writeObject(albumObject, FILENAME);
-
 }
 
-function getAlbumTitleArtist(albumObject, albumArtist){
-	var splitChar = String.fromCharCode(8211); // "–" special hypen char
-	var items = albumArtist.split(splitChar);
-	if (items.length == 2){
-		logV2(INFO, "DISCOGS", "items[0]: " + items[0]);
-		logV2(INFO, "DISCOGS", "items[1]: " + items[1]);
-		albumObject.albumArtist = items[0].trim();
-		albumObject.album = items[1].trim();
-	}
+function checkAlbumArtist(albumArtist){
 	if (isNullOrBlank(albumArtist) || albumArtist.toUpperCase() == "VARIOUS"){
 		albumArtist = "Various Artists";
 	}
-	return albumObject;
+	return albumArtist;
 }
 
-function processTrack(albumObject, track){
+
+function selectArtist(){
+	var artist = null;
+	var msg = "Albumartist (Laat leeg indien verzamel CD of artist is ingevuld): ";
+	var inputTxt = prompt(msg, "");
+	if (inputTxt != null){
+		if (inputTxt != ""){
+			artist = inputTxt;
+		}
+	}
+	return artist;
+}
+
+
+function processTrack(albumObject, track, realTrack){
 	var pos = track.toString();
 	var songObject = getSongObject();
 	if (albumObject.ignoreTrack){
@@ -81,6 +87,7 @@ function processTrack(albumObject, track){
 		}
         songObject.track = trackObject.track;
         songObject.cd = trackObject.cd;
+        albumObject.ignoreTrack = trackObject.ignore;
         albumObject.total = trackObject.cd;
     }
     	//alert(JSON.stringify(albumObject));
@@ -88,11 +95,11 @@ function processTrack(albumObject, track){
 	if (isNullOrBlank(songObject.artist)){
 		songObject.artist = albumObject.albumArtist;
 	}
-	songObject.title = getTitleDiscogs(pos, albumObject.ignoreTrack);
+	songObject.title = getTitle(MACRO_FOLDER, realTrack.toString());
     if (isNullOrBlank(songObject.title)){
         return false;
     }
-	songObject.extraArtists = getExtraArtistOld(pos);
+	songObject.extraArtists = getExtraArtist(pos);
 	albumObject.tracks.push(songObject);
 	return true;
 }
@@ -117,7 +124,7 @@ function getTrackDiscogs(pos){
 	iimSet("pos", pos);
 	var trackObject = {"track":null,"cd":null,"ignore":false};
 	var retCode = simpleMacroPlayFolder("Discogs_10_GetTrack.iim", MACRO_FOLDER);
-	logV2(DEBUG, "DISCOGS", "ReturnCode: " + retCode);
+	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
 	if (retCode == 1){
         track = iimGetLastExtract(1);
         if (!isNullOrBlank(track)){
@@ -137,117 +144,22 @@ function getTrackDiscogs(pos){
 	return trackObject;
 }
 
-
-function getTitleDiscogs(pos, ignoreTrack){
-	var title = null;
-	iimSet("pos", pos);
-	var macro = null;
-	if (ignoreTrack){
-		macro = "Discogs_16_GetTitleV2.iim";
-	}
-	else {
-		macro = "Discogs_15_GetTitle.iim";
-	}
-	var retCode = simpleMacroPlayFolder(macro, MACRO_FOLDER);
-	if (retCode == 1){
-		title = iimGetLastExtract(1);
-		if (!isNullOrBlank(title)){
-			title = title.trim();
-		}
-	}
-	return title;
-}
-
-function getArtistDiscogs(pos, ignoreTrack){
+function getArtistDiscogs(pos){
 	var artist = null;
 	iimSet("pos", pos);
-	var macro = null;
-	if (ignoreTrack){
-		macro = "Discogs_11_GetArtist.iim";
-	}
-	else {
-		macro = "Discogs_11_GetArtist.iim";
-	}
-	var retCode = simpleMacroPlayFolder(macro, MACRO_FOLDER);
-	logV2(DEBUG, "DISCOGS", "ReturnCode: " + retCode);
+	var retCode = simpleMacroPlayFolder("Discogs_11_GetArtist.iim", MACRO_FOLDER);
+	logV2(DEBUG, "MP3", "ReturnCode: " + retCode);
 	if (retCode == 1){
 		artist = iimGetLastExtract(1);
 		if (!isNullOrBlank(artist)){
-			artist = clearArtistTag(artist);
-		}
+			artist = artist.replace("–", "");
+            artist = artist.replace(/\([0-9]{1,3}\)/g, "");
+            artist = artist.replace(/\*$/, "");		}
 	}
-	return artist;
-}
-
-function clearArtistTag(artist){
-	artist = artist.replace("–", "");
-	artist = artist.replace(/\([0-9]{1,3}\)/g, "");
-	artist = artist.replace(/\*$/, "");
-	artist = artist.trim();
-	return artist;
+	return artist.trim();
 }
 
 function getExtraArtist(pos){
-	iimSet("pos", pos);
-	var extraArtists = [];
-	var retCode = simpleMacroPlayFolder("Discogs_12_GetExtraArtist.iim", MACRO_FOLDER);
-	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
-	if (retCode == 1){
-		var extraArtistHTML = iimGetLastExtract(1);
-		// alert(extraArtistHTML);
-		logV2(DEBUG, "MP3", "extraArtistHTML: " + extraArtistHTML);
-		if (!isNullOrBlank(extraArtistHTML)){
-			var regex = /<blockquote>(.*)<\/blockquote>/;
-			//var matches = extraArtistHTML.match(regex);
-			//if (matches != null){
-				//logV2(DEBUG, "MP3", "Match " + matches[0]);
-				//var strippedExtraArtistHTML = matches[0];
-				var strippedExtraArtistHTML = extraArtistHTML;
-
-				var oDiv = window.content.document.createElement('div');
-				oDiv.innerHTML=strippedExtraArtistHTML;
-				var oSpan = oDiv.getElementsByTagName("span");
-				//alert(JSON.stringify(oSpan));
-			    // alert(oSpan.length);
-				var object = getExtraArtistObject();
-				for (var j=0; j < oSpan.length; j++){
-					//alert(j + "/" + oSpan[j].innerText);
-					var innerHTML = oSpan[j].innerHTML;
-					if (innerHTML.includes("/artist/")){
-						object.extraArtist = object.extraArtist + "," + oSpan[j].innerText;
-					}
-					else {
-						object.type = oSpan[j].innerText;
-						// a new type
-					}
-				}
-
-				var oHref = oDiv.getElementsByTagName("a");
-
-				for (var j=0; j < oSpan.length; j++){
-					var type = oSpan[j].innerText;
-					arrayType = type.split("–");
-					if (arrayType != null && arrayType.length > 0){
-						type = arrayType[0].trim();
-					}
-					
-					var object = getExtraArtistObject(type, oHref[j].text);
-					extraArtists.push(object);
-				}
-				
-				for (var i=0; i < extraArtists.length; i++){
-					logV2(DEBUG, "MP3", "Extra Artist Info: " + JSON.stringify(extraArtists[i]));
-
-				}
-			//}
-		}
-		else {
-			logV2(DEBUG, "MP3", "No Extra Artist Tag Found For Track " + track);
-		}
-	}
-	return extraArtists;
-}
-function getExtraArtistOld(pos){
 	iimSet("pos", pos);
 	var extraArtists = [];
 	var retCode = simpleMacroPlayFolder("Discogs_12_GetExtraArtist.iim", MACRO_FOLDER);
@@ -274,12 +186,11 @@ function getExtraArtistOld(pos){
 					if (arrayType != null && arrayType.length > 0){
 						type = arrayType[0].trim();
 					}
-					//var artist = oHref[j].text;
-					var artist = arrayType[1].trim();
-					var object = getExtraArtistObject(type, clearArtistTag(artist));
+					
+					var object = getExtraArtistObject(type, oHref[j].text);
 					extraArtists.push(object);
 				}
-
+				
 				for (var i=0; i < extraArtists.length; i++){
 					logV2(DEBUG, "MP3", "Extra Artist Info: " + JSON.stringify(extraArtists[i]));
 
@@ -291,10 +202,6 @@ function getExtraArtistOld(pos){
 		}
 	}
 	return extraArtists;
-}
-
-function getExtraArtistObject2(){
-	return {"type":null, "extraArtist":""};
 }
 
 function getExtraArtistObject(type, extraArtist){
