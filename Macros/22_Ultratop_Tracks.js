@@ -57,7 +57,7 @@ function processAlbum(artist){
 }
 
 function processTrack(albumObject, track, artist){
-	var pos = (((track-1)*4)+2).toString();
+	var pos = track.toString() //(((track-1)*4)+2).toString();
 	var songObject = getSongObject();
 	songObject.track = getTrackUltratop(pos);
 	if (isNullOrBlank(songObject.track)){
