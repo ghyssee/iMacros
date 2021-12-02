@@ -15,6 +15,7 @@ var ALBUM = "Album";
 var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
 processAlbum();
 
+
 function processAlbum(){
 	
 	var albumObject = getAlbum();
@@ -64,15 +65,15 @@ function getAlbumName(macroName, albumObject){
 
 function processTrack(albumObject, track){
 	var pos = track.toString();
-	var pos2 = (track*2).toString();
+	//var pos2 = (track*2).toString();
 	var songObject = getSongObject();
 	songObject.track = getTrack(pos);
 	logV2(DEBUG, "INIT", "songObject.track: " + songObject.track);
 	if (isNullOrBlank(songObject.track)){
 		return false;
 	}
-	songObject.title = getTitle(pos2);
-	songObject.artist = getArtist(pos2);
+	songObject.title = getTitle(pos);
+	songObject.artist = getArtist(pos);
 	songObject.extraArtists = [];
 	songObject.cd = albumObject.total;
 	albumObject.tracks.push(songObject);
@@ -93,12 +94,17 @@ function getTrack(pos){
 	return track;
 }
 
+function removeNewLine(text){
+	return text.replace(/\\n-/g,'');
+}
+
 function getArtist(pos){
 	var artist = null;
 	iimSet("pos", pos);
 	var retCode = simpleMacroPlayFolder("Amazon_11_GetArtist.iim", MACRO_FOLDER);
 	if (retCode == 1){
 		artist = iimGetLastExtract(1);
+		artist = removeNewLine(artist).trim();
 	}
 	return artist;
 }
@@ -109,6 +115,7 @@ function getTitle(pos){
 	var retCode = simpleMacroPlayFolder("Amazon_15_GetTitle.iim", MACRO_FOLDER);
 	if (retCode == 1){
 		title = iimGetLastExtract(1);
+		title = removeNewLine(title).trim();
 		/*
 		if (isNullOrBlank(title)){
             iimSet("pos", pos);

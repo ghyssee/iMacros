@@ -1,4 +1,4 @@
 ﻿VERSION BUILD=8220116 RECORDER=FX
 SET !TIMEOUT_STEP 1
 TAG POS=1 TYPE=DIV ATTR=TXT:CD
-TAG POS=R{{pos}} TYPE=DIV ATTR=STYLE:*display*table-cell*vertical-align*top*background-color*padding*border-top*width*outline* EXTRACT=TXT
+TAG POS=R{{pos}} TYPE=DIV ATTR=STYLE:*display*table-cell*vertical-align*top*background-color*padding*border-top*width* EXTRACT=TXT
