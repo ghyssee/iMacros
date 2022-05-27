@@ -1,4 +1,7 @@
-﻿var DATASOURCE_DIR = "C:\\My Programs\\iMacros\\Datasources\\";
+﻿var MACROS_PATH = getMacrosPath();
+
+
+var DATASOURCE_DIR = "C:\\My Programs\\iMacros\\Datasources\\";
 var BASE_DIR = "C:\\My Programs\\iMacros\\";
 var OUTPUT_DIR = BASE_DIR + "output\\";
 var CONFIG_DIR  = BASE_DIR + "config\\";
@@ -8,15 +11,30 @@ var LOG_FILE = LOG_DIR + "log.RECON.ACCEPTOLD." + getDateYYYYMMDD() + ".txt";
 var INFO = 0; var ERROR = 1; WARNING = 2;
 var PREFIX = "Work/Atos/";
 var SUCCESS = 1;
+var ACCEPTOLD_FILE = DATASOURCE_DIR + "AcceptOldSearchValues.csv";
+
 var RECON_OBJ = {
     "total": 0, 
 	"tppns": [
-		"13/11/2020",
-		"14/11/2020",
-		"15/11/2020"
+		"201906OVER",
+		"202002DELI",
+		"202001DELI",
+		"JUIN19V2",
+		"201906DELI",
+		"JUILLAOUT",
+		"SURCH072019",
+		"2019_10",
+		"AO�T-19",
+		"JUIL-19",
+		"JUIN-19",
+		"2019_09",
+		"MARS-19",
+		"110329947"
 	], 
+	"searchField": "FILECODE",
 	"size": 400, 
-	"streamId": 58};
+	"streamId": 449};
+	// 449 = ADS Mercury
 
 String.prototype.lpad = function(padString, length) {
     var str = this;
@@ -45,14 +63,29 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 	logV2(INFO, "Start");
     logV2(INFO, "*".repeat(100));
 	var found = false;
+	
 
+	
+	initAcceptOld();
+	var lines = readFileWrapper(ACCEPTOLD_FILE);
+	lines.forEach(function (item, index) {
+        logV2(INFO, "Processing: " + item);
+        logV2(INFO, "=".repeat(100));
+        logV2(INFO, "Search field: " + RECON_OBJ.value);
+        logV2(INFO, "Stream Id: " + RECON_OBJ.streamId);
+        processValue(RECON_OBJ.searchField, item, RECON_OBJ.streamId.toString());
+	});
+	
 	/*
 	RECON_OBJ.tppns.forEach(function (tppn) {
-        logV2(INFO, "Processing Dat: " + tppn);
+        logV2(INFO, "Processing: " + tppn);
         logV2(INFO, "=".repeat(100));
+        logV2(INFO, "Search field: " + RECON_OBJ.value);
         logV2(INFO, "Stream Id: " + RECON_OBJ.streamId);
-        processTPPN(tppn, RECON_OBJ.streamId.toString());
-    });*/
+        processValue(RECON_OBJ.searchField, tppn, RECON_OBJ.streamId.toString());
+    }); 
+	*/
+	/*
 	var startDate = new Date(2015, 04, 05);
 	var endDate = new Date(2016, 00, 01);
 	var days = daysBetween(startDate, endDate);
@@ -64,15 +97,24 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
         logV2(INFO, "=".repeat(100));
 		processTPPN(newDate, RECON_OBJ.streamId.toString());
 	}
+	*/
+	
+	function initAcceptOld(){
+        var retCode = iimPlay(PREFIX + "00_InitAcceptOld");
+        if (retCode != SUCCESS) {
+			logException("Problem initializing Accept Old");
+		}
+	}
 
-    function processTPPN(newDate, streamId) {
+    function processValue(searchField, value, streamId) {
         RECON_OBJ.total = 0;
-		var formatDate = getFormattedDateDDMMYYY(newDate);
-        iimSet("DATE", formatDate);
+		//var formatDate = getFormattedDateDDMMYYY(newDate);
+        //iimSet("DATE", formatDate);
+        iimSet("STREAM", streamId);
         var retCode = iimPlay(PREFIX + "01_Select_Stream");
         if (retCode == SUCCESS) {
             do {
-                var found = doAcceptOld(formatDate);
+                var found = doAcceptOld(searchField, value);
                 if (found) {
                     logV2(INFO, "Number Of Times Confirmed: " + RECON_OBJ.total);
                 }
@@ -105,16 +147,17 @@ function checkIfDataFound(){
     return found;
 }
 
-function doAcceptOld(newDate){
+function doAcceptOld(searchField, value){
 	logV2(INFO, "Accept Old");
 	var dataFound = false;
     dataFound = checkIfDataFound();
     if (dataFound){
         logV2(INFO, "Data found. No need to search again");
-        retCode = confirmAcceptOld(newDate);
+        retCode = confirmAcceptOld(searchField, value);
     }
     else {
-        iimSet("DATE", newDate);
+        iimSet("FIELD", searchField);
+        iimSet("VALUE", value);
         iimSet("SIZE", RECON_OBJ.size);
         retCode = iimPlay(PREFIX + "02_Search_Records");
         if (retCode == SUCCESS) {
@@ -123,7 +166,7 @@ function doAcceptOld(newDate){
                 logV2(INFO, "No data found");
             }
             else {
-                retCode = confirmAcceptOld(newDate);
+                retCode = confirmAcceptOld(searchField, value);
             }
         }
 	}
@@ -135,10 +178,11 @@ function logException(message){
     throw new Error(message);
 }
 
-function confirmAcceptOld(date){
+function confirmAcceptOld(searchField, value){
     var retCode = iimPlay(PREFIX + "03_Select_Records.iim");
 	if (retCode == SUCCESS){
-        iimSet("DATE", date);
+        iimSet("VALUE", searchField  + ": " + value);
+		logV2(INFO, "SearchValue: " + value);
 		retCode = iimPlay(PREFIX + "04_Confirm.iim");
 		if (retCode == SUCCESS) {
 		  RECON_OBJ.total++;
@@ -443,5 +487,95 @@ function ConfigFile(path, file){
 	this.path = path;
 	this.file = file;
 	this.fullPath = function() { return this.path + this.file};
+}
+
+function readScript(filename){
+
+    // open an input stream from file
+    var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
+    file.initWithPath(filename);
+    var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].createInstance(Components.interfaces.nsIFileInputStream);
+    istream.init(file, 0x01, 0444, 0);
+    istream.QueryInterface(Components.interfaces.nsILineInputStream);
+
+    // read lines into array
+    var script = "";
+    var line = {}, lines = [], hasmore;
+    do {
+        hasmore = istream.readLine(line);
+        script += line.value + "\r\n";
+    } while(hasmore);
+
+    istream.close();
+
+    return script;
+
+}
+
+function getMacrosPath(){
+    var value = getFirefoxSetting("extensions.imacros.",  "defsavepath");
+    if (value == null){
+        throw new Error("iMacros Probably not installed...");
+    }
+    return value;
+}
+
+
+function getFirefoxSetting(branch, key){
+
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch(branch);
+
+    var value = prefs.getCharPref(key, Components.interfaces.nsISupportsString);
+    return value;
+}
+
+function readFile(filename){
+	// open an input stream from file
+	var file = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
+    file.initWithPath(filename);
+	var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].createInstance(Components.interfaces.nsIFileInputStream);
+	istream.init(file, 0x01, 0444, 0);
+	istream.QueryInterface(Components.interfaces.nsILineInputStream);
+
+	// read lines into array
+	var line = {}, lines = [], hasmore;
+	var utf8Converter = Components.classes["@mozilla.org/intl/utf8converterservice;1"].
+	getService(Components.interfaces.nsIUTF8ConverterService);
+	do {
+	   hasmore = istream.readLine(line);
+		var data = utf8Converter.convertURISpecToUTF8 (line.value, "UTF-8");
+	  lines.push(data);
+	} while(hasmore);
+	istream.close();
+	istream = null;	file = null;
+	return lines;
+}
+
+
+function readFileWrapper(fileName){
+    var counter = 0;
+    var success = false;
+    var lines = [];
+    do {
+        counter++;
+        try {
+            lines = readFile(fileName);
+            success = true;
+        }
+        catch (ex) {
+            if (ex.name == "NS_ERROR_FILE_IS_LOCKED") {
+                logV2(WARNING, "READ", "File was locked: " + fileName);
+                logV2(WARNING, "READ", "Retries; " + counter);
+                if (counter >= 5) {
+                    throw ("Problem reading file: " + fileName);
+                }
+                else {
+                    sleep(1000);
+                }
+            }
+        }
+    }
+    while (!success && counter < 5);
+    return lines;
 }
 

@@ -1,0 +1,4 @@
+﻿VERSION BUILD=8970419 RECORDER=FX
+URL GOTO=http://far-pr.awsprv.bpost.cloud/recon/indexPage.do
+TAG POS=1 TYPE=A ATTR=HREF:matcher/ManualMatchQueryAction.do?method=prepare*
+TAG POS=1 TYPE=A ATTR=HREF:matcher/AcceptErrorQueryAction.do?method=prepare*

@@ -197,49 +197,43 @@ function getExtraArtist(pos){
 		// alert(extraArtistHTML);
 		logV2(DEBUG, "MP3", "extraArtistHTML: " + extraArtistHTML);
 		if (!isNullOrBlank(extraArtistHTML)){
-			var regex = /<blockquote>(.*)<\/blockquote>/;
-			//var matches = extraArtistHTML.match(regex);
-			//if (matches != null){
-				//logV2(DEBUG, "MP3", "Match " + matches[0]);
-				//var strippedExtraArtistHTML = matches[0];
-				var strippedExtraArtistHTML = extraArtistHTML;
+			var strippedExtraArtistHTML = extraArtistHTML;
 
-				var oDiv = window.content.document.createElement('div');
-				oDiv.innerHTML=strippedExtraArtistHTML;
-				var oSpan = oDiv.getElementsByTagName("span");
-				//alert(JSON.stringify(oSpan));
-			    // alert(oSpan.length);
-				var object = getExtraArtistObject();
-				for (var j=0; j < oSpan.length; j++){
-					//alert(j + "/" + oSpan[j].innerText);
-					var innerHTML = oSpan[j].innerHTML;
-					if (innerHTML.includes("/artist/")){
-						object.extraArtist = object.extraArtist + "," + oSpan[j].innerText;
-					}
-					else {
-						object.type = oSpan[j].innerText;
-						// a new type
-					}
+			var oDiv = window.content.document.createElement('div');
+			oDiv.innerHTML=strippedExtraArtistHTML;
+			var oSpan = oDiv.getElementsByTagName("span");
+			//alert(JSON.stringify(oSpan));
+			// alert(oSpan.length);
+			var object = getExtraArtistObject();
+			for (var j=0; j < oSpan.length; j++){
+				//alert(j + "/" + oSpan[j].innerText);
+				var innerHTML = oSpan[j].innerHTML;
+				if (innerHTML.includes("/artist/")){
+					object.extraArtist = object.extraArtist + "," + oSpan[j].innerText;
 				}
+				else {
+					object.type = oSpan[j].innerText;
+					// a new type
+				}
+			}
 
-				var oHref = oDiv.getElementsByTagName("a");
+			var oHref = oDiv.getElementsByTagName("a");
 
-				for (var j=0; j < oSpan.length; j++){
-					var type = oSpan[j].innerText;
-					arrayType = type.split("–");
-					if (arrayType != null && arrayType.length > 0){
-						type = arrayType[0].trim();
-					}
-					
-					var object = getExtraArtistObject(type, oHref[j].text);
-					extraArtists.push(object);
+			for (var j=0; j < oSpan.length; j++){
+				var type = oSpan[j].innerText;
+				arrayType = type.split("–");
+				if (arrayType != null && arrayType.length > 0){
+					type = arrayType[0].trim();
 				}
 				
-				for (var i=0; i < extraArtists.length; i++){
-					logV2(DEBUG, "MP3", "Extra Artist Info: " + JSON.stringify(extraArtists[i]));
+				var object = getExtraArtistObject(type, oHref[j].text);
+				extraArtists.push(object);
+			}
+			
+			for (var i=0; i < extraArtists.length; i++){
+				logV2(DEBUG, "MP3", "Extra Artist Info: " + JSON.stringify(extraArtists[i]));
 
-				}
-			//}
+			}
 		}
 		else {
 			logV2(DEBUG, "MP3", "No Extra Artist Tag Found For Track " + track);
