@@ -92,7 +92,7 @@ function processTrack(albumObject, track){
     if (isNullOrBlank(songObject.title)){
         return false;
     }
-	songObject.extraArtists = getExtraArtistOld(pos);
+	songObject.extraArtists = getExtraArtist(pos);
 	albumObject.tracks.push(songObject);
 	return true;
 }
@@ -187,6 +187,27 @@ function clearArtistTag(artist){
 	return artist;
 }
 
+function saveExtraArtist(extraArtists, extraOrtistObj, extraArtistsArray){
+	if (extraOrtistObj != null && extraOrtistObj.type != null){
+		logV2(INFO, "MP3", "Push previous type " + extraOrtistObj.type);
+		var extraArtistName = "";
+		var first = true;
+		for (const element of extraArtistsArray) {
+			logV2(INFO, "MP3", "element: " + element);
+			if (!first){
+				extraArtistName += ", ";				
+			}
+			else {
+				first = false;
+			}
+			extraArtistName += clearArtistTag(element);
+		}
+		logV2(INFO, "MP3", "extraArtistName: " + extraArtistName);
+		extraOrtistObj.extraArtist = extraArtistName;
+		extraArtists.push(extraOrtistObj);
+	}
+}
+
 function getExtraArtist(pos){
 	iimSet("pos", pos);
 	var extraArtists = [];
@@ -194,8 +215,8 @@ function getExtraArtist(pos){
 	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
 	if (retCode == 1){
 		var extraArtistHTML = iimGetLastExtract(1);
-		// alert(extraArtistHTML);
-		logV2(DEBUG, "MP3", "extraArtistHTML: " + extraArtistHTML);
+		//alert(extraArtistHTML);
+		logV2(INFO, "MP3", "extraArtistHTML: " + extraArtistHTML);
 		if (!isNullOrBlank(extraArtistHTML)){
 			var strippedExtraArtistHTML = extraArtistHTML;
 
@@ -203,42 +224,35 @@ function getExtraArtist(pos){
 			oDiv.innerHTML=strippedExtraArtistHTML;
 			var oSpan = oDiv.getElementsByTagName("span");
 			//alert(JSON.stringify(oSpan));
-			// alert(oSpan.length);
-			var object = getExtraArtistObject();
+			//alert(oSpan.length);
+			var object = null;
+			var extraArtistsArray = [];
 			for (var j=0; j < oSpan.length; j++){
 				//alert(j + "/" + oSpan[j].innerText);
 				var innerHTML = oSpan[j].innerHTML;
 				if (innerHTML.includes("/artist/")){
-					object.extraArtist = object.extraArtist + "," + oSpan[j].innerText;
+					//object.extraArtist = object.extraArtist + "," + oSpan[j].innerText;
+					//object.extraArtists.push(oSpan[j].innerText);
+					extraArtistsArray.push(oSpan[j].innerText);
+					logV2(INFO, "MP3 Extra Artist", oSpan[j].innerText);
 				}
 				else {
+					saveExtraArtist(extraArtists, object, extraArtistsArray);
+					object = getExtraArtistObject();
+					extraArtistsArray = [];
 					object.type = oSpan[j].innerText;
+					logV2(INFO, "MP3 Type", oSpan[j].innerText);
 					// a new type
 				}
 			}
-
-			var oHref = oDiv.getElementsByTagName("a");
-
-			for (var j=0; j < oSpan.length; j++){
-				var type = oSpan[j].innerText;
-				arrayType = type.split("–");
-				if (arrayType != null && arrayType.length > 0){
-					type = arrayType[0].trim();
-				}
-				
-				var object = getExtraArtistObject(type, oHref[j].text);
-				extraArtists.push(object);
-			}
-			
-			for (var i=0; i < extraArtists.length; i++){
-				logV2(DEBUG, "MP3", "Extra Artist Info: " + JSON.stringify(extraArtists[i]));
-
-			}
+			saveExtraArtist(extraArtists, object, extraArtistsArray);
+			logV2(INFO, "MP3", JSON.stringify(object));
 		}
 		else {
-			logV2(DEBUG, "MP3", "No Extra Artist Tag Found For Track " + track);
+			logV2(INFO, "MP3", "No Extra Artist Tag Found For Track " + track);
 		}
 	}
+	logV2(INFO, "MP3", "extraArtists: " + JSON.stringify(extraArtists));
 	return extraArtists;
 }
 function getExtraArtistOld(pos){
@@ -287,13 +301,12 @@ function getExtraArtistOld(pos){
 	return extraArtists;
 }
 
-function getExtraArtistObject2(){
-	return {"type":null, "extraArtist":""};
-}
 
 function getExtraArtistObject(type, extraArtist){
 	return {"type":type, "extraArtist":extraArtist};
 }
+
+
 
 function readScript(filename){
 
