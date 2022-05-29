@@ -212,7 +212,7 @@ function getExtraArtist(pos){
 	iimSet("pos", pos);
 	var extraArtists = [];
 	var retCode = simpleMacroPlayFolder("Discogs_12_GetExtraArtist.iim", MACRO_FOLDER);
-	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
+	logV2(INFO, "INIT", "ReturnCode: " + retCode);
 	if (retCode == 1){
 		var extraArtistHTML = iimGetLastExtract(1);
 		//alert(extraArtistHTML);
@@ -246,13 +246,12 @@ function getExtraArtist(pos){
 				}
 			}
 			saveExtraArtist(extraArtists, object, extraArtistsArray);
-			logV2(INFO, "MP3", JSON.stringify(object));
+			logV2(INFO, "MP3", "extraArtists: " + JSON.stringify(extraArtists));
 		}
 		else {
-			logV2(INFO, "MP3", "No Extra Artist Tag Found For Track " + track);
+			logV2(INFO, "MP3", "No Extra Artist Tag Found For Track " + pos);
 		}
 	}
-	logV2(INFO, "MP3", "extraArtists: " + JSON.stringify(extraArtists));
 	return extraArtists;
 }
 function getExtraArtistOld(pos){
