@@ -42,7 +42,7 @@ function processAlbum(){
 	
 	getAlbumTitle();
 
-    trackHTML = checkTrack();
+    trackHTML = getTracks();
 //	writeObject(albumObject, FILENAME);
 
 }
@@ -108,7 +108,7 @@ function getTrackDiscogs(pos){
 //	if (retCode == 1){
 //		track = iimGetLastExtract(1);
 			//logV2(INFO, "DISCOGS", "Extracted Track Value: " + track);
-			checkTrack();
+			getTracks();
 //	}
 //	else {
 //		return null;
@@ -116,27 +116,21 @@ function getTrackDiscogs(pos){
 //	return track;
 }
 
-function checkTrack(){
-	//var oDiv = window.content.document.createElement('div');
-	//oDiv.innerHTML=trackinfo;
-	//logV2(INFO, "DISCOGS", "checkTrack: " + trackinfo);
-	//var oSpan = oDiv.getElementsByTagName("td");
+function getTracks(){
 	var oSpan = window.content.document.querySelectorAll("[data-track-position]");
 	logV2(INFO, "DISCOGS", "oSpan.length: " + oSpan.length);
 	for (var j=0; j < oSpan.length; j++){
-		var innerHTML = oSpan[j].outerHTML;
-		logV2(INFO, "DISCOGS", "innerHTML: " + innerHTML);
-		checkItem(innerHTML);
+		var outerHTML = oSpan[j].outerHTML;
+		logV2(INFO, "DISCOGS", "outerHTML: " + outerHTML);
+		checkItem(outerHTML);
 	}
 }
 
 function checkItem(item){
 			item = "<table>" + item + "</table>";
 			var oDiv = window.content.document.createElement('div');
-			//oDiv.appendChild(item);
 			oDiv.innerHTML=item;
 			logV2(INFO, "DISCOGS", "oDiv: " + oDiv.innerHTML);
-			//var oSpan = oDiv.getElementsByClassName("trackPos_2RCje");
 			getTrackHTML(oDiv);
 			getArtistHTML(oDiv);
 			getTrackTitleHTML(oDiv);
@@ -146,32 +140,33 @@ function checkItem(item){
 function getAlbumTitle(){
 			var oDiv = window.content.document.querySelectorAll("h1[class*=title]");
 			var albumTitle = '';
-			logV2(INFO, "DISCOGS", "AlbumTitle Length: " + oDiv.length);
+			logV2(INFO, "DISCOGS", "AlbumTitle oDiv Length: " + oDiv.length);
 			for (var i=0; i < oDiv.length; i++){
-				logV2(INFO, "DISCOGS", "Album Title: " + oDiv[i].innerText);
 				albumTitle = albumTitle + (i > 0 ? " - " : "") + oDiv[i].innerText;
+				logV2(INFO, "DISCOGS", "Album Title: " + albumTitle);
 			}
 }
 
 function getTrackHTML(oDiv){
-	var oSpan = oDiv.querySelectorAll("[class*=trackPos]");
-	for (var i=0; i < oSpan.length; i++){
-		logV2(INFO, "DISCOGS", "track: " + oSpan[i].innerText);
+	var oElement = oDiv.querySelectorAll("[class*=trackPos]");
+	for (var i=0; i < oElement.length; i++){
+		var track = oElement[i].innerText;
+		logV2(INFO, "DISCOGS", "track: " + track);
 	}
 }
 
 function getArtistHTML(oDiv){
-	var oSpan = oDiv.querySelectorAll("[class*=artist]");
-	for (var i=0; i < oSpan.length; i++){
-		var artist = clearArtistTag(oSpan[i].innerText);
+	var oElement = oDiv.querySelectorAll("[class*=artist]");
+	for (var i=0; i < oElement.length; i++){
+		var artist = clearArtistTag(oElement[i].innerText);
 		logV2(INFO, "DISCOGS", "artist: " + artist);
 	}
 }
 
 function getTrackTitleHTML(oDiv){
-	var oSpan = oDiv.querySelectorAll("span[class*=trackTitle]");
-	for (var i=0; i < oSpan.length; i++){
-		var title = oSpan[i].innerText;
+	var oElement = oDiv.querySelectorAll("span[class*=trackTitle]");
+	for (var i=0; i < oElement.length; i++){
+		var title = oElement[i].innerText;
 		logV2(INFO, "DISCOGS", "title: " + title);
 	}
 }
