@@ -23,29 +23,14 @@ function processAlbum(){
 	var albumObject = getAlbumObject();
 	var retCode = simpleMacroPlayFolder("Discogs_01_GetAlbum.iim", MACRO_FOLDER);
 	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
-	/*
-	var titleArtist = null;
-	titleArtist = getLastExtract(1);
-	if (!isNullOrBlank(titleArtist)){
-		logV2(INFO, "DISCOGS", "titleArtist: " + titleArtist);
-		fillAlbumTitleArtist(albumObject, titleArtist);
-	}
-	else {
-		albumObject.ignoreTrack = true;
-		retCode = simpleMacroPlayFolder("Discogs_02_GetAlbumV2.iim", MACRO_FOLDER);
-		albumObject.albumArtist = getLastExtract(1);
-		albumObject.album = getLastExtract(2);
-	}
-	logV2(INFO, "DISCOGS", "albumObject.albumArtist: " + albumObject.albumArtist);
-	logV2(INFO, "DISCOGS", "albumObject.album: " + albumObject.album);
-	*/
 	albumObject.tracks = [];
 	albumObject.total = 1;
 	
 	getAlbumTitle(albumObject);
 
     trackHTML = getTracks(albumObject);
-//	writeObject(albumObject, FILENAME);
+	alert(JSON.stringify(albumObject, null, 2));
+	writeObject(albumObject, FILENAME);
 
 }
 
@@ -68,59 +53,6 @@ function fillAlbumTitleArtist(albumObject, albumArtist){
 	return albumObject;
 }
 
-function processTrack(albumObject, track){
-	var pos = track.toString();
-	var songObject = getSongObject();
-	if (albumObject.ignoreTrack){
-        songObject.track = pos.toString();
-    }
-    else {
-        var trackObject = getTrackDiscogs(pos);
-        if (trackObject == null){
-        	return false;
-		}
-		else if (trackObject.track == null) {
-			  // skip this line
-			  logV2(INFO, "DISCOGS", "Skipping line " + pos);
-			  return true;
-		}
-        songObject.track = trackObject.track;
-        songObject.cd = trackObject.cd;
-        albumObject.total = trackObject.cd;
-    }
-    	//alert(JSON.stringify(albumObject));
-	songObject.artist = getArtistDiscogs(pos);
-	if (isNullOrBlank(songObject.artist)){
-		songObject.artist = albumObject.albumArtist;
-	}
-	songObject.title = getTitleDiscogs(pos, albumObject.ignoreTrack);
-	logV2(INFO, "DISCOGS", "songObject.title: " + songObject.title);
-    if (isNullOrBlank(songObject.title)){
-        return false;
-    }
-	songObject.extraArtists = getExtraArtist(pos);
-	logV2(INFO, "DISCOGS", "Pushing songobject");
-	albumObject.tracks.push(songObject);
-	return true;
-}
-
-function getTrackDiscogs(pos){
-	var track = null;
-	//iimSet("pos", pos);
-	//logV2(INFO, "DISCOGS", "pos: " + pos);
-	//var trackObject = {"track":null,"cd":null,"ignore":false};
-//	var retCode = simpleMacroPlayFolder("Discogs_10_GetHTMLTrack.iim", MACRO_FOLDER);
-	//logV2(DEBUG, "DISCOGS", "ReturnCode: " + retCode);
-//	if (retCode == 1){
-//		track = iimGetLastExtract(1);
-			//logV2(INFO, "DISCOGS", "Extracted Track Value: " + track);
-			getTracks();
-//	}
-//	else {
-//		return null;
-//	}
-//	return track;
-}
 
 function getTracks(albumObject){
 	var oSpan = window.content.document.querySelectorAll("[data-track-position]");
@@ -133,13 +65,15 @@ function getTracks(albumObject){
 }
 
 function checkItem(albumObject, item){
-			item = "<table>" + item + "</table>";
-			var oDiv = window.content.document.createElement('div');
-			oDiv.innerHTML=item;
-			logV2(INFO, "DISCOGS", "oDiv: " + oDiv.innerHTML);
-			getTrackHTML(oDiv);
-			getArtistHTML(albumObject, oDiv);
-			getTrackTitleHTML(oDiv);
+	var songObject = getSongObject();
+	item = "<table>" + item + "</table>";
+	var oDiv = window.content.document.createElement('div');
+	oDiv.innerHTML=item;
+	logV2(INFO, "DISCOGS", "oDiv: " + oDiv.innerHTML);
+	getTrackHTML(albumObject, songObject, oDiv);
+	getArtistHTML(albumObject, songObject, oDiv);
+	getTrackTitleHTML(songObject, oDiv);
+	albumObject.tracks.push(songObject);
 
 }
 
@@ -154,31 +88,49 @@ function getAlbumTitle(albumObject){
 			}
 }
 
-function getTrackHTML(oDiv){
+function getTrackHTML(albumObject, songObject, oDiv){
 	var oElement = oDiv.querySelectorAll("[class*=trackPos]");
-	for (var i=0; i < oElement.length; i++){
-		var track = oElement[i].innerText;
-		logV2(INFO, "DISCOGS", "track: " + track);
+	if (oElement.length > 0) {
+		for (var i=0; i < oElement.length; i++){
+			var track = oElement[i].innerText;
+			logV2(INFO, "DISCOGS", "track: " + track);
+			if (track.indexOf("-") >= 0){
+				var trackInfo = track.split("-");
+				songObject.track = trackInfo[1];
+				songObject.cd = trackInfo[0];
+			}
+			else {
+				songObject.track = track;
+			}			
+			albumObject.currentTrack++;
+			// there should be only 1 trackPos Class
+			break;
+		}
+	}
+	else {
+		albumObject.currentTrack++;
+		var track = albumObject.currentTrack;
+		songObject.track = track;
 	}
 }
 
-function getArtistHTML(albumObject, oDiv){
+function getArtistHTML(albumObject, songObject, oDiv){
 	var oElement = oDiv.querySelectorAll("[class*=artist]");
 	for (var i=0; i < oElement.length; i++){
 		var artist = clearArtistTag(oElement[i].innerText);
-		logV2(INFO, "DISCOGS", "isNullOrBlank(artist): " + isNullOrBlank(artist));
-		logV2(INFO, "DISCOGS", "albumObject: " + JSON.stringify(albumObject));
 		if(isNullOrBlank(artist) && !albumObject.compilation){
 			artist = albumObject.albumArtist;
 		}
+		songObject.artist = artist;
 		logV2(INFO, "DISCOGS", "artist: " + artist);
 	}
 }
 
-function getTrackTitleHTML(oDiv){
+function getTrackTitleHTML(songObject, oDiv){
 	var oElement = oDiv.querySelectorAll("span[class*=trackTitle]");
 	for (var i=0; i < oElement.length; i++){
 		var title = oElement[i].innerText;
+		songObject.title = title;
 		logV2(INFO, "DISCOGS", "title: " + title);
 	}
 }
@@ -188,6 +140,7 @@ function clearArtistTag(artist){
 	artist = artist.replace("–", "");
 	artist = artist.replace(/ ?\([0-9]{1,3}\)/g, "");
 	artist = artist.replace(/\*$/, "");
+	artist = artist.replace(/\*[ |,]/g, " ");
 	artist = artist.trim();
 	return artist;
 }

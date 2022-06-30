@@ -108,7 +108,7 @@ function getSongObject(){
 }
 
 function getAlbumObject(){
-		var albumObject = {"album":null,"tracks":null,"albumArtist":null,"total":0,"ignoreTrack":false,"compilation":false};
+		var albumObject = {"album":null,"tracks":null,"albumArtist":null,"total":0,"ignoreTrack":false,"compilation":false, "currentTrack": 0};
 		return albumObject;
 }
 
