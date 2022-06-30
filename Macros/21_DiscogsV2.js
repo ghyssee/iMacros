@@ -23,11 +23,12 @@ function processAlbum(){
 	var albumObject = getAlbumObject();
 	var retCode = simpleMacroPlayFolder("Discogs_01_GetAlbum.iim", MACRO_FOLDER);
 	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
+	/*
 	var titleArtist = null;
 	titleArtist = getLastExtract(1);
 	if (!isNullOrBlank(titleArtist)){
 		logV2(INFO, "DISCOGS", "titleArtist: " + titleArtist);
-		getAlbumTitleArtist(albumObject, titleArtist);
+		fillAlbumTitleArtist(albumObject, titleArtist);
 	}
 	else {
 		albumObject.ignoreTrack = true;
@@ -37,28 +38,33 @@ function processAlbum(){
 	}
 	logV2(INFO, "DISCOGS", "albumObject.albumArtist: " + albumObject.albumArtist);
 	logV2(INFO, "DISCOGS", "albumObject.album: " + albumObject.album);
+	*/
 	albumObject.tracks = [];
 	albumObject.total = 1;
 	
-	getAlbumTitle();
+	getAlbumTitle(albumObject);
 
-    trackHTML = getTracks();
+    trackHTML = getTracks(albumObject);
 //	writeObject(albumObject, FILENAME);
 
 }
 
-function getAlbumTitleArtist(albumObject, albumArtist){
+function fillAlbumTitleArtist(albumObject, albumArtist){
 	var splitChar = String.fromCharCode(8211); // "–" special hypen char
 	var items = albumArtist.split(splitChar);
 	if (items.length == 2){
-		logV2(INFO, "DISCOGS", "items[0]: " + items[0]);
-		logV2(INFO, "DISCOGS", "items[1]: " + items[1]);
 		albumObject.albumArtist = items[0].trim();
 		albumObject.album = items[1].trim();
 	}
-	if (isNullOrBlank(albumArtist) || albumArtist.toUpperCase() == "VARIOUS"){
-		albumArtist = "Various Artists";
+	if (isNullOrBlank(albumObject.albumArtist) || albumObject.albumArtist.toUpperCase() == "VARIOUS"){
+		albumObject.albumArtist = "Various Artists";
+		albumObject.compilation = true;
 	}
+	else {
+		albumObject.compilation = false;
+	}
+	logV2(INFO, "DISCOGS", "albumObject.albumArtist: " + albumObject.albumArtist);
+	logV2(INFO, "DISCOGS", "albumObject.album: " + albumObject.album);
 	return albumObject;
 }
 
@@ -116,34 +122,35 @@ function getTrackDiscogs(pos){
 //	return track;
 }
 
-function getTracks(){
+function getTracks(albumObject){
 	var oSpan = window.content.document.querySelectorAll("[data-track-position]");
 	logV2(INFO, "DISCOGS", "oSpan.length: " + oSpan.length);
 	for (var j=0; j < oSpan.length; j++){
 		var outerHTML = oSpan[j].outerHTML;
 		logV2(INFO, "DISCOGS", "outerHTML: " + outerHTML);
-		checkItem(outerHTML);
+		checkItem(albumObject, outerHTML);
 	}
 }
 
-function checkItem(item){
+function checkItem(albumObject, item){
 			item = "<table>" + item + "</table>";
 			var oDiv = window.content.document.createElement('div');
 			oDiv.innerHTML=item;
 			logV2(INFO, "DISCOGS", "oDiv: " + oDiv.innerHTML);
 			getTrackHTML(oDiv);
-			getArtistHTML(oDiv);
+			getArtistHTML(albumObject, oDiv);
 			getTrackTitleHTML(oDiv);
 
 }
 
-function getAlbumTitle(){
+function getAlbumTitle(albumObject){
 			var oDiv = window.content.document.querySelectorAll("h1[class*=title]");
-			var albumTitle = '';
-			logV2(INFO, "DISCOGS", "AlbumTitle oDiv Length: " + oDiv.length);
+			var albumArtistTitle = '';
+			logV2(INFO, "DISCOGS", "albumArtistTitle oDiv Length: " + oDiv.length);
 			for (var i=0; i < oDiv.length; i++){
-				albumTitle = albumTitle + (i > 0 ? " - " : "") + oDiv[i].innerText;
-				logV2(INFO, "DISCOGS", "Album Title: " + albumTitle);
+				albumArtistTitle = albumArtistTitle + (i > 0 ? " - " : "") + oDiv[i].innerText;
+				logV2(INFO, "DISCOGS", "Album Title: " + albumArtistTitle);
+				fillAlbumTitleArtist(albumObject, albumArtistTitle);
 			}
 }
 
@@ -155,10 +162,15 @@ function getTrackHTML(oDiv){
 	}
 }
 
-function getArtistHTML(oDiv){
+function getArtistHTML(albumObject, oDiv){
 	var oElement = oDiv.querySelectorAll("[class*=artist]");
 	for (var i=0; i < oElement.length; i++){
 		var artist = clearArtistTag(oElement[i].innerText);
+		logV2(INFO, "DISCOGS", "isNullOrBlank(artist): " + isNullOrBlank(artist));
+		logV2(INFO, "DISCOGS", "albumObject: " + JSON.stringify(albumObject));
+		if(isNullOrBlank(artist) && !albumObject.compilation){
+			artist = albumObject.albumArtist;
+		}
 		logV2(INFO, "DISCOGS", "artist: " + artist);
 	}
 }
