@@ -9,6 +9,7 @@ setupEnvrionment(getOneDrivePath());
 
 LOG_FILE = new LogFile(LOG_DIR, "Albums");
 songInit();
+var HYPHEN = String.fromCharCode(8211); // "–" special hypen char
 var MACRO_FOLDER = "Discogs";
 var ALBUM = "Album";
 var nrOfSkippedLines = 0;
@@ -17,6 +18,7 @@ var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
 //var albumArtist = selectArtist(); // 171
 
 processAlbum();
+//alert(clearArtistTag('Gordon Muir Wilson*, Hugh Jude Brankin*, John Robinson Reid, Ross Alexander Campbell*'));
 
 function processAlbum(){
 
@@ -35,8 +37,7 @@ function processAlbum(){
 }
 
 function fillAlbumTitleArtist(albumObject, albumArtist){
-	var splitChar = String.fromCharCode(8211); // "–" special hypen char
-	var items = albumArtist.split(splitChar);
+	var items = albumArtist.split(HYPHEN);
 	if (items.length == 2){
 		albumObject.albumArtist = items[0].trim();
 		albumObject.album = items[1].trim();
@@ -73,6 +74,7 @@ function checkItem(albumObject, item){
 	getTrackHTML(albumObject, songObject, oDiv);
 	getArtistHTML(albumObject, songObject, oDiv);
 	getTrackTitleHTML(songObject, oDiv);
+	getExtraArtists(songObject, oDiv);
 	albumObject.tracks.push(songObject);
 
 }
@@ -126,6 +128,63 @@ function getArtistHTML(albumObject, songObject, oDiv){
 	}
 }
 
+function getExtraArtists(songObject, oDiv){
+	var oElement = oDiv.querySelectorAll("div[class*=trackCredits]");
+	logV2(INFO, "DISCOGS", "oElement.length: " + oElement.length);
+	var extraArtists = [];
+	for (var i=0; i < oElement.length; i++){
+		var extraArtistInfo = oElement[i].innerHTML;
+		logV2(INFO, "DISCOGS", "Extra artist Info: " + extraArtistInfo);
+		var oDiv = window.content.document.createElement('div');
+		oDiv.innerHTML=extraArtistInfo;
+		var oSubDiv = oDiv.getElementsByTagName("div");
+		logV2(INFO, "DISCOGS", "Extra Artist Types: " + oSubDiv.length);
+		for (var i=0; i < oSubDiv.length; i++){
+			var extraArtistLine = oSubDiv[i].innerText;
+			logV2(INFO, "DISCOGS", "Extra Artist Type Info: " + extraArtistLine);
+			var oExtraArtist = splitExtraArtist(extraArtistLine);
+			if (oExtraArtist != null) {
+				extraArtists.push(oExtraArtist);
+			}
+			else {
+				logV2(INFO, "DISCOGS", "ignoring this line " + extraArtistLine);
+			}
+		}
+	}
+	songObject.extraArtists = extraArtists;
+}
+
+function splitExtraArtist(extraArtistLine){
+	var extraArtistArray = extraArtistLine.split(" " + HYPHEN + " ");
+	var oExtraArtist = null;
+	if (extraArtistArray.length == 2){
+		oExtraArtist = getExtraArtistObject();
+		oExtraArtist.extraArtist = clearArtistTag(extraArtistArray[1]);
+		oExtraArtist.type = extraArtistArray[0];
+		logV2(INFO, "DISCOGS", JSON.stringify(oExtraArtist));
+	}
+	return oExtraArtist;
+}
+
+function getExtraArtistsOld(songObject, oDiv){
+	var oElement = oDiv.querySelectorAll("div[class*=trackCredits]");
+	logV2(INFO, "DISCOGS", "oElement.length: " + oElement.length);
+	var extraArtists = [];
+	for (var i=0; i < oElement.length; i++){
+		var extraArtistInfo = oElement[i].innerText;
+		logV2(INFO, "DISCOGS", "Extra artist Info: " + extraArtistInfo);
+		var extraArtistArray = extraArtistInfo.split(" " + HYPHEN + " ");
+		if (extraArtistArray.length == 2){
+			var oExtraArtist = getExtraArtistObject();
+			oExtraArtist.extraArtist = clearArtistTag(extraArtistArray[1]);
+			oExtraArtist.type = extraArtistArray[0];
+			logV2(INFO, "DISCOGS", JSON.stringify(oExtraArtist));
+		}
+		extraArtists.push(oExtraArtist);
+	}
+	songObject.extraArtists = extraArtists;
+}
+
 function getTrackTitleHTML(songObject, oDiv){
 	var oElement = oDiv.querySelectorAll("span[class*=trackTitle]");
 	for (var i=0; i < oElement.length; i++){
@@ -139,8 +198,8 @@ function getTrackTitleHTML(songObject, oDiv){
 function clearArtistTag(artist){
 	artist = artist.replace("–", "");
 	artist = artist.replace(/ ?\([0-9]{1,3}\)/g, "");
-	artist = artist.replace(/\*$/, "");
-	artist = artist.replace(/\*[ |,]/g, " ");
+	artist = artist.replace(/\*$/, ""); // remove * at end of string
+	artist = artist.replace(/\*, ?/g, ", ");
 	artist = artist.trim();
 	return artist;
 }

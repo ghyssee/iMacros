@@ -39,7 +39,7 @@ function processAlbum(){
 	logV2(INFO, "DISCOGS", "albumObject.album: " + albumObject.album);
 	albumObject.tracks = [];
 	albumObject.total = 1;
-	var pos = 14;
+	var pos = 1;
 	var exit = false;
 
 	do {
