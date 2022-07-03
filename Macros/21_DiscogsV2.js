@@ -75,6 +75,10 @@ function checkItem(albumObject, item){
 	getArtistHTML(albumObject, songObject, oDiv);
 	getTrackTitleHTML(songObject, oDiv);
 	getExtraArtists(songObject, oDiv);
+	if (albumObject.total < songObject.cd) {
+		albumObject.total = songObject.cd;
+	}
+	
 	albumObject.tracks.push(songObject);
 
 }
