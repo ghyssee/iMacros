@@ -203,7 +203,8 @@ function clearArtistTag(artist){
 	artist = artist.replace("–", "");
 	artist = artist.replace(/ ?\([0-9]{1,3}\)/g, "");
 	artist = artist.replace(/\*$/, ""); // remove * at end of string
-	artist = artist.replace(/\*, ?/g, ", ");
+	artist = artist.replace(/\* /g, " "); // replace *<space> with <space>
+	artist = artist.replace(/\*, ?/g, "; "); // replace *, with ,
 	artist = artist.trim();
 	return artist;
 }

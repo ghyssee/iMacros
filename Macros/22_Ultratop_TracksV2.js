@@ -18,7 +18,6 @@ var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
 //var albumArtist = selectArtist(); // 171
 
 processAlbum();
-//alert(clearArtistTag('Gordon Muir Wilson*, Hugh Jude Brankin*, John Robinson Reid, Ross Alexander Campbell*'));
 
 function processAlbum(){
 
@@ -29,8 +28,8 @@ function processAlbum(){
 	getAlbumTitle(albumObject);
 
     getTracks(albumObject);
+	writeObject(albumObject, FILENAME);
 	alert(JSON.stringify(albumObject, null, 2));
-//	writeObject(albumObject, FILENAME);
 
 }
 
@@ -88,11 +87,59 @@ function getTracks(albumObject){
 	else {
 		oSpan = window.content.document.querySelectorAll("div[style*=table-row]");
 	}
-	logV2(INFO, CATEGORY, "oSpan.length: " + oSpan.length);
+	logV2(INFO, CATEGORY, "Tracks length: " + oSpan.length);
 	for (var j=0; j < oSpan.length; j++){
 		var outerHTML = oSpan[j].outerHTML;
 		logV2(INFO, CATEGORY, "outerHTML: " + outerHTML);
 		checkItem(albumObject, outerHTML);
+	}
+}
+
+function getLayoutType(albumObject, songObject, oDiv){
+	
+	// type 1: div class="normalcell"
+	var oElement = oDiv.querySelectorAll("div[class*=normalcell]");
+	if (oElement.length > 0){
+		albumObject.currentTrack++;
+		logV2(INFO, CATEGORY, "Layout Type 1 (normallcell)");
+		logV2(INFO, CATEGORY, oElement[0].innerText);
+		getArtistLayoutType1(albumObject, songObject, oElement[0]);
+		songObject.track = albumObject.currentTrack.toString();
+		albumObject.tracks.push(songObject);
+		return 1;
+	}
+	return 0;
+	
+}
+
+function getArtistLayoutType1(albumObject, songObject, oElement){
+	var oDiv = window.content.document.createElement('div');
+	oDiv.innerHTML=oElement.outerHTML;
+	var oLink = oDiv.getElementsByTagName("a");
+	logV2(INFO, CATEGORY, "oLink Length: " + oLink.length);
+	if (oLink.length > 0){
+		songObject.title = oLink[0].innerText;
+		logV2(INFO, CATEGORY, "title: " + songObject.title);
+		checkExtraArtist(albumObject, songObject, oDiv);
+		return 1;
+	}
+	
+}
+
+function checkExtraArtist(albumObject, songObject, oDiv){
+	logV2(INFO, CATEGORY, "Check for Extra Artist");
+	var oSpan = oDiv.getElementsByTagName("span");
+	logV2(INFO, CATEGORY, "Extra Artist Span Elements: " + oSpan.length);
+	if (oSpan.length > 0){
+		var extraArtist = oSpan[0].innerText;
+		logV2(INFO, CATEGORY, "extraArtist: " + extraArtist);
+		// remove ( )
+		extraArtist = extraArtist.replace(/ ?\((.*)\)/g, "$1");
+		logV2(INFO, CATEGORY, "extraArtist After Cleanup: " + extraArtist);
+		songObject.artist = extraArtist;
+	}
+	else {
+		songObject.artist = albumObject.albumArtist;
 	}
 }
 
@@ -102,7 +149,10 @@ function checkItem(albumObject, item){
 	var oDiv = window.content.document.createElement('div');
 	oDiv.innerHTML=item;
 	logV2(INFO, CATEGORY, "oDiv: " + oDiv.innerHTML);
-	var oElement = oDiv.querySelectorAll("div[style*=table-cell]");
+	// var oElement = oDiv.querySelectorAll("div[style*=table-cell]");
+	getLayoutType(albumObject, songObject, oDiv);
+	if (false){
+	var oElement = oDiv.querySelectorAll("div[class*=normalcell]");
 	logV2(INFO, CATEGORY, "oElement.length: " + oElement.length);
 	if (oElement.length == 4){
 		// 1 = track
@@ -121,6 +171,7 @@ function checkItem(albumObject, item){
 			logV2(INFO, CATEGORY, "CD Tag Found");
 			albumObject.total = extractCD(myText);
 		}
+	}
 	}
 
 }
