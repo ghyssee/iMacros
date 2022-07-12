@@ -1,14 +1,11 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
 SET !TIMEOUT_STEP 0
 TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fightclub*&id={{id}}
-WAIT SECONDS=0.2
+WAIT SECONDS=0.1
 TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fightclub*&id={{id}}
-WAIT SECONDS=0.2
+WAIT SECONDS=0.1
 TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fightclub*&id={{id}}
-WAIT SECONDS=0.2
+WAIT SECONDS=0.1
 TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fightclub*&id={{id}}
-WAIT SECONDS=0.2
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fightclub*&id={{id}}
-WAIT SECONDS=0.2
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fightclub*&id={{id}}
+
 
