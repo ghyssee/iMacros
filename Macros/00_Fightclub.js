@@ -21,6 +21,8 @@ var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
 
 
 var counter = 0;
+
+
 joinFightClub();
 do {
 	setMyId();
@@ -38,6 +40,17 @@ while (counter < 100 && myCounter != -1 && counter != -1);
 function joinFightClub(){
 	logV2(INFO, CATEGORY, "Join Fight Club");
 	var retCode = simpleMacroPlayFolder("11_Fightclub_Join.iim", MACRO_FOLDER);
+}
+
+function leaveFightClub(){
+	logV2(INFO, CATEGORY, "Leave Fight Club");
+	var retCode = simpleMacroPlayFolder("12_Fightclub_Leave", MACRO_FOLDER);
+	collectFightClub();
+}
+
+function collectFightClub(){
+	logV2(INFO, CATEGORY, "Collect Fight Club");
+	var retCode = simpleMacroPlayFolder("13_Fightclub_Collect", MACRO_FOLDER);
 }
 
 function setMyId(){
@@ -60,11 +73,31 @@ function setMyId(){
 
 function checkResultsButton(){
 	var oSpan = window.content.document.querySelectorAll("a[data-params*=result]");
-	//logV2(INFO, CATEGORY, "checkResultsButton: " + oSpan.length);
-	if (oSpan.length > 1){
+	logV2(INFO, CATEGORY, "checkResultsButton: " + oSpan.length);
+	if (oSpan.length >= 1){
 		return 1;
 	}
 	return 0;
+}
+
+function checkLeaveButton(){
+	var oSpan = window.content.document.querySelectorAll("a[data-params*=leave]");
+	logV2(INFO, CATEGORY, "checkLeaveButton: " + oSpan.length);
+	if (oSpan.length >= 1){
+		return 1;
+	}
+	return 0;
+}
+
+function quitFightClub(){
+	logV2(INFO, CATEGORY, "Fight Club Finished");
+	waitV2("1");
+	if (checkLeaveButton() == 1){
+		leaveFightClub();
+	}
+	else if (checkResultsButton() == 1){
+		collectFightClub();
+	}
 }
 
 function getMyHealth(){
@@ -74,7 +107,6 @@ function getMyHealth(){
 	do {
 		// checking for results button
 		var results = checkResultsButton();
-		//logV2(INFO, CATEGORY,"checkResultsButton: " + results);
 		if (results == 1){
 			// results button available. No need for checking health anymore
 			return 0;
@@ -111,11 +143,13 @@ function getFighters(){
 	do {
 		
 		var results = checkResultsButton();
-		logV2(INFO, CATEGORY,"checkResultsButton: " + results);
 		if (results == 1){
 			// results button available. No need for checking health anymore
 			return null;
 		}
+		// check for Leave button
+		
+		// end check
 		oSpan = window.content.document.querySelectorAll("span[id*=fc-health]:not([class*=health_bar])");
 		nr = oSpan.length;
 		if (nr != 5){
@@ -133,7 +167,9 @@ function getFighters(){
 function startFight(){
 	var oSpan = getFighters();
 	if (oSpan == null){
-		alert("No Fighters available. Fight Finished!");
+		quitFightClub();
+		//alert("No Fighters available. Fight Finished!");
+		return -1;
 	}
 	var counter = 0;
 	
@@ -143,7 +179,8 @@ function startFight(){
 	for (var i=nr-1; i >= 0; i--){
 		var myHealth = getMyHealth();
 		if (myHealth == 0){
-			alert("I'm dead");
+			//alert("I'm dead");
+			quitFightClub();
 			return -1;
 		}
 		var fighterObj = {"id": null, "health": -1};
