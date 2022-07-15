@@ -113,7 +113,7 @@ function getMyHealth(){
 		}
 		// gettting my health
 		oSpan = window.content.document.querySelectorAll("span[id=fc-health-" + MR_ID + "]");
-		logV2(INFO, CATEGORY,"getMyHealth oSpan.length: " + oSpan.length);
+		//logV2(INFO, CATEGORY,"getMyHealth oSpan.length: " + oSpan.length);
 
 		for (var i=0; i < oSpan.length; i++){
 			//logV2(INFO, CATEGORY, oSpan[i].innerText);
@@ -122,11 +122,11 @@ function getMyHealth(){
 			health = health.replace(/(.*)\%/g, "$1");
 			var attr= oSpan[i].getAttribute('id');
 			attr = attr.replace(/fc-health-(.*)/g, "$1");
-			logV2(INFO, CATEGORY, "My health: " + health);
+			//logV2(INFO, CATEGORY, "My health: " + health);
 			return health;
 		}
 		if (oSpan.length == 0){	
-			logV2(INFO, CATEGORY, "Reload page");
+			logV2(INFO, CATEGORY, "Waiting...");
 			waitV2(0.5);
 			
 		}
@@ -136,9 +136,7 @@ function getMyHealth(){
 }
 
 function getFighters(){
-	// contain id fc-health but not class health_bar
 	var nr = 0;
-	//var tries = 0;
 	var oSpan = null;
 	do {
 		
@@ -150,16 +148,14 @@ function getFighters(){
 		// check for Leave button
 		
 		// end check
+		// contain id fc-health but not class health_bar
 		oSpan = window.content.document.querySelectorAll("span[id*=fc-health]:not([class*=health_bar])");
 		nr = oSpan.length;
 		if (nr != 5){
 			waitV2(0.1);
 		}
-		//tries++;
-		//logV2(INFO, CATEGORY, "nr: " + nr);
-		//logV2(INFO, CATEGORY, "tries: " + tries);
 	}
-	while (nr != 5 && results == 0); //&& tries < 100);
+	while (nr != 5 && results == 0);
 	return oSpan;
 }
 
@@ -201,9 +197,7 @@ function startFight(){
 			fighterObj.id = attr;
 			fighterObj.health  = Number(health);
 			counter++;
-			//attack(attr);
 			fighters.push(fighterObj);
-			//break;
 		}
 	}
 	logV2(INFO, CATEGORY, JSON.stringify(fighters));
@@ -214,7 +208,7 @@ function startFight(){
 		//if (retCode != 1){
 	//		return -1;
 	//	}
-		//simulateClick(attackObj.id);
+	//	simulateClick(attackObj.id);
 	}
 	else {
 		logV2(INFO, CATEGORY, "There was a problem with attacking lowest health player");
@@ -225,12 +219,28 @@ function startFight(){
 
 function simulateClick(id){
 	oSpan = oSpan = window.content.document.querySelectorAll("a[id*=fc-atk-" + id + "]");
-	//alert(oSpan.length);
 	logV2(INFO, CATEGORY, "Simulate: " + oSpan.length);
 	if (oSpan.length == 1){
 		oSpan[0].click();
-
-		logV2(INFO, CATEGORY, "Clicking...");
+		waitV2("0.1");
+		oSpan[0].click();
+		waitV2("0.1");
+		oSpan[0].click();
+		waitV2("0.1");
+		oSpan[0].click();
+		waitV2("0.1");
+		oSpan[0].click();
+		waitV2("0.1");
+		oSpan[0].click();
+		waitV2("0.1");
+		oSpan[0].click();
+		waitV2("0.1");
+		oSpan[0].click();
+		waitV2("0.1");
+		oSpan[0].click();
+		waitV2("0.1");
+		oSpan[0].click();
+        //logV2(INFO, CATEGORY, "Clicking...");
 	}
 	else {
 		logV2(INFO, CATEGORY, "Problem Clicking attack button for: " + id);
