@@ -19,7 +19,6 @@ var FIRST_ATTACK = true;
 
 
 var counter = 0;
-//healShakedown();
 var retCode = startShakeDown();
 if (retCode == 1){
 	if (getHealth() > 0){
@@ -39,18 +38,6 @@ if (retCode == 1){
 else {
 	alert("Shakedown not found!");
 }
-
-//do {
-//	setMyId();
-//	waitV2("0.5");
-//}
-//while (MR_ID == "-1");
-
-//do {
-//	var myCounter = startFight();
-//	counter++;
-//}
-//while (counter < 100 && myCounter != -1 && counter != -1);
 
 
 function startShakeDown(){
@@ -171,64 +158,9 @@ function evaluateShakedownStatus(){
 			logV2(INFO, CATEGORY, "SUCCESSFUL");
 			exitCode = 1;
 		}
-		else if (status.startsWith("THERE ARE COPS")){
-			logV2(INFO, CATEGORY, "THERE ARE COPS");
-			exitCode = 1;
-		}
-		else {
-			logV2(INFO, CATEGORY, "UNKNOWN STATUS");
-			exitCode = 1;
-		}
-	}
-	else {
-		logV2(INFO, CATEGORY, "shakedown status not found");
-		exitCode = 1;
-	}
-	logV2(INFO, CATEGORY, "exitCode: " + exitCode);
-	return exitCode;
-}
-
-function evaluateShakedownStatusOld(){
-	var status = getShakedownStatus();
-	var exitCode = 0;
-	if (status != null){
-		status = status.toUpperCase();
-		if (status.startsWith("CHOOSE")){
-			chooseBusiness();
-			exitCode = 0;
-		}
-		else if (status.startsWith("NO DEAL")){
-			// continue fighting
-			var health = getHealth();
-			if (health > 0){
-				var stamina = getStamina();
-				if (stamina > 10000){
-					logV2(INFO, CATEGORY, "NO DEAL");
-					startFight();
-					exitCode = 0;
-				}
-				else { 
-				 logV2(INFO, CATEGORY, "Not enough stamina");
-				 alert("Not enough stamina");
-				 exitCode = 1;
-				}
-			}
-			else {
-				logV2(INFO, CATEGORY, "You're Dead!!!");
-				if (FIRST_ATTACK){
-					healShakedown();
-					FIRST_ATTACK = false;
-				}
-				else {
-					waitV2(60);
-					healShakedown();
-				}
-				exitCode = 0;
-			}
-
-		}
-		else if (status.startsWith("SUCCESSFUL")){
+		else if (status.startsWith("EVENT COMPLETE")){
 			logV2(INFO, CATEGORY, "SUCCESSFUL");
+			alert("Shakedown Event Completed");
 			exitCode = 1;
 		}
 		else if (status.startsWith("THERE ARE COPS")){
@@ -298,37 +230,6 @@ function continueShakedown(){
 	logV2(INFO, CATEGORY, "Shakedown Continue status: " + retCode);
 	return retCode;
 }
-
-function simulateClick(id){
-	oSpan = oSpan = window.content.document.querySelectorAll("a[id*=fc-atk-" + id + "]");
-	logV2(INFO, CATEGORY, "Simulate: " + oSpan.length);
-	if (oSpan.length == 1){
-		oSpan[0].click();
-		waitV2("0.1");
-		oSpan[0].click();
-		waitV2("0.1");
-		oSpan[0].click();
-		waitV2("0.1");
-		oSpan[0].click();
-		waitV2("0.1");
-		oSpan[0].click();
-		waitV2("0.1");
-		oSpan[0].click();
-		waitV2("0.1");
-		oSpan[0].click();
-		waitV2("0.1");
-		oSpan[0].click();
-		waitV2("0.1");
-		oSpan[0].click();
-		waitV2("0.1");
-		oSpan[0].click();
-        //logV2(INFO, CATEGORY, "Clicking...");
-	}
-	else {
-		logV2(INFO, CATEGORY, "Problem Clicking attack button for: " + id);
-	}
-}
-
 
 function readScript(filename){
 
