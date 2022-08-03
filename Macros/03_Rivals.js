@@ -20,18 +20,24 @@ var FIRST_ATTACK = true;
 
 var counter = 0;
 
+var RESOURCE_TYPE = Object.freeze({
+        "RIVALS": {"type": "Rival Mobsters Alive", "color": "f40", "id": "2"},
+		"STREET_TUGS": {"type": "Street Thugs Alive", "color": "fc4", "id": "3"},
+    }
+);
 
 var retCode = initRivals();
+var resource = RESOURCE_TYPE.STREET_TUGS;
 if (retCode == SUCCESS){
-	var rivals = getRivals();
+	var rivals = getRivals(resource);
 	if (rivals > 10){
 		if (getHealth() > 0){
 			// you already have health when you started this fight
 			// so, when you're dead, don't heal immediately
 			FIRST_ATTACK = false;
 		}
-		if (initAttack()){
-			startFight();
+		if (initAttack(resource)){
+			startFight(resource);
 		}
 		else{
 			logV2(INFO, CATEGORY, "Problem Initializeing rivals...");
@@ -44,6 +50,7 @@ if (retCode == SUCCESS){
 else {
 	alert("Rivals not found!");
 }
+
 
 function initRivals(){
 	logV2(INFO, CATEGORY, "Start Rivals");
@@ -61,15 +68,17 @@ function initRivals(){
 	return retCode;
 }
 
-function getRivals(){
+function getRivals(resource){
 	var results = []; 
 	var rivals = 0;
 	window.content.document.querySelectorAll("div").forEach(elem => {
-		if (elem.textContent.startsWith("Rival Mobsters Alive")) {
+		if (elem.textContent.startsWith(resource.type)) {
 			var rivalsInfo = elem.innerText;
 			logV2(INFO, CATEGORY, rivalsInfo);
-			rivalsInfo = rivalsInfo.replace(/^Rival Mobsters Alive: ?([0-9]{1,2}) ?\/ ([0-9]{1,2})/g, "$1");
-			// ex. Rival Mobsters Alive: 35 / 40
+			//rivalsInfo = rivalsInfo.replace(/^Rival Mobsters Alive: ?([0-9]{1,2}) ?\/ ([0-9]{1,2})/g, "$1");
+			var search_term = new RegExp("^" + resource.type + ": ?([0-9]{1,2}) ?\/ ([0-9]{1,2})", "g");
+			rivalsInfo = rivalsInfo.replace(search_term, "$1");
+		    // ex. Rival Mobsters Alive: 35 / 40
 			rivals = Number(rivalsInfo);
 			logV2(INFO, CATEGORY, "Rivals: " + rivals);
 		}
@@ -77,17 +86,18 @@ function getRivals(){
 	return rivals;
 }
 
-function getRivals2(){
+function getRivals2(resource){
 	var results = []; 
 	var rivals = 0;
 	window.content.document.querySelectorAll("span").forEach(elem => {
-		if (elem.textContent.startsWith("Rival Mobsters Alive")) {
+		if (elem.textContent.startsWith(resource.type)) {
 			var rivalsInfo = elem.innerText;
 			logV2(INFO, CATEGORY, rivalsInfo);
-			rivalsInfo = rivalsInfo.replace(/^Rival Mobsters Alive: ?([0-9]{1,2}) ?\/ ([0-9]{1,2})/g, "$1");
+			var search_term = new RegExp("^" + resource.type + ": ?([0-9]{1,2}) ?\/ ([0-9]{1,2})", "g");
+			rivalsInfo = rivalsInfo.replace(search_term, "$1");
 			// ex. Rival Mobsters Alive: 35 / 40
 			rivals = Number(rivalsInfo);
-			logV2(INFO, CATEGORY, "Rivals: " + rivals);
+			logV2(INFO, CATEGORY, "Rivals2: " + rivals);
 		}
 	});
 	return rivals;
@@ -109,7 +119,7 @@ function getHealth(){
 	return health;
 }
 
-function startFight(){
+function startFight(resource){
 	var health = 0;
 	health = getHealth();
 	var rivals = 100;
@@ -117,22 +127,22 @@ function startFight(){
 		attack();
 		health = getHealth();
 		if (checkContinueButton() == 1){
-			rivals = getRivals2();
+			rivals = getRivals2(resource);
 			continueRivals();
 		}
 	}
 	while (health > 0 && rivals > 0);
 }
 
-function initAttack(){
+function initAttack(resource){
 	logV2(INFO, CATEGORY, "Start Attack");
 	var ok = false;
 	var oSpan = window.content.document.querySelectorAll("div[class*=feed_row]");
 	for (var i =0; i < oSpan.length; i++){
 		logV2(INFO, CATEGORY, oSpan[i].outerHTML);
-		if (isRival(oSpan[i])){
+		if (isRival(oSpan[i], resource)){
 			logV2(INFO, CATEGORY, "Rival Found. Extracting id...");
-			var id = extractId(oSpan[i]);
+			var id = extractId(oSpan[i], resource);
 			if (id != null){
 				ok = goRivalAttack(id);
 				logV2(INFO, CATEGORY, "ok: " + ok);
@@ -154,7 +164,7 @@ function goRivalAttack(id){
 	return (retCode == SUCCESS);
 }
 
-function extractId(oElement)
+function extractId(oElement, resource)
 {
 	/* ex: 
 	<div class="feed_row">
@@ -173,14 +183,15 @@ function extractId(oElement)
 		var attr= oRival[0].getAttribute('data-params');
 		// ex. controller=fight&action=attackview2&id=2613803
 		logV2(INFO, CATEGORY, "attr: " + attr);
-		var id = attr.replace(/^controller=fight&action=attackview2&id=(.*)/g, "$1");
+		var search_term = new RegExp("^controller=fight&action=attackview" + resource.id + "&id=(.*)", "g");
+		var id = attr.replace(search_term, "$1");
 		logV2(INFO, CATEGORY, "id: " + id);
 		return id;
 	}
 	return null;
 }
 
-function isRival(oElement){
+function isRival(oElement, resource){
 	var oDiv = window.content.document.createElement('div');
 	oDiv.innerHTML=oElement.outerHTML;
 	oRival = oDiv.querySelectorAll("span[style*=color]");
@@ -190,7 +201,8 @@ function isRival(oElement){
 		// ex. color:#f40;
 		var color = attr.replace(/^color: ?#(.*);/g, "$1").toLowerCase();
 		logV2(INFO, CATEGORY, "color: " + color);
-		if (color == "f40"){
+
+		if (color == resource.color){
 			return true;
 		}
 	}
