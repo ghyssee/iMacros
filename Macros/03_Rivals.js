@@ -4,11 +4,8 @@ eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
-eval(readScript(MACROS_PATH + "\\js\\SongUtils-0.0.3.js"));
-setupEnvrionment(getOneDrivePath());
 
 LOG_FILE = new LogFile(LOG_DIR, "Rivals");
-songInit();
 var HYPHEN = String.fromCharCode(8211); // "–" special hypen char
 var CATEGORY = "RIVALS";
 var MACRO_FOLDER = "MR/Rivals";
@@ -26,31 +23,68 @@ var RESOURCE_TYPE = Object.freeze({
     }
 );
 
-var retCode = initRivals();
-var resource = RESOURCE_TYPE.STREET_TUGS;
-if (retCode == SUCCESS){
-	var rivals = getRivals(resource);
-	if (rivals > 10){
-		if (getHealth() > 0){
-			// you already have health when you started this fight
-			// so, when you're dead, don't heal immediately
-			FIRST_ATTACK = false;
+var resource = selectRival();
+
+if (resource != null) {
+
+	var retCode = initRivals();
+	if (retCode == SUCCESS){
+		var rivals = getRivals(resource);
+		if (rivals > 10){
+			if (getHealth() > 0){
+				// you already have health when you started this fight
+				// so, when you're dead, don't heal immediately
+				FIRST_ATTACK = false;
+			}
+			if (initAttack(resource)){
+				startFight(resource);
+			}
+			else{
+				logV2(INFO, CATEGORY, "Problem Initializeing rivals...");
+			}
 		}
-		if (initAttack(resource)){
-			startFight(resource);
-		}
-		else{
-			logV2(INFO, CATEGORY, "Problem Initializeing rivals...");
+		else {
+			alert("Not enough rivals Alive");
 		}
 	}
 	else {
-		alert("Not enough rivals Alive");
+		alert("Rivals not found!");
 	}
 }
-else {
-	alert("Rivals not found!");
+
+
+function isValidId(id){
+	var valid = false;
+	Object.entries(RESOURCE_TYPE).forEach(([key, value]) => {
+		if (value.id == id){
+			valid = true;
+		}
+	});	
+	return valid;
 }
 
+function selectRival(){
+	var rival = null;
+	var msg = "Select Rival Type" + NEWLINE;
+	msg += "=".repeat("20") + NEWLINE.repeat(2);
+	
+	Object.entries(RESOURCE_TYPE).forEach(([key, value]) => {
+		msg+= value.id + " =" + value.type  + NEWLINE.repeat(2);
+	});	
+	
+	
+	do {
+		rival = prompt(msg, RESOURCE_TYPE.RIVALS.id);
+	}
+	while (!isValidId(rival) && rival != null);
+	var resource = null;
+	Object.entries(RESOURCE_TYPE).forEach(([key, value]) => {
+		if (value.id == rival){
+			resource = value;
+		}
+	});	
+	return resource;
+}
 
 function initRivals(){
 	logV2(INFO, CATEGORY, "Start Rivals");
