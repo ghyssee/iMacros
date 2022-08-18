@@ -30,7 +30,7 @@ if (resource != null) {
 	var retCode = initRivals();
 	if (retCode == SUCCESS){
 		var rivals = getRivals(resource);
-		if (rivals > 10){
+		if (rivals > 7){
 			if (getHealth() > 0){
 				// you already have health when you started this fight
 				// so, when you're dead, don't heal immediately
@@ -69,7 +69,7 @@ function selectRival(){
 	msg += "=".repeat("20") + NEWLINE.repeat(2);
 	
 	Object.entries(RESOURCE_TYPE).forEach(([key, value]) => {
-		msg+= value.id + " =" + value.type  + NEWLINE.repeat(2);
+		msg+= value.id + " = " + value.type  + NEWLINE.repeat(2);
 	});	
 	
 	
@@ -105,7 +105,8 @@ function initRivals(){
 function getRivals(resource){
 	var results = []; 
 	var rivals = 0;
-	window.content.document.querySelectorAll("div").forEach(elem => {
+	logV2(INFO, CATEGORY, "Entering getRivals");
+	window.content.document.querySelectorAll("div, span").forEach(elem => {
 		if (elem.textContent.startsWith(resource.type)) {
 			var rivalsInfo = elem.innerText;
 			logV2(INFO, CATEGORY, rivalsInfo);
@@ -115,23 +116,6 @@ function getRivals(resource){
 		    // ex. Rival Mobsters Alive: 35 / 40
 			rivals = Number(rivalsInfo);
 			logV2(INFO, CATEGORY, "Rivals: " + rivals);
-		}
-	});
-	return rivals;
-}
-
-function getRivals2(resource){
-	var results = []; 
-	var rivals = 0;
-	window.content.document.querySelectorAll("span").forEach(elem => {
-		if (elem.textContent.startsWith(resource.type)) {
-			var rivalsInfo = elem.innerText;
-			logV2(INFO, CATEGORY, rivalsInfo);
-			var search_term = new RegExp("^" + resource.type + ": ?([0-9]{1,2}) ?\/ ([0-9]{1,2})", "g");
-			rivalsInfo = rivalsInfo.replace(search_term, "$1");
-			// ex. Rival Mobsters Alive: 35 / 40
-			rivals = Number(rivalsInfo);
-			logV2(INFO, CATEGORY, "Rivals2: " + rivals);
 		}
 	});
 	return rivals;
@@ -156,14 +140,18 @@ function getHealth(){
 function startFight(resource){
 	var health = 0;
 	health = getHealth();
+	if (health == 0){
+		heal();
+	}
 	var rivals = 100;
 	do {
 		attack();
 		health = getHealth();
 		if (checkContinueButton() == 1){
-			rivals = getRivals2(resource);
+			rivals = getRivals(resource);
 			continueRivals();
 		}
+		logV2(INFO, CATEGORY, health + "/" + rivals);
 	}
 	while (health > 0 && rivals > 0);
 }
@@ -179,7 +167,6 @@ function initAttack(resource){
 			var id = extractId(oSpan[i], resource);
 			if (id != null){
 				ok = goRivalAttack(id);
-				logV2(INFO, CATEGORY, "ok: " + ok);
 			}
 			else {
 				logV2(INFO, CATEGORY, "No Id found for rivals!!!");
@@ -267,9 +254,9 @@ function closePopup(){
     return (retCode == SUCCESS);
 }
 
-function healShakedown(){
+function heal(){
 	logV2(INFO, CATEGORY, "Healing");
-	var retCode = simpleMacroPlayFolder("15_Shakedown_Heal", MACRO_FOLDER);
+	var retCode = simpleMacroPlayFolder("15_Heal", COMMON_FOLDER);
 	closePopup();
 }
 
