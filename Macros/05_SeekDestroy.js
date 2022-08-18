@@ -4,45 +4,38 @@ eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.3.js"));
 
 LOG_FILE = new LogFile(LOG_DIR, "SeekDestroy");
 var HYPHEN = String.fromCharCode(8211); // "–" special hypen char
 var CATEGORY = "SEEKDESTROY";
 var MACRO_FOLDER = "MR/Seek";
-var COMMON_FOLDER = "MR/Common";
 var MR_ID = "-1";
 var MIN_STAMINA = 10000;
 var FIRST_ATTACK = true;
 
-
-var counter = 0;
-
-var RESOURCE_TYPE = Object.freeze({
-        "RIVALS": {"type": "Rival Mobsters Alive", "color": "f40", "id": "2"},
-		"STREET_TUGS": {"type": "Street Thugs Alive", "color": "fc4", "id": "3"},
-    }
-);
-
-test();
-
-var job = test();
+if (true){
 
 	var retCode = initSeekDestroy();
-	
+		
 	if (retCode == SUCCESS){
-		if (getHealth() > 0){
-			// you already have health when you started this fight
-			// so, when you're dead, don't heal immediately
-			FIRST_ATTACK = false;
-		}
-		if (initAttack(job)){
-			startFight();
-		}
-		else{
-		logV2(INFO, CATEGORY, "Problem Initializing Attack...");
+		var job = test();
+		if (job != null){
+			if (getHealth() > 0){
+				// you already have health when you started this fight
+				// so, when you're dead, don't heal immediately
+				FIRST_ATTACK = false;
+			}
+			if (initAttack(job)){
+				startFight();
+			}
+			else{
+			logV2(INFO, CATEGORY, "Problem Initializing Seek & Destroy...");
+			}
 		}
 	}
 
+}
 
 function test(){
 	var oSpan = window.content.document.querySelectorAll("a[class*=qbit]");
@@ -56,8 +49,8 @@ function test(){
 			staminaJobs.push(dataId);
 		}
 	}
-	//alert(staminaJobs.toString());
-	selectJob(staminaJobs);
+	staminaJobs.sort();
+	return selectJob(staminaJobs);
 }
 
 function checkTest(object){
@@ -97,12 +90,10 @@ function selectJob(aStaminaJobs){
 	for (var i=0; i < aStaminaJobs.length; i++){
 		msg += aStaminaJobs[i] + NEWLINE;
 	}	
-	
-	//do {
-		job = prompt(msg, aStaminaJobs[0]);
-	//}
-	//while (job != null);
+
+	job = prompt(msg, aStaminaJobs[aStaminaJobs.length-1]);
 	logV2(INFO, CATEGORY, "Seek & Destroy Stamina job: " + job);
+	return job;
 }
 
 function initSeekDestroy(){
@@ -113,40 +104,32 @@ function initSeekDestroy(){
 }
 
 
-function getHealth(){
-	var oSpan = window.content.document.querySelectorAll("span[class*=health]");
-	var health = 0;
-	if (oSpan.length >= 1){
-		var healthInfo = oSpan[0].innerText;
-		logV2(INFO, CATEGORY, "Check health: " + healthInfo);
-		var items = healthInfo.split("/");
-		if (items.length == 2){
-			health = items[0].replace(",", "");
-			health = Number(health);
-			logV2(INFO, CATEGORY, "Health: " + health);
-		}
-	}
-	return health;
-}
-
 function startFight(){
 	var health = 0;
 	health = getHealth();
 	var exit = false;
 	do {
+		if (checkAttackButton() == 1 && getHealth() < 5){
+			healSeek();
+			if (!FIRST_ATTACK){
+				waitV2("5");
+			}
+		}
 		attack();
 		health = getHealth();
+
 		if (checkContinueButton() == 1){
 			continueSeek();
-		}
-		if (checkAttackButton() == 0){
-			logV2(INFO, CATEGORY, "Attack Button not found!");
-			exit = true;
 		}
 		if (checkFinishedButton() == 1){
 			alert("Task Finished!");
 			exit = true;
 		}
+		if (checkAttackButton() == 0){
+			logV2(INFO, CATEGORY, "Attack Button not found!");
+			exit = true;
+		}
+
 	}
 	while (health > 0 && exit == false);
 }
@@ -174,65 +157,11 @@ function clickGoNowButton(){
 	return (retCode == SUCCESS);
 }
 
-
-function goRivalAttack(id){
-	logV2(INFO, CATEGORY, "Go To Rival Attack Screen");
-	iimSet("id", id);
-	var retCode = simpleMacroPlayFolder("11_Rivals_InitAttack", MACRO_FOLDER);
-	return (retCode == SUCCESS);
-}
-
 function attack(){
 	logV2(INFO, CATEGORY, "Attack");
 	var retCode = simpleMacroPlayFolder("12_Seek_Attack", MACRO_FOLDER);
 }
 
-function getCash(){
-	var oSpan = window.content.document.querySelectorAll("span[class*=cash]");
-	//var cash = 0;
-	if (oSpan.length >= 1){
-		var cashInfo = oSpan[0].innerText;
-		logV2(INFO, CATEGORY, "Cash: " + cashInfo);
-	}
-	return cashInfo;
-}
-
-
-function closePopup(){
-    var retCode = simpleMacroPlayFolder("02_ClosePopup.iim", COMMON_FOLDER);
-    if (retCode == SUCCESS){
-        logV2(INFO, "POPUP", "Popup Closed");
-    }
-    return (retCode == SUCCESS);
-}
-
-function healShakedown(){
-	logV2(INFO, CATEGORY, "Healing");
-	var retCode = simpleMacroPlayFolder("15_Shakedown_Heal", MACRO_FOLDER);
-	closePopup();
-}
-
-function deposit(){
-	logV2(INFO, CATEGORY, "Collect Shakedown");
-	getCash();
-	var retCode = simpleMacroPlayFolder("12_ShakeDown_Deposit.iim", MACRO_FOLDER);
-}
-
-function getStamina(){
-	var oSpan = window.content.document.querySelectorAll("span[class*=stamina]");
-	var stamina = 0;
-	if (oSpan.length >= 1){
-		var staminaInfo = oSpan[0].innerText;
-		logV2(INFO, CATEGORY, "Check stamina: " + staminaInfo);
-		var items = staminaInfo.split("/");
-		if (items.length == 2){
-			stamina = items[0].replace(",", "");
-			stamina = Number(stamina);
-			logV2(INFO, CATEGORY, "stamina: " + stamina);
-		}
-	}
-	return stamina;
-}
 
 function checkAttackButton(){
 	var oSpan = window.content.document.querySelectorAll("a[data-params*=amt\\=5]");
@@ -272,12 +201,19 @@ function checkAttackScreen(){
 	return 0;
 }
 
+
+function healSeek(){
+	logV2(INFO, CATEGORY, "Healing");
+	var retCode = simpleMacroPlayFolder("15_Seek_Heal", MACRO_FOLDER);
+}
+
 function continueSeek(){
 	logV2(INFO, CATEGORY, "Continue Seek & Destroy");
 	var retCode = simpleMacroPlayFolder("14_Seek_Continue", MACRO_FOLDER);
 	logV2(INFO, CATEGORY, "Seek & Destroy Continue status: " + retCode);
 	return retCode;
 }
+
 
 function readScript(filename){
 
