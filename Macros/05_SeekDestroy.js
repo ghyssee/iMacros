@@ -5,27 +5,21 @@ eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
 eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.3.js"));
-
+eval(readScript(MACROS_PATH + "\\js\\MyDocumentUtils-0.0.1.js"));
 LOG_FILE = new LogFile(LOG_DIR, "SeekDestroy");
 var HYPHEN = String.fromCharCode(8211); // "–" special hypen char
 var CATEGORY = "SEEKDESTROY";
 var MACRO_FOLDER = "MR/Seek";
 var MR_ID = "-1";
 var MIN_STAMINA = 10000;
-var FIRST_ATTACK = true;
 
 if (true){
 
 	var retCode = initSeekDestroy();
 		
 	if (retCode == SUCCESS){
-		var job = test();
+		var job = getSeekDestroyStaminaJobs();
 		if (job != null){
-			if (getHealth() > 0){
-				// you already have health when you started this fight
-				// so, when you're dead, don't heal immediately
-				FIRST_ATTACK = false;
-			}
 			if (initAttack(job)){
 				startFight();
 			}
@@ -37,23 +31,73 @@ if (true){
 
 }
 
-function test(){
+function getSeekDestroyStaminaJobs(){
 	var oSpan = window.content.document.querySelectorAll("a[class*=qbit]");
 	// stamina: <div class="qbit" style="background-position:-195px -30px;width:30px;height:30px;top:10px;left:15px;"></div>
 	logV2(INFO, CATEGORY, "checkContinueButton: " + oSpan.length);
 	var staminaJobs = [];
 	for (var i=0; i < oSpan.length; i++){
 		logV2(INFO, CATEGORY, oSpan[i].outerHTML);
-		var dataId = checkTest(oSpan[i]);
+		var dataId = checkForStaminaJobs(oSpan[i]);
 		if (dataId != null){
 			staminaJobs.push(dataId);
 		}
 	}
-	staminaJobs.sort();
+	staminaJobs.sort(function(a, b){return Number(a)-Number(b)});
 	return selectJob(staminaJobs);
 }
 
-function checkTest(object){
+function test(){
+	var oDiv = window.content.document.querySelectorAll("a[class*=qbit]");
+	for (var i=0; i < oDiv.length; i++){
+		logV2(INFO, CATEGORY, oDiv[i].outerHTML);
+		var nextElement = oDiv[i].nextSibling;
+		logV2(INFO, CATEGORY, "nextElement: " + nextElement.outerHTML);
+		var oSpan = window.content.document.createElement('div');
+		oSpan.innerHTML = nextElement.outerHTML;
+		var oRes = oSpan.querySelectorAll("span");
+		logV2(INFO, CATEGORY, "oRes: " + oRes.length);
+		if (oRes.length > 0){
+			var attr= oRes[0].getAttribute('style');
+			//logV2(INFO, CATEGORY, "attr Bar: " + attr);
+			// ex. width:58%;background:#0f0;display:block;height:100%;
+			var regExp = "^width:(.*)%;background(.*)$";
+			var matches = attr.match(regExp);
+			if (matches != null && matches.length > 1){
+				var x = matches[1];
+				logV2(INFO, CATEGORY, "bar completed: " + x);
+				if (Number(x) < 100){
+				}
+			}
+		}
+	}	
+}
+
+function completed(object){
+	var nextElement = object.nextSibling;
+	logV2(INFO, CATEGORY, "nextElement: " + nextElement.outerHTML);
+	var oSpan = window.content.document.createElement('div');
+	oSpan.innerHTML = nextElement.outerHTML;
+	var oRes = oSpan.querySelectorAll("span");
+	logV2(INFO, CATEGORY, "bar element span objects: " + oRes.length);
+	if (oRes.length > 0){
+		var attr= oRes[0].getAttribute('style');
+		//logV2(INFO, CATEGORY, "attr Bar: " + attr);
+		// ex. width:58%;background:#0f0;display:block;height:100%;
+		var regExp = "^width:(.*)%;background(.*)$";
+		var matches = attr.match(regExp);
+		if (matches != null && matches.length > 1){
+			var x = matches[1];
+			logV2(INFO, CATEGORY, "bar completed: " + x);
+			if (Number(x) == 100){
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+function checkForStaminaJobs(object){
 	var oDiv = window.content.document.createElement('div');
 	oDiv.innerHTML=object.outerHTML;
 	var dataId = object.getAttribute('data-id');
@@ -64,7 +108,8 @@ function checkTest(object){
 	for (var i=0; i < oRes.length; i++){
 		logV2(INFO, CATEGORY, oRes[i].outerHTML);
 		var attr= oRes[i].getAttribute('style');
-		logV2(INFO, CATEGORY, "attribute value: " + attr);
+		//logV2(INFO, CATEGORY, "attribute value: " + attr);
+		logV2(INFO, CATEGORY, "oRes[i]: " + oRes[i].outerHTML);
 		var regExp = "^background-position:(.*)px (.*)px;width(.*)$";
 		var matches = attr.match(regExp);
 		logV2(INFO, CATEGORY, "matches.length: " + matches.length);
@@ -76,7 +121,11 @@ function checkTest(object){
 			logV2(INFO, CATEGORY, "y: " + y);
 			if (x == "-195" && y == "-30") {
 				logV2(INFO, CATEGORY, "Stamina Candidate found");
-				found = dataId;
+				var completedJob = completed(object);
+				logV2(INFO, CATEGORY, "completed: " + completedJob);
+				if (!completedJob){
+					found = dataId;
+				}
 			}
 		}
 	}
@@ -111,9 +160,6 @@ function startFight(){
 	do {
 		if (checkAttackButton() == 1 && getHealth() < 5){
 			healSeek();
-			if (!FIRST_ATTACK){
-				waitV2("5");
-			}
 		}
 		attack();
 		health = getHealth();
@@ -204,7 +250,12 @@ function checkAttackScreen(){
 
 function healSeek(){
 	logV2(INFO, CATEGORY, "Healing");
-	var retCode = simpleMacroPlayFolder("15_Seek_Heal", MACRO_FOLDER);
+	var el = querySelectorContainsText("a[data-params*=controller\\=quest\\&action\\=]", "Heal");
+	do {
+		el.click();
+		waitV2("0.1");
+	}
+	while (getHealth() < 5);
 }
 
 function continueSeek(){
