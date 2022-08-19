@@ -74,7 +74,7 @@ function test(){
 }
 
 function completed(object){
-	var nextElement = object.nextSibling;
+	var nextElement = object.previousSibling;
 	logV2(INFO, CATEGORY, "nextElement: " + nextElement.outerHTML);
 	var oSpan = window.content.document.createElement('div');
 	oSpan.innerHTML = nextElement.outerHTML;
