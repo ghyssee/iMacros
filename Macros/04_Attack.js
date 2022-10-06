@@ -157,10 +157,15 @@ function closePopup(){
 }
 
 function heal(){
-	waitV2("5");
-	logV2(INFO, CATEGORY, "Healing");
-	var retCode = simpleMacroPlayFolder("15_Heal", COMMON_FOLDER);
-	closePopup();
+	var health = 0;
+	do {
+		waitV2("5");
+		logV2(INFO, CATEGORY, "Healing");
+		var retCode = simpleMacroPlayFolder("15_Heal", COMMON_FOLDER);
+		closePopup();
+		health = getHealth();
+	}
+	while (health < 5);
 }
 
 function deposit(){
