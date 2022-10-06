@@ -32,7 +32,8 @@ if (true){
 }
 
 function getSeekDestroyStaminaJobs(){
-	var oSpan = window.content.document.querySelectorAll("a[class*=qbit]");
+	logV2(INFO, CATEGORY, "getSeekDestroyStaminaJobs");
+	var oSpan = window.content.document.querySelectorAll("a[class*=qsel]");
 	// stamina: <div class="qbit" style="background-position:-195px -30px;width:30px;height:30px;top:10px;left:15px;"></div>
 	logV2(INFO, CATEGORY, "checkContinueButton: " + oSpan.length);
 	var staminaJobs = [];
@@ -98,6 +99,7 @@ function completed(object){
 }
 
 function checkForStaminaJobs(object){
+	logV2(INFO, CATEGORY, "checkForStaminaJobs");
 	var oDiv = window.content.document.createElement('div');
 	oDiv.innerHTML=object.outerHTML;
 	var dataId = object.getAttribute('data-id');
@@ -108,12 +110,12 @@ function checkForStaminaJobs(object){
 	for (var i=0; i < oRes.length; i++){
 		logV2(INFO, CATEGORY, oRes[i].outerHTML);
 		var attr= oRes[i].getAttribute('style');
-		//logV2(INFO, CATEGORY, "attribute value: " + attr);
+		logV2(INFO, CATEGORY, "attribute value: " + attr);
 		logV2(INFO, CATEGORY, "oRes[i]: " + oRes[i].outerHTML);
 		var regExp = "^background-position:(.*)px (.*)px;width(.*)$";
-		var matches = attr.match(regExp);
-		logV2(INFO, CATEGORY, "matches.length: " + matches.length);
+		var matches = attr.match(regExp);	
 		if (matches != null && matches.length > 0){
+			logV2(INFO, CATEGORY, "matches.length: " + matches.length);
 			// background-position:-195px 0px;width:30px;height:30px;top:10px;left:15px;
 			var x = matches[1];
 			var y = matches[2];
