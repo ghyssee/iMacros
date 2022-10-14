@@ -2,7 +2,7 @@
 SET !TIMEOUT_STEP 0
 TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=home&action=view*
 WAIT SECONDS=0.8
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fight&action=view
+TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=*fight&action=view
 WAIT SECONDS=0.5
-TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=fight&action=view&tab=1
+TAG POS=1 TYPE=A ATTR=DATA-PARAMS:controller=*fight&action=view&tab=1
 WAIT SECONDS=0.5

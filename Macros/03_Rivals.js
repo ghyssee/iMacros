@@ -16,21 +16,30 @@ var FIRST_ATTACK = true;
 
 
 var counter = 0;
+var ORDER_UP = 1;
+var ORDER_DOWN = 2;
+var ORDER_TYPE = Object.freeze({
+        "UP": 1,
+		"DOWN": 2
+    }
+);
 
 var RESOURCE_TYPE = Object.freeze({
-        "RIVALS": {"type": "Rival Mobsters Alive", "color": "f40", "id": "2"},
-		"STREET_TUGS": {"type": "Street Thugs Alive", "color": "fc4", "id": "3"},
+        "RIVALS": {"type": "Rival Mobsters Alive", "color": "f40", "id": "2", "order": ORDER_TYPE.DOWN},
+		"STREET_TUGS": {"type": "Street Thugs Alive", "color": "fc4", "id": "3","order": ORDER_TYPE.DOWN},
+		"ZOMBIES": {"type": "Zombies Destroyed", "color": "4cf", "id": "4","order": ORDER_TYPE.UP},
     }
 );
 
 var resource = selectRival();
 
+
 if (resource != null) {
 
 	var retCode = initRivals();
 	if (retCode == SUCCESS){
-		var rivals = getRivals(resource);
-		if (rivals > 7){
+		var rivalObj = getRivals(resource);
+		if (isRivalAlive(resource, rivalObj)){
 			if (getHealth() > 0){
 				// you already have health when you started this fight
 				// so, when you're dead, don't heal immediately
@@ -40,7 +49,7 @@ if (resource != null) {
 				startFight(resource);
 			}
 			else{
-				logV2(INFO, CATEGORY, "Problem Initializeing rivals...");
+				logV2(INFO, CATEGORY, "Problem Initializing rivals...");
 			}
 		}
 		else {
@@ -50,6 +59,20 @@ if (resource != null) {
 	else {
 		alert("Rivals not found!");
 	}
+}
+
+function isRivalAlive(resource, rivalObj){
+	var alive = false;
+	if (resource.order == ORDER_TYPE.DOWN && rivalObj.counter > 7){
+		// ex. Rival Mobsters Alive: 10 / 40
+		alive = true;
+	}
+	else if (resource.order == ORDER_TYPE.UP && rivalObj.counter != rivalObj.total){
+		// ex. Zombies Destroyed: 0 / 26
+		alive = true;
+	}
+	logV2(INFO, CATEGORY, "isRivalAlive: " + alive);
+	return alive;
 }
 
 
@@ -102,20 +125,44 @@ function initRivals(){
 	return retCode;
 }
 
+function getRivalObject(){
+	var rivals = {"counter": 0, "total": 0};
+	return rivals;
+}
+
 function getRivals(resource){
 	var results = []; 
-	var rivals = 0;
+	var rivals = getRivalObject();
 	logV2(INFO, CATEGORY, "Entering getRivals");
 	window.content.document.querySelectorAll("div, span").forEach(elem => {
+		//logV2(INFO, CATEGORY, "div.span: " + elem.textContent);
 		if (elem.textContent.startsWith(resource.type)) {
 			var rivalsInfo = elem.innerText;
-			logV2(INFO, CATEGORY, rivalsInfo);
+			logV2(INFO, CATEGORY, "rivalsInfo: " + rivalsInfo);
 			//rivalsInfo = rivalsInfo.replace(/^Rival Mobsters Alive: ?([0-9]{1,2}) ?\/ ([0-9]{1,2})/g, "$1");
-			var search_term = new RegExp("^" + resource.type + ": ?([0-9]{1,2}) ?\/ ([0-9]{1,2})", "g");
-			rivalsInfo = rivalsInfo.replace(search_term, "$1");
+			//var search_term = new RegExp("^" + resource.type + ": ?([0-9]{1,2}) ?\/ ([0-9]{1,2})", "g");
+			//rivalsInfo = rivalsInfo.replace(search_term, "$1");
+			
+			var regExp = "^" + resource.type + ": ?([0-9]{1,3}) ?/ ?([0-9]{1,3})$";
+			logV2(INFO, CATEGORY, "regExp: " + regExp);
+			var matches = rivalsInfo.match(regExp);
+			if (matches != null && matches.length == 3){
+				logV2(INFO, CATEGORY, "matches: " + JSON.stringify(matches));
+				rivals.counter = matches[1];
+				rivals.total = matches[2];
+				logV2(INFO, CATEGORY, "rivals: " + JSON.stringify(rivals));
+				
+			}
+			else {
+				// no matches found, this should never happen
+				logV2(INFO, CATEGORY, "no matches found, this should never happen");
+			}
+	
+			
+			
 		    // ex. Rival Mobsters Alive: 35 / 40
-			rivals = Number(rivalsInfo);
-			logV2(INFO, CATEGORY, "Rivals: " + rivals);
+			//rivals = Number(rivalsInfo);
+			//logV2(INFO, CATEGORY, "Rivals: " + rivals);
 		}
 	});
 	return rivals;
@@ -143,18 +190,37 @@ function startFight(resource){
 	if (health == 0){
 		heal();
 	}
-	var rivals = 100;
+	var rivalObj = getRivalObject();
+	// set rivalObj total alive > 0 because in first call, we don't know the total alive yet
+	rivalObj.counter = 10;
+	rivalObj.total = 100;
 	do {
 		attack();
 		health = getHealth();
 		if (checkContinueButton() == 1){
-			rivals = getRivals(resource);
+			rivalObj = getRivals(resource);
 			continueRivals();
 		}
-		logV2(INFO, CATEGORY, health + "/" + rivals);
+		logV2(INFO, CATEGORY, "startFight: " + health + "/" + JSON.stringify(rivalObj));
 	}
-	while (health > 0 && rivals > 0);
+	while (health > 0 && getRivalsAlive(resource, rivalObj) > 0);
 }
+
+
+function getRivalsAlive(resource, rivalObj){
+	var alive = 0;
+	if (resource.order == ORDER_TYPE.DOWN){
+		// ex. Rival Mobsters Alive: 10 / 40
+		alive = rivalObj.counter;
+	}
+	else if (resource.order == ORDER_TYPE.UP){
+		// ex. Zombies Destroyed: 0 / 26
+		alive = rivalObj.total - rivalObj.counter;
+	}
+	logV2(INFO, CATEGORY, "getRivalsAlive: " + alive);
+	return alive;
+}
+
 
 function initAttack(resource){
 	logV2(INFO, CATEGORY, "Start Attack");
@@ -180,6 +246,7 @@ function initAttack(resource){
 
 function goRivalAttack(id){
 	logV2(INFO, CATEGORY, "Go To Rival Attack Screen");
+	logV2(INFO, CATEGORY, "Rival Id: " + id);
 	iimSet("id", id);
 	var retCode = simpleMacroPlayFolder("11_Rivals_InitAttack", MACRO_FOLDER);
 	return (retCode == SUCCESS);
@@ -204,8 +271,8 @@ function extractId(oElement, resource)
 		var attr= oRival[0].getAttribute('data-params');
 		// ex. controller=fight&action=attackview2&id=2613803
 		logV2(INFO, CATEGORY, "attr: " + attr);
-		var search_term = new RegExp("^controller=fight&action=attackview" + resource.id + "&id=(.*)", "g");
-		var id = attr.replace(search_term, "$1");
+		var search_term = new RegExp("^controller=(.*)fight&action=attackview2?" + "&id=(.*)", "g");
+		var id = attr.replace(search_term, "$2");
 		logV2(INFO, CATEGORY, "id: " + id);
 		return id;
 	}
