@@ -271,7 +271,7 @@ function extractId(oElement, resource)
 		var attr= oRival[0].getAttribute('data-params');
 		// ex. controller=fight&action=attackview2&id=2613803
 		logV2(INFO, CATEGORY, "attr: " + attr);
-		var search_term = new RegExp("^controller=(.*)fight&action=attackview2?" + "&id=(.*)", "g");
+		var search_term = new RegExp("^controller=(.*)fight&action=attackview.?" + "&id=(.*)", "g");
 		var id = attr.replace(search_term, "$2");
 		logV2(INFO, CATEGORY, "id: " + id);
 		return id;
