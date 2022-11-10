@@ -36,15 +36,18 @@ function initRob(){
 }
 
 function startRobbing(){
-	var stamina = 0;
+	var stamina = getStamina();
 	do {
-		if (checkEscapeButton() == 1){
+		if (checkStartButton() == 1){
+			selectRobbing();
+		}
+		else if (checkEscapeButton() == 1){
 			escapeRobbing();
 		}
-		if (checkCollectButton() == 1){
+		else if (checkCollectButton() == 1){
 			collectRobbing();
 		}
-		if (checkSearchButton() == 1){
+		else if (checkSearchButton() == 1){
 			rob();
 			stamina = getStamina();
 		}	
@@ -58,7 +61,7 @@ function startRobbing(){
 
 function rob(){
 	logV2(INFO, CATEGORY, "Rob");
-	var retCode = simpleMacroPlayFolder("11_Rob", MACRO_FOLDER);
+	var retCode = simpleMacroPlayFolder("11_Rob_Search", MACRO_FOLDER);
 }
 
 function checkEscapeButton(){
@@ -95,10 +98,28 @@ function checkSearchButton(){
 	}
 	return 0;
 }
+
+function checkStartButton(){
+	var oSpan = window.content.document.querySelectorAll("a[data-params*=controller\\=rob\\&action\\=start]");
+	logV2(INFO, CATEGORY, "checkStartButton: " + oSpan.length);
+	if (oSpan.length >= 1){
+		return 1;
+	}
+	return 0;
+}
+
+
 function escapeRobbing(){
 	logV2(INFO, CATEGORY, "Escape Robbing");
 	var retCode = simpleMacroPlayFolder("12_Rob_Escape.iim", MACRO_FOLDER);
-	logV2(INFO, CATEGORY, "Continue Robbing status: " + retCode);
+	logV2(INFO, CATEGORY, "Escape Robbing status: " + retCode);
+	return retCode;
+}
+
+function selectRobbing(){
+	logV2(INFO, CATEGORY, "Select Robbing");
+	var retCode = simpleMacroPlayFolder("14_Rob_Start.iim", MACRO_FOLDER);
+	logV2(INFO, CATEGORY, "Select Robbing status: " + retCode);
 	return retCode;
 }
 
