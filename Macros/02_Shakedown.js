@@ -117,6 +117,7 @@ function healShakedown(){
 }
 
 function evaluateShakedownStatus(){
+	collect();
 	var status = getShakedownStatus();
 	var exitCode = 0;
 	if (status != null){
@@ -142,7 +143,7 @@ function evaluateShakedownStatus(){
 						FIRST_ATTACK = false;
 					}
 					else {
-						waitV2(60);
+						waitV2(10);
 						healShakedown();
 					}
 					exitCode = 0;
@@ -195,8 +196,17 @@ function chooseBusiness(){
 
 function deposit(){
 	logV2(INFO, CATEGORY, "Collect Shakedown");
-	getCash();
-	var retCode = simpleMacroPlayFolder("12_ShakeDown_Deposit.iim", MACRO_FOLDER);
+	if (checkDepositButton() == 1){
+		getCash();
+		var retCode = simpleMacroPlayFolder("12_ShakeDown_Deposit.iim", MACRO_FOLDER);
+	}
+}
+
+function collect(){
+	if (checkCollectButton() == 1){
+		logV2(INFO, CATEGORY, "Collect Shakedown");
+		var retCode = simpleMacroPlayFolder("16_Shakedown_Collect.iim", MACRO_FOLDER);
+	}
 }
 
 function getStamina(){
@@ -218,6 +228,24 @@ function getStamina(){
 function checkContinueButton(){
 	var oSpan = window.content.document.querySelectorAll("a[data-params*=killed]");
 	logV2(INFO, CATEGORY, "checkContinueButton: " + oSpan.length);
+	if (oSpan.length >= 1){
+		return 1;
+	}
+	return 0;
+}
+
+function checkDepositButton(){
+	var oSpan = window.content.document.querySelectorAll("a[data-params*=shake\\&action\\=deposit]");
+	logV2(INFO, CATEGORY, "checkDepositButton: " + oSpan.length);
+	if (oSpan.length >= 1){
+		return 1;
+	}
+	return 0;
+}
+
+function checkCollectButton(){
+	var oSpan = window.content.document.querySelectorAll("a[data-params*=shake\\&action\\=collect]");
+	logV2(INFO, CATEGORY, "checkCollectButton: " + oSpan.length);
 	if (oSpan.length >= 1){
 		return 1;
 	}
