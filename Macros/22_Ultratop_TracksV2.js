@@ -138,7 +138,13 @@ function fillSongInfo(albumObject, songObject, oElement){
 	else {
 		var myText = oDiv.innerText;
 		logV2(INFO, CATEGORY, "Check for cd number: " + myText);
-		if (myText.toUpperCase().startsWith("CD ")){
+		//if (myText.toUpperCase().startsWith("CD ")){
+		//	logV2(INFO, CATEGORY, "CD Tag Found");
+		//	albumObject.total = extractCD(myText);
+		//}
+		var regex = new RegExp("(CD|LP) ");
+		var cdTagFound = regex.test(myText);
+		if (cdTagFound){
 			logV2(INFO, CATEGORY, "CD Tag Found");
 			albumObject.total = extractCD(myText);
 		}
@@ -166,7 +172,7 @@ function checkExtraArtist(albumObject, songObject, oDiv){
 function extractCD(tagInfo){
 	logHeader(INFO, CATEGORY, "Step: extract CD from String", "*");
 	tagInfo = tagInfo.toUpperCase();
-	tagInfo = tagInfo.replace(/^CD ([0-9]{1,2}):?/g, "$1");
+	tagInfo = tagInfo.replace(/^(?:CD|LP) ([0-9]{1,2}):?/g, "$1");
 	tagInfo = tagInfo.trim();
 	logV2(INFO, CATEGORY, "Extracted CD: " + tagInfo);
 	return tagInfo;
