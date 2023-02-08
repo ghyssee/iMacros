@@ -25,9 +25,11 @@ var ORDER_TYPE = Object.freeze({
 );
 
 var RESOURCE_TYPE = Object.freeze({
-        "RIVALS": {"type": "Rival Mobsters Alive", "color": "f40", "id": "2", "order": ORDER_TYPE.DOWN},
-		"STREET_TUGS": {"type": "Street Thugs Alive", "color": "fc4", "id": "3","order": ORDER_TYPE.DOWN},
-		"ZOMBIES": {"type": "Zombies Destroyed", "color": "4cf", "id": "4","order": ORDER_TYPE.UP},
+        "RIVALS": {"type": "Rival Mobsters Alive", "controller": "fight", "color": "f40", "id": "2", "order": ORDER_TYPE.DOWN},
+		"STREET_TUGS": {"type": "Street Thugs Alive", "controller": "fight", "color": "fc4", "id": "3","order": ORDER_TYPE.DOWN},
+		"ZOMBIES": {"type": "Zombies Destroyed", "controller": "fight", "color": "4cf", "id": "4","order": ORDER_TYPE.UP},
+		"SNOWBALL": {"type": "Snowball Fighters Iced", "controller": "fight", "color": "4cf", "id": "32","order": ORDER_TYPE.UP},
+		"ASSIGNMENT": {"type": "Racketeers Killed", "controller": "assignment", "color": "fc4", "id": "*","order": ORDER_TYPE.UP}
     }
 );
 
@@ -36,7 +38,7 @@ var resource = selectRival();
 
 if (resource != null) {
 
-	var retCode = initRivals();
+	var retCode = initRivals(resource);
 	if (retCode == SUCCESS){
 		var rivalObj = getRivals(resource);
 		if (isRivalAlive(resource, rivalObj)){
@@ -109,12 +111,18 @@ function selectRival(){
 	return resource;
 }
 
-function initRivals(){
+function playFight(macroName, resource){
+	logV2(INFO, CATEGORY, "CONTROLLER: " + resource.controller);
+	iimSet("CONTROLLER", resource.controller);
+	return simpleMacroPlayFolder(macroName, MACRO_FOLDER);
+}
+
+function initRivals(resource){
 	logV2(INFO, CATEGORY, "Start Rivals");
 	var retCode = 0;
 	var i=0;
 	do {
-		retCode = simpleMacroPlayFolder("10_Rivals_Start.iim", MACRO_FOLDER);
+		retCode = playFight("10_Rivals_Start.iim", resource);
 		logV2(INFO, CATEGORY, "Rivals Start status: " + retCode);
 		i++;
 		if (retCode != SUCCESS && i < 20){
@@ -195,11 +203,11 @@ function startFight(resource){
 	rivalObj.counter = 10;
 	rivalObj.total = 100;
 	do {
-		attack();
+		attack(resource);
 		health = getHealth();
 		if (checkContinueButton() == 1){
 			rivalObj = getRivals(resource);
-			continueRivals();
+			continueRivals(resource);
 		}
 		logV2(INFO, CATEGORY, "startFight: " + health + "/" + JSON.stringify(rivalObj));
 	}
@@ -232,7 +240,7 @@ function initAttack(resource){
 			logV2(INFO, CATEGORY, "Rival Found. Extracting id...");
 			var id = extractId(oSpan[i], resource);
 			if (id != null){
-				ok = goRivalAttack(id);
+				ok = goRivalAttack(resource, id);
 			}
 			else {
 				logV2(INFO, CATEGORY, "No Id found for rivals!!!");
@@ -244,11 +252,11 @@ function initAttack(resource){
 	
 }
 
-function goRivalAttack(id){
+function goRivalAttack(resource, id){
 	logV2(INFO, CATEGORY, "Go To Rival Attack Screen");
 	logV2(INFO, CATEGORY, "Rival Id: " + id);
 	iimSet("id", id);
-	var retCode = simpleMacroPlayFolder("11_Rivals_InitAttack", MACRO_FOLDER);
+	var retCode = playFight("11_Rivals_InitAttack", resource);
 	return (retCode == SUCCESS);
 }
 
@@ -271,7 +279,7 @@ function extractId(oElement, resource)
 		var attr= oRival[0].getAttribute('data-params');
 		// ex. controller=fight&action=attackview2&id=2613803
 		logV2(INFO, CATEGORY, "attr: " + attr);
-		var search_term = new RegExp("^controller=(.*)fight&action=attackview.?" + "&id=(.*)", "g");
+		var search_term = new RegExp("^controller=(.*)" + resource.controller + "&action=attackview.?" + "&id=(.*)", "g");
 		var id = attr.replace(search_term, "$2");
 		logV2(INFO, CATEGORY, "id: " + id);
 		return id;
@@ -297,9 +305,9 @@ function isRival(oElement, resource){
 	return false;
 }
 
-function attack(){
+function attack(resource){
 	logV2(INFO, CATEGORY, "Attack");
-	var retCode = simpleMacroPlayFolder("12_Rivals_Attack", MACRO_FOLDER);
+	var retCode = playFight("12_Rivals_Attack", resource);
 }
 
 function getCash(){
@@ -367,9 +375,9 @@ function checkContinueButton(){
 	return 0;
 }
 
-function continueRivals(){
+function continueRivals(resource){
 	logV2(INFO, CATEGORY, "Continue Rivals");
-	var retCode = simpleMacroPlayFolder("13_Rivals_Continue", MACRO_FOLDER);
+	var retCode = playFight("13_Rivals_Continue", resource);
 	logV2(INFO, CATEGORY, "Rivals Continue status: " + retCode);
 	return retCode;
 }
