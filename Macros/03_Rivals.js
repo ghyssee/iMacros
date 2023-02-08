@@ -4,6 +4,7 @@ eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.5.js"));
 eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\MafiaReloaded-0.0.3.js"));
 
 LOG_FILE = new LogFile(LOG_DIR, "Rivals");
 var HYPHEN = String.fromCharCode(8211); // "–" special hypen char
@@ -24,20 +25,14 @@ var ORDER_TYPE = Object.freeze({
     }
 );
 
-var RESOURCE_TYPE = Object.freeze({
-        "RIVALS": {"type": "Rival Mobsters Alive", "controller": "fight", "color": "f40", "id": "2", "order": ORDER_TYPE.DOWN},
-		"STREET_TUGS": {"type": "Street Thugs Alive", "controller": "fight", "color": "fc4", "id": "3","order": ORDER_TYPE.DOWN},
-		"ZOMBIES": {"type": "Zombies Destroyed", "controller": "fight", "color": "4cf", "id": "4","order": ORDER_TYPE.UP},
-		"SNOWBALL": {"type": "Snowball Fighters Iced", "controller": "fight", "color": "4cf", "id": "32","order": ORDER_TYPE.UP},
-		"ASSIGNMENT": {"type": "Racketeers Killed", "controller": "assignment", "color": "fc4", "id": "*","order": ORDER_TYPE.UP}
-    }
-);
+var FILENAME = getMRFile("rivals.json");
+var rivalsObj = initObject(FILENAME);
 
-var resource = selectRival();
-
+var resource = selectRival(rivalsObj);
 
 if (resource != null) {
 
+	writeObject(rivalsObj, FILENAME);
 	var retCode = initRivals(resource);
 	if (retCode == SUCCESS){
 		var rivalObj = getRivals(resource);
@@ -80,7 +75,7 @@ function isRivalAlive(resource, rivalObj){
 
 function isValidId(id){
 	var valid = false;
-	Object.entries(RESOURCE_TYPE).forEach(([key, value]) => {
+	Object.entries(rivalsObj.rivals).forEach(([key, value]) => {
 		if (value.id == id){
 			valid = true;
 		}
@@ -88,26 +83,28 @@ function isValidId(id){
 	return valid;
 }
 
-function selectRival(){
+function selectRival(rivalsObj){
 	var rival = null;
 	var msg = "Select Rival Type" + NEWLINE;
 	msg += "=".repeat("20") + NEWLINE.repeat(2);
 	
-	Object.entries(RESOURCE_TYPE).forEach(([key, value]) => {
+	Object.entries(rivalsObj.rivals).forEach(([key, value]) => {
 		msg+= value.id + " = " + value.type  + NEWLINE.repeat(2);
 	});	
-	
+	var defaultRivalId = (rivalsObj.lastSelectedRivalId == null ? rivalsObj.rivals.RIVALS.id : rivalsObj.lastSelectedRivalId);
 	
 	do {
-		rival = prompt(msg, RESOURCE_TYPE.RIVALS.id);
+		rival = prompt(msg, defaultRivalId);
 	}
 	while (!isValidId(rival) && rival != null);
 	var resource = null;
-	Object.entries(RESOURCE_TYPE).forEach(([key, value]) => {
+	Object.entries(rivalsObj.rivals).forEach(([key, value]) => {
 		if (value.id == rival){
 			resource = value;
+			rivalsObj.lastSelectedRivalId = rival;
 		}
 	});	
+	
 	return resource;
 }
 

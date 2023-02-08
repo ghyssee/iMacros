@@ -1,4 +1,9 @@
 var COMMON_FOLDER = "MR/Common";
+var MR_DIR =  ONEDRIVE_DIR + "Config\\MR\\";
+
+function getMRFile(fileId){
+    return new ConfigFile(MR_DIR, fileId);
+}
 
 function closePopup(){
     var retCode = simpleMacroPlayFolder("02_ClosePopup.iim", COMMON_FOLDER);
