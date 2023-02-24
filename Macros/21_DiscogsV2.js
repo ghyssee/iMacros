@@ -118,6 +118,12 @@ function getTrackHTML(albumObject, songObject, oDiv){
 		var track = albumObject.currentTrack;
 		songObject.track = track;
 	}
+	songObject.track  = filterTrack(songObject.track);
+}
+
+function filterTrack(track){
+	var filteredTrack = track.replace(/\.$/g, "");
+	return filteredTrack;
 }
 
 function getArtistHTML(albumObject, songObject, oDiv){
