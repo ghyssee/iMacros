@@ -9,7 +9,7 @@ setupEnvrionment(getOneDrivePath());
 
 LOG_FILE = new LogFile(LOG_DIR, "Albums");
 songInit();
-var HYPHEN = "-";
+var HYPHEN = " - ";
 var ALBUM = "Album";
 var nrOfSkippedLines = 0;
 var CATEGORY = "BOL.COM";
@@ -38,9 +38,12 @@ function fillAlbumTitleArtist(albumObject, albumArtist){
 	logHeader(INFO, CATEGORY, "Step: Fill Album Artist", "*");
 	var items = albumArtist.split(HYPHEN);
 
-	if (items.length == 2){
+	if (items.length >= 2){
 		albumObject.albumArtist = items[0].trim();
-		albumObject.album = items[1].trim();
+		albumObject.album = "";
+		for (var i=1; i < items.length; i++){
+			albumObject.album += (i > 1 ? " - " : "") + items[i];
+		}
 		if (albumObject.albumArtist == "Various Artists"){
 			albumObject.compilation = true;
 		}
@@ -165,7 +168,8 @@ function getAlbumTitle(albumObject){
 }
 
 function stripAlbum(album){
-		var strippedAlbum = album.replace(/ ?\((C[D|d]|L[P|p])\)/,'');
+	    // remove (2 CD) at the end
+		var strippedAlbum = album.replace(/ ?\(([1-9] )?(C[D|d]|L[P|p])\)/,'');
 		logV2(INFO, CATEGORY, strippedAlbum);
 		return strippedAlbum;
 	}
