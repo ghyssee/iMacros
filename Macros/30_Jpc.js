@@ -12,7 +12,7 @@ songInit();
 var HYPHEN = " - ";
 var ALBUM = "Album";
 var nrOfSkippedLines = 0;
-var CATEGORY = "AMAZON";
+var CATEGORY = "JPC";
 
 var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
 //var albumArtist = selectArtist(); // 171
@@ -64,37 +64,37 @@ function getTrackLists(albumObject){
 	
 	var oSpan = null;
 	var cd = null;
-	oSpan = window.content.document.querySelectorAll("div[id*=music-tracks");
-	logV2(INFO, CATEGORY, "getTrackLists oSpan Length: " + oSpan.length);
+	oSpan = window.content.document.querySelectorAll("div[class*=playlist");
+	logV2(INFO, CATEGORY, "getTrackLists nr of playlists: " + oSpan.length);
+	
 	if (oSpan.length > 0){
-		var oDiv = window.content.document.createElement('div');
-		oDiv.innerHTML = oSpan[0].outerHTML;
-		//logV2(INFO, CATEGORY, oSpan.outerHTML);
-		var list = oDiv.querySelectorAll("tr, h4");
-		for (var i=0; i < list.length; i++){
-			logV2(INFO, CATEGORY, list[i].outerHTML);
-			logV2(INFO, CATEGORY, list[i].innerText);
-			if (isTrack(list[i])){
-				cd = list[i].innerText.trim();
-				alert(cd);
-				cd = cd.replace(/(Tracklist|Dis[K|c]|[C|c][D|d]) /,'');
-				albumObject.total = cd;
-				logV2(INFO, CATEGORY, "cd: " + cd);
-			}
-			else{
-				var songObject = getTrackinfo(list[i], cd);
-				albumObject.tracks.push(songObject);
+		for (var i=0; i < oSpan.length; i++){
+			var oDiv = window.content.document.createElement('div');
+			oDiv.innerHTML = oSpan[i].outerHTML;
+			//logV2(INFO, CATEGORY, oSpan.outerHTML);
+			var list = oDiv.querySelectorAll("h4, li");
+			logV2(INFO, CATEGORY, "list.length: " + list.length);
+			for (var j=0; j < list.length; j++){
+				//logV2(INFO, CATEGORY, list[j].innerText);
+				//logV2(INFO, CATEGORY, list[j].innerHTML);
+				if (isTrack(list[j])){
+					cd = list[j].innerText.trim();
+					cd = cd.replace(/Disk (.*) von(?:.*)\r?\n(.*)/,'$1');
+					albumObject.total = cd;
+					logV2(INFO, CATEGORY, "cd: " + cd);
+				}
+				else {
+					logV2(INFO, CATEGORY, list[j].outerHTML);
+					var songObject = getTrackinfo(list[j], cd);
+					albumObject.tracks.push(songObject);
+				}
 			}
 		}
-		
-	}
-	else {
-		alert("No Track Info Found!");
 	}
 }
 
 function isTrack(tag){
-	logV2(INFO, CATEGORY, "tag: " + tag.innerHTML);
+	//logV2(INFO, CATEGORY, "tag: " + tag.innerHTML);
 	var oDiv = window.content.document.createElement('div');
 	oDiv.innerHTML=tag.outerHTML;
 	var oSpan = oDiv.querySelectorAll("h4");
@@ -106,68 +106,61 @@ function getTrackinfo(tag, cd){
 	var songObject = getSongObject();
 	songObject.cd = cd;
 	logHeader(INFO, CATEGORY, "Step: Get Track Info", "*");
-	var oDiv2 = window.content.document.createElement('table');
+	var oDiv2 = window.content.document.createElement('div');
 	oDiv2.innerHTML=tag.outerHTML;
-	var oInfo = oDiv2.querySelectorAll("td");
-	// <tr> <td>26</td> <td>Call It Love (Sing It Back) - Jaehn, Felix</td> </tr>
-	// cell 1: track number
-	// cell 2: artist - title
-	logV2(INFO, CATEGORY, "oInfo.length: " + oInfo.length);
-	if (oInfo.length == 2){
-		songObject.track = oInfo[0].innerText.trim();
-		var array =  oInfo[1].innerText.trim().split(HYPHEN); // title.split(/ - ?/)
-		logV2(INFO, CATEGORY, "Title: " + array[0]);
-		logV2(INFO, CATEGORY, "Artist: " + array[1]);
-		if (array.length >= 2){
-			songObject.title = array[0];
-			songObject.artist = array[1];
-			logV2(INFO, CATEGORY, "songObject: " + JSON.stringify(songObject));
-		}
-		else {
-			logV2(INFO, CATEGORY, "No Song Info found!");
+		// track: <strong>1</strong>
+		// Artist: Title<small itemprop="name">Ed Sheeran: Celestial</small>	oDiv2.innerHTML=tag.outerHTML;
+	// get track
+	var oInfo = oDiv2.querySelectorAll("strong");
+	if (oInfo.length > 0){
+		songObject.track = oInfo[0].innerText;
+		logV2(INFO, CATEGORY, "songObject.track: " + songObject.track);
+	}
+	else {
+		logV2(INFO, CATEGORY, "No Track Number found!");
+	}
+	// get Artist/Title
+	oInfo = oDiv2.querySelectorAll("small");
+	if (oInfo.length > 0){
+		var array = oInfo[0].innerText.split(":");
+		if (array.length >= 2) {
+			songObject.artist = array[0].trim();
+			for (var i=1; i < array.length; i++){
+				if (i==1){
+					songObject.title = array[i].trim();
+				}
+				else {
+					songObject.title += ":" + array[i].trim();
+				}
+			}
+			
+			logV2(INFO, CATEGORY, "songObject.artist: " + songObject.artist);
+			logV2(INFO, CATEGORY, "songObject.title: " + songObject.title);		
 		}
 	}
+	else {
+		logV2(INFO, CATEGORY, "No Artist/Title found!");
+	}
+
 	return songObject;
 }
 
-function getTrackNumber(tag){
-	var oDiv = window.content.document.createElement('div');
-	oDiv.innerHTML=tag.outerHTML;
-	var oSpan = oDiv.querySelectorAll("span[data-test*=track-number");
-	var trackNumber = null;
-	for (var i=0; i < oSpan.length; i++){
-		trackNumber = oSpan[i].innerText;
-		trackNumber = trackNumber.replace(/\./,'');
-		logV2(INFO, CATEGORY, "track number: " + trackNumber);
-	}
-	return trackNumber;
-}
-
-function getTrackList(tag){
-	var oDiv = window.content.document.createElement('div');
-	oDiv.innerHTML=tag.outerHTML;
-	var oSpan = oDiv.querySelectorAll("h3[data-test*=tracklist-title");
-	//logV2(INFO, CATEGORY, "isTrackListTag oSpan Length: " + oSpan.length);
-	var cd = null;
-	for (var i=0; i < oSpan.length; i++){
-		cd = oSpan[i].innerText;
-		logV2(INFO, CATEGORY, "text: " + oSpan[i].innerText);
-		cd = cd.replace(/Tracklist /,'');
-	}
-	return cd;
-}
 
 function getAlbumTitle(albumObject){
 	logHeader(INFO, CATEGORY, "Step: Get Album Title/Artist", "*");
-	var oDiv = window.content.document.querySelectorAll("span[id*=productTitle]");
+	var oDiv = window.content.document.querySelectorAll("h2[class*=page-title]");
 	// ex. <span id="productTitle" class="a-size-large product-title-word-break">        Megahits 2023-die Erste       </span>
-	var albumArtistTitle = '';
+	var albumArtistTitle = "";
 	logV2(INFO, CATEGORY, "albumArtistTitle oDiv Length: " + oDiv.length);
 	for (var i=0; i < oDiv.length; i++){
 		albumArtistTitle = oDiv[i].innerText;
 		albumArtistTitle = albumArtistTitle.trim();
 		logV2(INFO, CATEGORY, albumArtistTitle);
-		fillAlbumTitleArtist(albumObject, albumArtistTitle);
+		albumObject.album = albumArtistTitle;
+		albumObject.albumArtist = "Various Artists";
+		albumObject.compilation = true;
+		// enable next line if first part contain album artist and second part album title ex. 
+		// fillAlbumTitleArtist(albumObject, albumArtistTitle);
 	}
 }
 
