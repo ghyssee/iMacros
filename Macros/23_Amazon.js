@@ -1,135 +1,174 @@
 ﻿var ONEDRIVEPATH = getOneDrivePath();
 var MACROS_PATH = getMacrosPath();
 eval(readScript(MACROS_PATH + "\\js\\MyUtils-0.0.1.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.3.js"));
-eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.2.js"));
-eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.3.js"));
-eval(readScript(MACROS_PATH + "\\js\\SongUtils-0.0.2.js"));
-setupEnvrionment(ONEDRIVEPATH);
+eval(readScript(MACROS_PATH + "\\js\\MyFileUtils-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\MyConstants-0.0.5.js"));
+eval(readScript(MACROS_PATH + "\\js\\MacroUtils-0.0.4.js"));
+eval(readScript(MACROS_PATH + "\\js\\SongUtils-0.0.3.js"));
+setupEnvrionment(getOneDrivePath());
 
 LOG_FILE = new LogFile(LOG_DIR, "Albums");
 songInit();
-//var	configObject = initObject(CONFIG_JSON_FILE);
-var MACRO_FOLDER = "Amazon";
+var HYPHEN = " - ";
 var ALBUM = "Album";
+var nrOfSkippedLines = 0;
+var CATEGORY = "AMAZON";
+
 var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
+//var albumArtist = selectArtist(); // 171
+
 processAlbum();
 
-
 function processAlbum(){
-	
-	var albumObject = getAlbum();
-	
+
+	var albumObject = getAlbumObject();
 	albumObject.tracks = [];
-	var track = 0;
-	var exitLoop = false;
-	var oldTrack = 1;
-	do {
-		track++;
-		exitLoop = !processTrack(albumObject, track);
-		if (!exitLoop){
-			if (oldTrack > parseInt(albumObject.tracks[track-1].track)){
-				logV2(DEBUG, "INIT", "Increase Number of CD's");
-				albumObject.total++;
-				albumObject.tracks[track-1].cd = albumObject.total;
-			}
-			oldTrack = parseInt(albumObject.tracks[track-1].track);
-		}
-	}
-	while (exitLoop == false);
+	albumObject.total = 0;
+	
+	getAlbumTitle(albumObject);
+	getTrackLists(albumObject);
+	logV2(INFO, CATEGORY, JSON.stringify(albumObject));
+
 	writeObject(albumObject, FILENAME);
+	alert(JSON.stringify(albumObject, null, 2));
+
 }
 
-function getAlbum(){
-	var albumObject = {"album":null,"tracks":null,"total":1};
-	if (!getAlbumName("Amazon_01_GetAlbum.iim", albumObject)){
-		getAlbumName("Amazon_02_GetAlbum.iim", albumObject);
+function fillAlbumTitleArtist(albumObject, albumArtist){
+	logHeader(INFO, CATEGORY, "Step: Fill Album Artist", "*");
+	var items = albumArtist.split(HYPHEN);
+
+	if (items.length >= 2){
+		albumObject.albumArtist = items[0].trim();
+		albumObject.album = "";
+		for (var i=1; i < items.length; i++){
+			albumObject.album += (i > 1 ? " - " : "") + items[i];
+		}
+		if (albumObject.albumArtist == "Various Artists"){
+			albumObject.compilation = true;
+		}
 	}
-	alert(albumObject.album);
+	else {
+		albumObject.album = albumArtist;
+		albumObject.albumArtist = "Various Artists";
+		albumObject.compilation = true;
+	}
+	logV2(INFO, CATEGORY, "albumObject.albumArtist: " + albumObject.albumArtist);
+	logV2(INFO, CATEGORY, "albumObject.album: " + albumObject.album);
 	return albumObject;
 }
 
-function getAlbumName(macroName, albumObject){
-	var retCode = simpleMacroPlayFolder(macroName, MACRO_FOLDER);
-	albumObject.album = getLastExtract(1);
-	var ok = false;
-	if (!isNullOrBlank(albumObject.album)){
-		albumObject.album = removeFromAndAfterNewline(albumObject.album).trim();
-		ok =true;
+function getTrackLists(albumObject){
+
+	logHeader(INFO, CATEGORY, "Step: Get Track List Info", "*");
+	
+	var oSpan = null;
+	var cd = null;
+	oSpan = window.content.document.querySelectorAll("div[id*=music-tracks");
+	logV2(INFO, CATEGORY, "getTrackLists oSpan Length: " + oSpan.length);
+	if (oSpan.length > 0){
+		var oDiv = window.content.document.createElement('div');
+		oDiv.innerHTML = oSpan[0].outerHTML;
+		//logV2(INFO, CATEGORY, oSpan.outerHTML);
+		var list = oDiv.querySelectorAll("tr, h4");
+		for (var i=0; i < list.length; i++){
+			logV2(INFO, CATEGORY, list[i].outerHTML);
+			logV2(INFO, CATEGORY, list[i].innerText);
+			if (isTrack(list[i])){
+				cd = list[i].innerText.trim();
+				alert(cd);
+				cd = cd.replace(/(Tracklist|Dis[K|c]|[C|c][D|d]) /,'');
+				albumObject.total = cd;
+				logV2(INFO, CATEGORY, "cd: " + cd);
+			}
+			else{
+				var songObject = getTrackinfo(list[i], cd);
+				albumObject.tracks.push(songObject);
+			}
+		}
+		
 	}
 	else {
-		albumObject.album = null;
+		alert("No Track Info Found!");
 	}
-	return ok;
 }
 
-function processTrack(albumObject, track){
-	var pos = track.toString();
-	//var pos2 = (track*2).toString();
+function isTrack(tag){
+	logV2(INFO, CATEGORY, "tag: " + tag.innerHTML);
+	var oDiv = window.content.document.createElement('div');
+	oDiv.innerHTML=tag.outerHTML;
+	var oSpan = oDiv.querySelectorAll("h4");
+	//logV2(INFO, CATEGORY, "isTrack oSpan Length: " + oSpan.length);
+	return oSpan.length > 0;
+}
+
+function getTrackinfo(tag, cd){
 	var songObject = getSongObject();
-	songObject.track = getTrack(pos);
-	logV2(DEBUG, "INIT", "songObject.track: " + songObject.track);
-	if (isNullOrBlank(songObject.track)){
-		return false;
-	}
-	songObject.title = getTitle(pos);
-	songObject.artist = getArtist(pos);
-	songObject.extraArtists = [];
-	songObject.cd = albumObject.total;
-	albumObject.tracks.push(songObject);
-	return true;
-}
-
-function getTrack(pos){
-	var track = null;
-	iimSet("pos", pos);
-	var retCode = simpleMacroPlayFolder("Amazon_10_GetTrack.iim", MACRO_FOLDER);
-	if (retCode == 1){
-		track = iimGetLastExtract(1);
-		logV2(DEBUG, "MP3", "track: " + track);
-		if (!isNullOrBlank(track)){
-			track = track.replace(".", "").trim();
+	songObject.cd = cd;
+	logHeader(INFO, CATEGORY, "Step: Get Track Info", "*");
+	var oDiv2 = window.content.document.createElement('table');
+	oDiv2.innerHTML=tag.outerHTML;
+	var oInfo = oDiv2.querySelectorAll("td");
+	// <tr> <td>26</td> <td>Call It Love (Sing It Back) - Jaehn, Felix</td> </tr>
+	// cell 1: track number
+	// cell 2: artist - title
+	logV2(INFO, CATEGORY, "oInfo.length: " + oInfo.length);
+	if (oInfo.length == 2){
+		songObject.track = oInfo[0].innerText.trim();
+		var array =  oInfo[1].innerText.trim().split(HYPHEN); // title.split(/ - ?/)
+		logV2(INFO, CATEGORY, "Title: " + array[0]);
+		logV2(INFO, CATEGORY, "Artist: " + array[1]);
+		if (array.length >= 2){
+			songObject.title = array[0];
+			songObject.artist = array[1];
+			logV2(INFO, CATEGORY, "songObject: " + JSON.stringify(songObject));
+		}
+		else {
+			logV2(INFO, CATEGORY, "No Song Info found!");
 		}
 	}
-	return track;
+	return songObject;
 }
 
-function removeNewLine(text){
-	return text.replace(/\\n-/g,'');
-}
-
-function getArtist(pos){
-	var artist = null;
-	iimSet("pos", pos);
-	var retCode = simpleMacroPlayFolder("Amazon_11_GetArtist.iim", MACRO_FOLDER);
-	if (retCode == 1){
-		artist = iimGetLastExtract(1);
-		artist = removeNewLine(artist).trim();
+function getTrackNumber(tag){
+	var oDiv = window.content.document.createElement('div');
+	oDiv.innerHTML=tag.outerHTML;
+	var oSpan = oDiv.querySelectorAll("span[data-test*=track-number");
+	var trackNumber = null;
+	for (var i=0; i < oSpan.length; i++){
+		trackNumber = oSpan[i].innerText;
+		trackNumber = trackNumber.replace(/\./,'');
+		logV2(INFO, CATEGORY, "track number: " + trackNumber);
 	}
-	return artist;
+	return trackNumber;
 }
 
-function getTitle(pos){
-	var title = null;
-	iimSet("pos", pos);
-	var retCode = simpleMacroPlayFolder("Amazon_15_GetTitle.iim", MACRO_FOLDER);
-	if (retCode == 1){
-		title = iimGetLastExtract(1);
-		title = removeNewLine(title).trim();
-		/*
-		if (isNullOrBlank(title)){
-            iimSet("pos", pos);
-			retCode = simpleMacroPlayFolder("Amazon_16_GetTitle.iim", MACRO_FOLDER);
-			title = iimGetLastExtract(2);
-		}*/
+function getTrackList(tag){
+	var oDiv = window.content.document.createElement('div');
+	oDiv.innerHTML=tag.outerHTML;
+	var oSpan = oDiv.querySelectorAll("h3[data-test*=tracklist-title");
+	//logV2(INFO, CATEGORY, "isTrackListTag oSpan Length: " + oSpan.length);
+	var cd = null;
+	for (var i=0; i < oSpan.length; i++){
+		cd = oSpan[i].innerText;
+		logV2(INFO, CATEGORY, "text: " + oSpan[i].innerText);
+		cd = cd.replace(/Tracklist /,'');
 	}
-	return title;
+	return cd;
 }
 
-function LogFile(path, fileId){
-	this.path = path;
-	this.fileId = fileId;
-	this.fullPath = function() { return this.path + "log." + this.fileId + (NODE_ID == "" ? "" : "." + NODE_ID) + "." + getDateYYYYMMDD() + ".txt"};
+function getAlbumTitle(albumObject){
+	logHeader(INFO, CATEGORY, "Step: Get Album Title/Artist", "*");
+	var oDiv = window.content.document.querySelectorAll("span[id*=productTitle]");
+	// ex. <span id="productTitle" class="a-size-large product-title-word-break">        Megahits 2023-die Erste       </span>
+	var albumArtistTitle = '';
+	logV2(INFO, CATEGORY, "albumArtistTitle oDiv Length: " + oDiv.length);
+	for (var i=0; i < oDiv.length; i++){
+		albumArtistTitle = oDiv[i].innerText;
+		albumArtistTitle = albumArtistTitle.trim();
+		logV2(INFO, CATEGORY, albumArtistTitle);
+		fillAlbumTitleArtist(albumObject, albumArtistTitle);
+	}
 }
 
 function readScript(filename){
@@ -184,14 +223,6 @@ function getOneDrivePath(){
 	return id;
 }
 
-function getFirefoxSetting(branch, key){
-
-    var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch(branch);
-
-    var value = prefs.getCharPref(key, Components.interfaces.nsISupportsString);
-    return value;
-}
-
 function getMacrosPath(){
     var value = getFirefoxSetting("extensions.imacros.",  "defsavepath");
     if (value == null){
@@ -200,3 +231,10 @@ function getMacrosPath(){
     return value;
 }
 
+function getFirefoxSetting(branch, key){
+
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch(branch);
+
+    var value = prefs.getCharPref(key, Components.interfaces.nsISupportsString);
+    return value;
+}

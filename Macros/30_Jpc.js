@@ -12,7 +12,7 @@ songInit();
 var HYPHEN = " - ";
 var ALBUM = "Album";
 var nrOfSkippedLines = 0;
-var CATEGORY = "BOL.COM";
+var CATEGORY = "JPC";
 
 var FILENAME = new ConfigFile(getPath(PATH_PROCESS), ALBUM + ".json");
 //var albumArtist = selectArtist(); // 171
@@ -63,116 +63,106 @@ function getTrackLists(albumObject){
 	logHeader(INFO, CATEGORY, "Step: Get Track List Info", "*");
 	
 	var oSpan = null;
-	oSpan = window.content.document.querySelectorAll(".tracklist li, h3");
-	logV2(INFO, CATEGORY, "getTrackLists oSpan Length: " + oSpan.length);
 	var cd = null;
-	for (var i=0; i < oSpan.length; i++){
-		//logV2(INFO, CATEGORY, "text: " + oSpan[i].innerText);
-		var cdInfo = getTrackList(oSpan[i]);
-		if (cdInfo != null){
-			// it's a Tracklist Line. Filling in cd number
-			logV2(INFO, CATEGORY, "cd: " + cdInfo);	
-			cd = cdInfo;
-			albumObject.total = cd;
-		}
-		else {
-			if (isTrack(oSpan[i])){
-				logV2(INFO, CATEGORY, "Track Line found. Getting info...");
-				var songObject = GetTrackinfo(oSpan[i], cd);
-				logV2(INFO, CATEGORY, JSON.stringify(songObject));
-				albumObject.tracks.push(songObject);
+	oSpan = window.content.document.querySelectorAll("div[class*=playlist");
+	logV2(INFO, CATEGORY, "getTrackLists nr of playlists: " + oSpan.length);
+	
+	if (oSpan.length > 0){
+		for (var i=0; i < oSpan.length; i++){
+			var oDiv = window.content.document.createElement('div');
+			oDiv.innerHTML = oSpan[i].outerHTML;
+			//logV2(INFO, CATEGORY, oSpan.outerHTML);
+			var list = oDiv.querySelectorAll("h4, li");
+			logV2(INFO, CATEGORY, "list.length: " + list.length);
+			for (var j=0; j < list.length; j++){
+				//logV2(INFO, CATEGORY, list[j].innerText);
+				//logV2(INFO, CATEGORY, list[j].innerHTML);
+				if (isTrack(list[j])){
+					cd = list[j].innerText.trim();
+					cd = cd.replace(/Disk (.*) von(?:.*)\r?\n(.*)/,'$1');
+					albumObject.total = cd;
+					logV2(INFO, CATEGORY, "cd: " + cd);
+				}
+				else {
+					logV2(INFO, CATEGORY, list[j].outerHTML);
+					var songObject = getTrackinfo(list[j], cd);
+					albumObject.tracks.push(songObject);
+				}
 			}
 		}
 	}
 }
 
 function isTrack(tag){
-	logV2(INFO, CATEGORY, "tag: " + tag.innerHTML);
+	//logV2(INFO, CATEGORY, "tag: " + tag.innerHTML);
 	var oDiv = window.content.document.createElement('div');
 	oDiv.innerHTML=tag.outerHTML;
-	var oSpan = oDiv.querySelectorAll("span[data-test*=track-number");
+	var oSpan = oDiv.querySelectorAll("h4");
 	//logV2(INFO, CATEGORY, "isTrack oSpan Length: " + oSpan.length);
 	return oSpan.length > 0;
 }
 
-function GetTrackinfo(tag, cd){
+function getTrackinfo(tag, cd){
 	var songObject = getSongObject();
 	songObject.cd = cd;
 	logHeader(INFO, CATEGORY, "Step: Get Track Info", "*");
-	var oDiv = window.content.document.createElement('div');
-	oDiv.innerHTML=tag.outerHTML;
-	var track = getTrackNumber(tag);
-	songObject.track = track;
-	var title = getTitleArtist(tag);
-	var array = title.split(/ - ?/);
-	if (array.length >= 2){
-		songObject.title = array[0];
-		songObject.artist = array[1];
-		logV2(INFO, CATEGORY, "Title: " + array[0]);
-		logV2(INFO, CATEGORY, "Artist: " + array[1]);
+	var oDiv2 = window.content.document.createElement('div');
+	oDiv2.innerHTML=tag.outerHTML;
+		// track: <strong>1</strong>
+		// Artist: Title<small itemprop="name">Ed Sheeran: Celestial</small>	oDiv2.innerHTML=tag.outerHTML;
+	// get track
+	var oInfo = oDiv2.querySelectorAll("strong");
+	if (oInfo.length > 0){
+		songObject.track = oInfo[0].innerText;
+		logV2(INFO, CATEGORY, "songObject.track: " + songObject.track);
+	}
+	else {
+		logV2(INFO, CATEGORY, "No Track Number found!");
+	}
+	// get Artist/Title
+	oInfo = oDiv2.querySelectorAll("small");
+	if (oInfo.length > 0){
+		var array = oInfo[0].innerText.split(":");
+		if (array.length >= 2) {
+			songObject.artist = array[0].trim();
+			for (var i=1; i < array.length; i++){
+				if (i==1){
+					songObject.title = array[i].trim();
+				}
+				else {
+					songObject.title += ":" + array[i].trim();
+				}
+			}
+			
+			logV2(INFO, CATEGORY, "songObject.artist: " + songObject.artist);
+			logV2(INFO, CATEGORY, "songObject.title: " + songObject.title);		
 		}
+	}
+	else {
+		logV2(INFO, CATEGORY, "No Artist/Title found!");
+	}
+
 	return songObject;
 }
 
-function getTrackNumber(tag){
-	var oDiv = window.content.document.createElement('div');
-	oDiv.innerHTML=tag.outerHTML;
-	var oSpan = oDiv.querySelectorAll("span[data-test*=track-number");
-	var trackNumber = null;
-	for (var i=0; i < oSpan.length; i++){
-		trackNumber = oSpan[i].innerText;
-		trackNumber = trackNumber.replace(/\./,'');
-		logV2(INFO, CATEGORY, "track number: " + trackNumber);
-	}
-	return trackNumber;
-}
-
-function getTitleArtist(tag){
-	var oDiv = window.content.document.createElement('div');
-	oDiv.innerHTML=tag.outerHTML;
-	var oSpan = oDiv.querySelectorAll("span[data-test*=track-title");
-	var titleArtist = null;
-	for (var i=0; i < oSpan.length; i++){
-		titleArtist = oSpan[i].innerText;
-		logV2(INFO, CATEGORY, "Title Artist: " + titleArtist);
-	}
-	return titleArtist;
-}
-
-function getTrackList(tag){
-	var oDiv = window.content.document.createElement('div');
-	oDiv.innerHTML=tag.outerHTML;
-	var oSpan = oDiv.querySelectorAll("h3[data-test*=tracklist-title");
-	//logV2(INFO, CATEGORY, "isTrackListTag oSpan Length: " + oSpan.length);
-	var cd = null;
-	for (var i=0; i < oSpan.length; i++){
-		cd = oSpan[i].innerText;
-		logV2(INFO, CATEGORY, "text: " + oSpan[i].innerText);
-		cd = cd.replace(/Tracklist /,'');
-	}
-	return cd;
-}
 
 function getAlbumTitle(albumObject){
 	logHeader(INFO, CATEGORY, "Step: Get Album Title/Artist", "*");
-	var oDiv = window.content.document.querySelectorAll("h1[class*=page-heading]");
-	// ex. <span class="u-mr--xs" data-test="title">Various Artists - Die Slow Van Toen 10 (CD)</span>
-	var albumArtistTitle = '';
+	var oDiv = window.content.document.querySelectorAll("h2[class*=page-title]");
+	// ex. <span id="productTitle" class="a-size-large product-title-word-break">        Megahits 2023-die Erste       </span>
+	var albumArtistTitle = "";
 	logV2(INFO, CATEGORY, "albumArtistTitle oDiv Length: " + oDiv.length);
 	for (var i=0; i < oDiv.length; i++){
 		albumArtistTitle = oDiv[i].innerText;
+		albumArtistTitle = albumArtistTitle.trim();
 		logV2(INFO, CATEGORY, albumArtistTitle);
-		albumArtistTitle = stripAlbum(albumArtistTitle);
-		fillAlbumTitleArtist(albumObject, albumArtistTitle);
+		albumObject.album = albumArtistTitle;
+		albumObject.albumArtist = "Various Artists";
+		albumObject.compilation = true;
+		// enable next line if first part contain album artist and second part album title ex. 
+		// fillAlbumTitleArtist(albumObject, albumArtistTitle);
 	}
 }
-
-function stripAlbum(album){
-	    // remove (2 CD) at the end
-		var strippedAlbum = album.replace(/ ?\(([1-9] )?(C[D|d]|L[P|p])\)/,'');
-		logV2(INFO, CATEGORY, strippedAlbum);
-		return strippedAlbum;
-	}
 
 function readScript(filename){
 

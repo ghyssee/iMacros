@@ -60,7 +60,7 @@ function getTracks(albumObject){
 	logV2(INFO, "DISCOGS", "oSpan.length: " + oSpan.length);
 	for (var j=0; j < oSpan.length; j++){
 		var outerHTML = oSpan[j].outerHTML;
-		logV2(INFO, "DISCOGS", "outerHTML: " + outerHTML);
+		logV2(INFO, "DISCOGS", "Tracks outerHTML: " + outerHTML);
 		checkItem(albumObject, outerHTML);
 	}
 }
@@ -84,7 +84,7 @@ function checkItem(albumObject, item){
 }
 
 function getAlbumTitle(albumObject){
-			var oDiv = window.content.document.querySelectorAll("h1[class*=title]");
+			var oDiv = window.content.document.querySelectorAll("h1[class*=title], h1[id*=profile_title]");
 			var albumArtistTitle = '';
 			logV2(INFO, "DISCOGS", "albumArtistTitle oDiv Length: " + oDiv.length);
 			for (var i=0; i < oDiv.length; i++){
@@ -95,7 +95,7 @@ function getAlbumTitle(albumObject){
 }
 
 function getTrackHTML(albumObject, songObject, oDiv){
-	var oElement = oDiv.querySelectorAll("[class*=trackPos]");
+	var oElement = oDiv.querySelectorAll("[class*=trackPos], [class*=tracklist_track_pos]");
 	if (oElement.length > 0) {
 		for (var i=0; i < oElement.length; i++){
 			var track = oElement[i].innerText;
@@ -118,11 +118,24 @@ function getTrackHTML(albumObject, songObject, oDiv){
 		var track = albumObject.currentTrack;
 		songObject.track = track;
 	}
+	songObject.track  = filterTrack(songObject.track);
+}
+
+function filterTrack(track){
+	var filteredTrack = track;
+	if (isNaN(track)){
+	   var filteredTrack = track.replace(/\.$/g, "");
+	}
+	return filteredTrack;
 }
 
 function getArtistHTML(albumObject, songObject, oDiv){
-	var oElement = oDiv.querySelectorAll("[class*=artist]");
+	var oElement = oDiv.querySelectorAll("[class*=tracklist_track_artists]");	
+	if (oElement.length == 0) {
+		oElement = oDiv.querySelectorAll("[class*=artist_]");
+	}
 	for (var i=0; i < oElement.length; i++){
+		logV2(INFO, "DISCOGS", "artist HTML: " + oElement.outerHTML);
 		var artist = clearArtistTag(oElement[i].innerText);
 		if(isNullOrBlank(artist) && !albumObject.compilation){
 			artist = albumObject.albumArtist;
@@ -133,27 +146,39 @@ function getArtistHTML(albumObject, songObject, oDiv){
 }
 
 function getExtraArtists(songObject, oDiv){
-	var oElement = oDiv.querySelectorAll("div[class*=trackCredits]");
-	logV2(INFO, "DISCOGS", "oElement.length: " + oElement.length);
+	var oElement = oDiv.querySelectorAll("div[class*=trackCredits], span[class*=tracklist_extra_artist_span]");
+	logV2(INFO, "DISCOGS", "Extra Artists length: " + oElement.length);
 	var extraArtists = [];
 	for (var i=0; i < oElement.length; i++){
 		var extraArtistInfo = oElement[i].innerHTML;
-		logV2(INFO, "DISCOGS", "Extra artist Info: " + extraArtistInfo);
-		var oDiv = window.content.document.createElement('div');
-		oDiv.innerHTML=extraArtistInfo;
-		var oSubDiv = oDiv.getElementsByTagName("div");
-		logV2(INFO, "DISCOGS", "Extra Artist Types: " + oSubDiv.length);
-		for (var i=0; i < oSubDiv.length; i++){
-			var extraArtistLine = oSubDiv[i].innerText;
-			logV2(INFO, "DISCOGS", "Extra Artist Type Info: " + extraArtistLine);
-			var oExtraArtist = splitExtraArtist(extraArtistLine);
-			if (oExtraArtist != null) {
-				extraArtists.push(oExtraArtist);
+			logV2(INFO, "DISCOGS", "Extra artist Info: " + extraArtistInfo);
+			var oDiv = window.content.document.createElement('div');
+			oDiv.innerHTML=extraArtistInfo;
+			var oSubDiv = oDiv.getElementsByTagName("div");
+			if (oSubDiv.length > 0){
+				// each extra artist info is in a DIV element
+				logV2(INFO, "DISCOGS", "Extra Artist Types: " + oSubDiv.length);
+				for (var i=0; i < oSubDiv.length; i++){
+					var extraArtistLine = oSubDiv[i].innerText;
+					logV2(INFO, "DISCOGS", "Extra Artist Type Info: " + extraArtistLine);
+					var oExtraArtist = splitExtraArtist(extraArtistLine);
+					if (oExtraArtist != null) {
+						extraArtists.push(oExtraArtist);
+					}
+					else {
+						logV2(INFO, "DISCOGS", "ignoring this line " + extraArtistLine);
+					}
+				}
 			}
 			else {
-				logV2(INFO, "DISCOGS", "ignoring this line " + extraArtistLine);
-			}
-		}
+				// extra artist is like this: Featuring – <a title="Colby O'Donis" href="/artist/1103160-Colby-ODonis">Colby O'Donis</a>
+				logV2(INFO, "DISCOGS", "No Divs in Extra Artist Info");
+				var extraArtistLine = oDiv.innerText;
+				var oExtraArtist = splitExtraArtist(extraArtistLine);
+				if (oExtraArtist != null) {
+					extraArtists.push(oExtraArtist);
+				}		
+			}				
 	}
 	songObject.extraArtists = extraArtists;
 }
@@ -190,7 +215,7 @@ function getExtraArtistsOld(songObject, oDiv){
 }
 
 function getTrackTitleHTML(songObject, oDiv){
-	var oElement = oDiv.querySelectorAll("span[class*=trackTitle]");
+	var oElement = oDiv.querySelectorAll("span[class*=trackTitle], span[class*=tracklist_track_title]");
 	for (var i=0; i < oElement.length; i++){
 		var title = oElement[i].innerText;
 		songObject.title = title;
