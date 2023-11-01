@@ -94,6 +94,12 @@ function watchFighters(fighter){
 			break;
 		}
 	}
+	if (fighter.gangId == "3239260"
+	    || fighter.gangId == "3035534" ){
+			logV2(INFO, "FIGHTLIST", fighter.id + " " + fighter.name, watchFile);
+			logV2(INFO, "FIGHTLIST", fighter.gangId + " " + fighter.gangName, watchFile);
+			logV2(INFO, "FIGHTLIST", "==================================================", watchFile);			
+	}
 }
 
 function startFightList(){
