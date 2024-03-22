@@ -215,7 +215,7 @@ function getExtraArtistsOld(songObject, oDiv){
 }
 
 function getTrackTitleHTML(songObject, oDiv){
-	var oElement = oDiv.querySelectorAll("span[class*=trackTitle], span[class*=tracklist_track_title]");
+	var oElement = oDiv.querySelectorAll("span[class*=trackTitle], span[class*=tracklist_track_title], td[class*=trackTitleNoArtist]");
 	for (var i=0; i < oElement.length; i++){
 		var title = oElement[i].innerText;
 		songObject.title = title;

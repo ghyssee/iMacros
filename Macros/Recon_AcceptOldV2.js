@@ -1,6 +1,5 @@
 ﻿var MACROS_PATH = getMacrosPath();
 
-
 var DATASOURCE_DIR = "C:\\My Programs\\iMacros\\Datasources\\";
 var BASE_DIR = "C:\\My Programs\\iMacros\\";
 var OUTPUT_DIR = BASE_DIR + "output\\";
@@ -13,30 +12,55 @@ var PREFIX = "Work/Atos/";
 var SUCCESS = 1;
 var ACCEPTOLD_FILE = DATASOURCE_DIR + "AcceptOldSearchValues.csv";
 
+var searchByDay = true;
+
 var RECON_OBJ = {
     "total": 0, 
-	"tppns": [
-		"201906OVER",
-		"202002DELI",
-		"202001DELI",
-		"JUIN19V2",
-		"201906DELI",
-		"JUILLAOUT",
-		"SURCH072019",
-		"2019_10",
-		"AO�T-19",
-		"JUIL-19",
-		"JUIN-19",
-		"2019_09",
-		"MARS-19",
-		"110329947"
-	], 
+	"values": [
+	{"value1": "13/03/2014", "value2": "13/03/2014"},
+	{"value1": "14/03/2014", "value2": "14/03/2014"},
+	{"value1": "15/03/2014", "value2": "20/03/2014"},
+	{"value1": "21/03/2014", "value2": "31/03/2014"},	
+	{"value1": "01/04/2014", "value2": "08/04/2014"},
+	{"value1": "09/04/2014", "value2": "15/04/2014"},
+	{"value1": "16/04/2014", "value2": "22/04/2014"},
+	{"value1": "23/04/2014", "value2": "30/04/2014"},	
+	{"value1": "01/01/2010", "value2": "31/12/2010"},
+	{"value1": "01/01/2011", "value2": "31/12/2011"},
+	{"value1": "01/01/2012", "value2": "31/12/2012"},
+	{"value1": "01/01/2013", "value2": "31/12/2013"},
+	{"value1": "01/01/2015", "value2": "31/12/2015"},
+	{"value1": "01/01/2016", "value2": "31/12/2016"},
+	{"value1": "01/01/2017", "value2": "31/12/2017"},
+	{"value1": "01/01/2018", "value2": "31/12/2018"},
+	{"value1": "01/01/2019", "value2": "31/12/2019"},
+	{"value1": "01/01/2020", "value2": "31/12/2020"},
+	{"value1": "01/01/2014", "value2": "31/01/2014"},
+	{"value1": "01/02/2014", "value2": "28/02/2014"},
+	{"value1": "01/03/20146", "value2": "15/03/2014"},
+	{"value1": "16/03/2014", "value2": "31/03/2014"},
+	{"value1": "01/04/2014", "value2": "15/04/2014"},
+	{"value1": "16/04/2014", "value2": "30/04/2014"},
+	{"value1": "01/05/2014", "value2": "15/05/2014"},
+	{"value1": "16/05/2014", "value2": "31/05/2014"},
+	{"value1": "01/06/2014", "value2": "15/06/2014"},
+	{"value1": "16/06/2014", "value2": "30/06/2014"},
+	{"value1": "01/07/2014", "value2": "15/07/2014"},
+	{"value1": "16/07/2014", "value2": "31/07/2014"},
+	{"value1": "01/08/2014", "value2": "15/08/2014"},
+	{"value1": "16/08/2014", "value2": "31/08/2014"},
+	{"value1": "01/09/2014", "value2": "15/09/2014"},
+	{"value1": "16/09/2014", "value2": "30/09/2014"},
+	{"value1": "01/10/2014", "value2": "15/10/2014"},
+	{"value1": "16/10/2014", "value2": "31/10/2014"},
+	{"value1": "01/11/2014", "value2": "15/11/2014"},
+	{"value1": "16/11/2014", "value2": "30/11/2014"},
+	{"value1": "01/12/2014", "value2": "31/12/2014"}
+	],
 	"searchField1": "TXDATE*||from",
 	"searchField2": "TXDATE*||to",
-	"value1": "01/02/2023",
-	"value2": "28/02/2023",	
-	"comment": "Accept old of 2023 transactions",
-	"size": 100,
+	"comment": "Accept old of 2021 transactions",
+	"size": 300,
 	"streamId": 58};
 	// 449 = ADS Mercury
 	// 56 = PCE TPPN selfservice transacties
@@ -82,31 +106,34 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
         logV2(INFO, "Stream Id: " + RECON_OBJ.streamId);
         processValue(RECON_OBJ.searchField1, RECON_OBJ.searchField2, item, RECON_OBJ.streamId.toString());
 	});*/
-	processValue(RECON_OBJ.streamId.toString());
+	//processValue(RECON_OBJ.streamId.toString());
 	
-	
-	/*
-	RECON_OBJ.tppns.forEach(function (tppn) {
-        logV2(INFO, "Processing: " + tppn);
-        logV2(INFO, "=".repeat(100));
-        logV2(INFO, "Search field: " + RECON_OBJ.value);
-        logV2(INFO, "Stream Id: " + RECON_OBJ.streamId);
-        processValue(RECON_OBJ.searchField, tppn, RECON_OBJ.streamId.toString());
-    }); 
-	*/
-	/*
-	var startDate = new Date(2015, 04, 05);
-	var endDate = new Date(2016, 00, 01);
-	var days = daysBetween(startDate, endDate);
-	logV2(INFO, "Days Between: " + days);
-	for (i=0; i <= days; i++){
-        var newDate =  new Date(startDate.getTime() + 86400000*i); // + 1 day in ms
-		logV2(INFO, "Processing Dat: " + newDate);
-		logV2(INFO, "Formatted Date: " + getFormattedDateDDMMYYY(newDate));
-        logV2(INFO, "=".repeat(100));
-		processTPPN(newDate, RECON_OBJ.streamId.toString());
+	if (!searchByDay){	
+		RECON_OBJ.values.forEach(function (item) {
+			logV2(INFO, "Processing Value1: " + item.value1);
+			logV2(INFO, "Processing Value2: " + item.value2);
+			logV2(INFO, "=".repeat(100));
+			logV2(INFO, "Stream Id: " + RECON_OBJ.streamId);
+			processValue(RECON_OBJ.searchField1, RECON_OBJ.searchField2, item, RECON_OBJ.streamId.toString());
+		}); 
 	}
-	*/
+	
+	else {
+		var startDate = new Date(2000, 00, 01);
+		var endDate = new Date(2021, 11, 31);
+		var days = daysBetween(startDate, endDate);
+		logV2(INFO, "Days Between: " + days);
+		
+		for (i=0; i <= days; i++){
+			var newDate =  new Date(startDate.getTime() + 86400000*i); // + 1 day in ms
+			logV2(INFO, "Processing Date: " + newDate);
+			logV2(INFO, "Formatted Date: " + getFormattedDateDDMMYYY(newDate));
+			logV2(INFO, "=".repeat(100));
+			var item = {"value1": getFormattedDateDDMMYYY(newDate), "value2": getFormattedDateDDMMYYY(newDate)};
+			processValue(RECON_OBJ.searchField1, RECON_OBJ.searchField2, item, RECON_OBJ.streamId.toString());
+		}
+	}
+	
 	
 	function initAcceptOld(){
         var retCode = iimPlay(PREFIX + "00_InitAcceptOld");
@@ -115,7 +142,7 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 		}
 	}
 
-    function processValue(streamId) {
+    function processValue(searchField1, searchField2, item, streamId) {
         RECON_OBJ.total = 0;
 		//var formatDate = getFormattedDateDDMMYYY(newDate);
         //iimSet("DATE", formatDate);
@@ -123,7 +150,7 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
         var retCode = iimPlay(PREFIX + "01_Select_Stream");
         if (retCode == SUCCESS) {
             do {
-                var found = doAcceptOld();
+                var found = doAcceptOld(searchField1, searchField2, item);
                 if (found) {
                     logV2(INFO, "Number Of Times Confirmed: " + RECON_OBJ.total);
                 }
@@ -156,24 +183,24 @@ function checkIfDataFound(){
     return found;
 }
 
-function doAcceptOld(){
+function doAcceptOld(searchField1, searchField2, item){
 	logV2(INFO, "Accept Old");
 	var dataFound = false;
     dataFound = checkIfDataFound();
     if (dataFound){
         logV2(INFO, "Data found. No need to search again");
-        retCode = confirmAcceptOld();
+        retCode = confirmAcceptOld(item);
     }
     else {
-        iimSet("FIELD1", RECON_OBJ.searchField1);
-        iimSet("VALUE1", RECON_OBJ.value1);
+        iimSet("FIELD1", searchField1);
+        iimSet("VALUE1", item.value1);
         iimSet("SIZE", RECON_OBJ.size);
-		if (isNullOrBlank(RECON_OBJ.searchField2)){
+		if (isNullOrBlank(searchField2)){
 			retCode = iimPlay(PREFIX + "02_Search_Records_1");
 		}
 		else {
-			iimSet("FIELD2", RECON_OBJ.searchField2);
-			iimSet("VALUE2", RECON_OBJ.value2);
+			iimSet("FIELD2", searchField2);
+			iimSet("VALUE2", item.value2);
 			retCode = iimPlay(PREFIX + "02_Search_Records_2");
 		}
         if (retCode == SUCCESS) {
@@ -194,11 +221,11 @@ function logException(message){
     throw new Error(message);
 }
 
-function confirmAcceptOld(){
+function confirmAcceptOld(item){
     var retCode = iimPlay(PREFIX + "03_Select_Records.iim");
 	if (retCode == SUCCESS){
         iimSet("VALUE", RECON_OBJ.comment);
-		logV2(INFO, RECON_OBJ.comment + ": " + RECON_OBJ.value1 + " - " + RECON_OBJ.value2);
+		logV2(INFO, RECON_OBJ.comment + ": " + item.value1 + " - " + item.value2);
 		retCode = iimPlay(PREFIX + "04_Confirm.iim");
 		if (retCode == SUCCESS) {
 		  RECON_OBJ.total++;
