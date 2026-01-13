@@ -77,7 +77,7 @@ function getTracks(albumObject){
 		var oDiv = window.content.document.createElement('div');
 		oDiv.innerHTML=oSpan[i].outerHTML;
 		var oName = oDiv.querySelectorAll("a[name*=tracks]");
-		logV2(INFO, "ELEMENTS with 'tracks' as name: ", oName.length);
+		logV2(INFO, CATEGORY, "ELEMENTS with 'tracks' as name: " + oName.length);
 		if (oName.length == 1) {
 			processTracks(albumObject, oSpan[i]);
 			// skip other 'tracks' tags

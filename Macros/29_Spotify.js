@@ -60,7 +60,8 @@ function getTrackLists(albumObject){
 	logHeader(INFO, CATEGORY, "Step: Get Track List Info", "*");
 	
 	var oSpan = null;
-	oSpan = window.content.document.querySelectorAll("div[data-testid*=track-row]");
+	oSpan = window.content.document.querySelectorAll("div[class*=RowMouseLink]");
+	// Note: Spotify only shows first 30 tracks in Pale Moon. No fix for the moment
 	logV2(INFO, CATEGORY, "getTrackLists oSpan Length: " + oSpan.length);
 	alert(oSpan.length);
 	var trackInfo = null;
@@ -148,8 +149,9 @@ function getMyArtist(tag){
 
 function getAlbumTitle(albumObject){
 	logHeader(INFO, CATEGORY, "Step: Get Album Title/Artist", "*");
-	var oDiv = window.content.document.querySelectorAll("h1[data-encore-id*=type]");
+	var oDiv = window.content.document.querySelectorAll("h1[data-encore-id*=text]");
 	// <h1 style="margin: 0.08em 0px 0.12em; visibility: visible; width: 100%; font-size: 6rem;" dir="auto" data-encore-id="type" class="Type__TypeElement-sc-goli3j-0 bZdlXz">Mega Hits des Jahres 2022</h1>
+	// <h1 class="e-91000-text encore-text-headline-large encore-internal-color-text-base" data-encore-id="text" style="visibility: visible; width: 100%; font-size: 6rem; text-wrap: nowrap balance; white-space: nowrap;" dir="auto">10s Radio Hits</h1>
 	var albumArtistTitle = '';
 	logV2(INFO, CATEGORY, "albumArtistTitle oDiv Length: " + oDiv.length);
 	if ( oDiv.length > 0) {

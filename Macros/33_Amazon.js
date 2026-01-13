@@ -9,7 +9,7 @@ setupEnvrionment(getOneDrivePath());
 
 LOG_FILE = new LogFile(LOG_DIR, "Albums");
 songInit();
-var HYPHEN = " - ";
+var HYPHEN = /\ - | -|- /;
 var ALBUM = "Album";
 var nrOfSkippedLines = 0;
 var CATEGORY = "AMAZON";
@@ -76,8 +76,7 @@ function getTrackLists(albumObject){
 			logV2(INFO, CATEGORY, list[i].innerText);
 			if (isTrack(list[i])){
 				cd = list[i].innerText.trim();
-				alert(cd);
-				cd = cd.replace(/(Tracklist|Dis[K|c]|[C|c][D|d]) /,'');
+				cd = cd.replace(/(Tracklist|Dis[K|c]|[C|c][D|d]):? /,'');
 				albumObject.total = cd;
 				logV2(INFO, CATEGORY, "cd: " + cd);
 			}
@@ -116,11 +115,11 @@ function getTrackinfo(tag, cd){
 	if (oInfo.length == 2){
 		songObject.track = oInfo[0].innerText.trim();
 		var array =  oInfo[1].innerText.trim().split(HYPHEN); // title.split(/ - ?/)
-		logV2(INFO, CATEGORY, "Title: " + array[0]);
-		logV2(INFO, CATEGORY, "Artist: " + array[1]);
+		logV2(INFO, CATEGORY, "Title: " + array[1]);
+		logV2(INFO, CATEGORY, "Artist: " + array[0]);
 		if (array.length >= 2){
-			songObject.title = array[0];
-			songObject.artist = array[1];
+			songObject.title = array[1];
+			songObject.artist = array[0];
 			logV2(INFO, CATEGORY, "songObject: " + JSON.stringify(songObject));
 		}
 		else {

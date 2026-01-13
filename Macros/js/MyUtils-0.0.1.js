@@ -160,6 +160,14 @@ function pad(number, length) {
     return str;
 }
 
+function padChar(exp, length, padChar) {
+    var str = exp;
+    while (str.length < length) {
+        str = padChar + str;
+    }
+    return str;
+}
+
 function isNullOrBlank(param){
 	if (param != null && param.toUpperCase() != "#EANF#" && param != ""){
       return false;

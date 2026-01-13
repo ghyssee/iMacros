@@ -37,7 +37,6 @@ String.prototype.repeat = function(times){
     }
     return result;
 };
-
 Components.utils.import("resource://gre/modules/FileUtils.jsm");
 
 	var retcode = 1;
@@ -46,27 +45,34 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 	logV2(INFO, "Start");
     logV2(INFO, "*".repeat(100));
 	var found = false;
+	
+	var retCode = iimPlay(PREFIX + "00_Init.iim");
+    if (retCode == SUCCESS) {
+		logV2(INFO, "Init successfull");
+		deleteFile(E2E_NEW_FILE);
+		var lines = readFile(E2E_FILE);
+		var counter = 0;
+		lines.forEach(function (line) {
+			//if (counter > 5){
+			//	return;
+			//}
+			//else {
+				counter++;
+			//}
+			if (!isNullOrBlank(line)){
+				var fields = addRecord(line, counter);
 
-	deleteFile(E2E_NEW_FILE);
-	var lines = readFile(E2E_FILE);
-	var counter = 0;
-	lines.forEach(function (line) {
-		//if (counter > 5){
-		//	return;
-		//}
-		//else {
-			counter++;
-		//}
-		if (!isNullOrBlank(line)){
-			var fields = addRecord(line, counter);
-			writeLineToCSV(E2E_NEW_FILE, fields, ";");
-			//logV2(INFO, line);
-			//logV2(INFO, "field 1:" + fields[CONSTANTS.E2E_REC.ID]);
-			//logV2(INFO, "field 2:" + fields[CONSTANTS.E2E_REC.COMMENT]);
-			//logV2(INFO, "field 3:" + fields[CONSTANTS.E2E_REC.METHOD]);
-		}
-	});
-
+				writeLineToCSV(E2E_NEW_FILE, fields, ";");
+				//logV2(INFO, line);
+				//logV2(INFO, "field 1:" + fields[CONSTANTS.E2E_REC.ID]);
+				//logV2(INFO, "field 2:" + fields[CONSTANTS.E2E_REC.COMMENT]);
+				//logV2(INFO, "field 3:" + fields[CONSTANTS.E2E_REC.METHOD]);
+			}
+		})
+	}
+	else {
+		logV2(WARNING, "Init Failed");
+	}
 
     function addRecord(line, counter) {
 		var fields = line.split(";");
@@ -76,9 +82,11 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
         var retCode = iimPlay(PREFIX + "01_NewEntry.iim");
         if (retCode == SUCCESS) {
 			logV2(INFO, "Adding Line " + counter + " - ID: " + fields[CONSTANTS.E2E_REC.ID]);
+
         	if (checkForError()) {
 				logV2(INFO, "ERROR adding record");
 				fields.push(getError());
+				iimPlay(PREFIX + "04_CancelEntry.iim");
 			}
         	else {
 				logV2(INFO, fields[CONSTANTS.E2E_REC.ID] + " Added");
@@ -139,6 +147,7 @@ function getExtract(nr){
 
 
 function save(fileName, data, overwrite) {
+
 	// file is nsIFile, data is a string
 	// file is nsIFile, data is a string
 

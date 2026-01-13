@@ -1,8 +1,7 @@
 ﻿VERSION BUILD=8970419 RECORDER=FX
-URL GOTO=http://far-pr.awsprv.bpost.cloud/recon/endtoendkeepsafes/getExcludeFromEndToEndKeepsafesReportList.do?method=list&be.post.jkt.ui.menu.MenuBase.SELECTED=root.header1.endtoendkeepsafes
-WAIT SECONDS=0.5
 TAG POS=1 TYPE=A ATTR=TXT:Nieuwe<SP>entry
 TAG POS=1 TYPE=SELECT FORM=NAME:ExcludeFromEndToEndKeepsafesReportForm ATTR=ID:loadMethod CONTENT=%{{METHOD}}
 TAG POS=1 TYPE=INPUT:TEXT FORM=NAME:ExcludeFromEndToEndKeepsafesReportForm ATTR=ID:keepsafeId CONTENT={{ID}}
 TAG POS=1 TYPE=TEXTAREA FORM=NAME:ExcludeFromEndToEndKeepsafesReportForm ATTR=ID:comment CONTENT={{COMMENT}}
 TAG POS=1 TYPE=INPUT:SUBMIT FORM=NAME:ExcludeFromEndToEndKeepsafesReportForm ATTR=*
+WAIT SECONDS=1
