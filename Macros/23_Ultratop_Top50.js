@@ -22,8 +22,10 @@ processAlbum();
 
 function processAlbum(){
 
-	var top50Object = {"title":null,"tracks":null,"filename":null};
-	top50Object.tracks = [];
+	//var top50Object = {"title":null,"tracks":null,"filename":null};
+	var top50Object = getAlbumObject();
+    top50Object.tracks = [];
+	top50Object.total = 0;
 	
 	getTop50Title(top50Object);
 
@@ -37,13 +39,14 @@ function processAlbum(){
 function makeTop50(top50Object){
 	var top50File = OUTPUT_DIR + "Ultratop50_" + top50Object.filename + ".txt";
 	var newline = "\r\n";
-	writeFileWrapper(top50File, top50Object.title + newline, true);
-	writeFileWrapper(top50File, "=".repeat(top50Object.title.length) + newline, false);
+	writeFileWrapper(top50File, top50Object.album + newline, true);
+	writeFileWrapper(top50File, "=".repeat(top50Object.album.length) + newline, false);
 	for (const track of top50Object.tracks){
 		var line = padChar(track.track, 2, ' ') + " " + track.artist + " - " + track.title;
        logV2(INFO, CATEGORY, line);
 	   writeFileWrapper(top50File, line + newline, false);
     }
+	writeObject(top50Object, FILENAME);
 }
 
 function getTop50Title(top50Object){
@@ -70,16 +73,17 @@ function getTop50Title(top50Object){
 	else {
 		logV2(INFO, CATEGORY, "Top 50 date not found!");
 	}
-	top50Object.title = top50Title;
+	top50Object.album = top50Title;
+	top50Object.albumArtist = "Various Artists";
+	top50Object.compilation = true;
 	logV2(INFO, CATEGORY, "top50Title: " + top50Title);
 }
 
 function getTracks(top50Object){
 
 	logHeader(INFO, CATEGORY, "Step: Get Track Info", "*");
-	var oSpan = null;
-	oSpan = window.content.document.querySelectorAll("div[class*=chart_title]");
-	oTrackNumber = window.content.document.querySelectorAll("div[class*=chart_pos]");
+	var oSpan = window.content.document.querySelectorAll("div[class*=chart_title]");
+	var oTrackNumber = window.content.document.querySelectorAll("div[class*=chart_pos]");
 	
 	for (var i=0; i < oSpan.length; i++){
 		var oDiv = window.content.document.createElement('div');
