@@ -47,6 +47,7 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 	var TITLE = "Ultratop List" + NEWLINE + "-".repeat(100) + NEWLINE.repeat(2);
 	
 	var localConfigObject = initObject(LOCAL_CONFIG_JSON_FILE);
+	alert(JSON.stringify(localConfigObject));
 	ULTRATOP_JSON_FILE.path = localConfigObject.global.oneDriveInstallDir + "\\" + CONFIG_BASE + "\\";
 	ULTRATOP_MENU_FILE.path = localConfigObject.global.oneDriveInstallDir + "\\" + CONFIG_BASE + "\\";
 	var ultratopMenu = initObject(ULTRATOP_MENU_FILE);
