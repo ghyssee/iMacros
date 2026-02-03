@@ -103,12 +103,14 @@ function validateDirectory(directoryName){
 }
 
 function getSongObject(){
-	var song = {"track":null, "artist":null, "title":null, "cd":null};
+	var song = {"track":null, "artist":null, "title":null, "cd":null, "status": null};
 	return song;
 }
 
 function getAlbumObject(){
-		var albumObject = {"album":null,"tracks":null,"albumArtist":null,"filename":null,"total":0,"ignoreTrack":false,"compilation":false, "currentTrack": 0};
+		var albumObject = {"album":null,"tracks":null,"albumArtist":null,"filename":null,
+		                   "total":0,"ignoreTrack":false,"compilation":false, 
+						   "currentTrack": 0};
 		return albumObject;
 }
 
