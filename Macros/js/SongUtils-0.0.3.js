@@ -114,13 +114,6 @@ function getAlbumObject(){
 		return albumObject;
 }
 
-function getAlbumArtist(folder){
-var albumArtist = null;
-	var retCode = simpleMacroPlayFolder(folder + "_02_GetAlbumArtist.iim", folder);
-	albumArtist = iimGetLastExtract(1);
-	return albumArtist;
-}
-
 function getTrack(folder, pos){
 	var track = null;
 	iimSet("pos", pos);

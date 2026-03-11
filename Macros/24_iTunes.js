@@ -44,6 +44,13 @@ function processAlbum(){
 	writeObject(albumObject, FILENAME);
 }
 
+function getAlbumArtist(folder){
+var albumArtist = null;
+	var retCode = simpleMacroPlayFolder(folder + "_02_GetAlbumArtist.iim", folder);
+	albumArtist = iimGetLastExtract(1);
+	return albumArtist;
+}
+
 function processTrackOld(albumObject, track){
 	var pos = track.toString();
 	var songObject = getSongObject();
