@@ -23,8 +23,6 @@ processAlbum();
 function processAlbum(){
 
 	var albumObject = getAlbumObject();
-	var retCode = simpleMacroPlayFolder("Discogs_01_GetAlbum.iim", MACRO_FOLDER);
-	logV2(DEBUG, "INIT", "ReturnCode: " + retCode);
 	albumObject.tracks = [];
 	albumObject.total = 1;
 	
